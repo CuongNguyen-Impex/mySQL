@@ -1,0 +1,37 @@
+tạo một phần mềm html quản lý chi phí logistic với mô tả như sau:
+1. Hạng mục chính của phần mềm
+a. Quản lý Bill
+* Thêm Bill: Nhập thông tin về số Bill, ngày tạo, khách hàng, dịch vụ, trạng thái, và ghi chú.
+* Danh sách Bill: Hiển thị tất cả các Bill với thông tin cơ bản (số Bill, ngày tạo, khách hàng, dịch vụ, trạng thái).
+* Chỉnh sửa Bill: Thay đổi thông tin Bill đã lưu.
+* Xóa Bill: Xóa Bill và các dữ liệu liên quan như chi phí và doanh thu.
+b. Quản lý chi phí
+* Thêm Chi phí: Nhập loại chi phí (nhiên liệu, lương tài xế, phí cầu đường, bảo dưỡng xe...), số tiền, ngày phát sinh, nhà cung cấp, và ghi chú.
+* Danh sách chi phí của Bill: Hiển thị chi tiết các chi phí đã nhập cho từng Bill.
+* Xóa Chi phí: Cho phép xóa từng chi phí không còn phù hợp.
+c. Quản lý doanh thu
+* Thiết lập giá bán: Admin thiết lập giá bán của từng dịch vụ dựa trên khách hàng.
+* Thêm Doanh thu: Nhập dịch vụ, số tiền, ngày ghi nhận, và ghi chú.
+* Danh sách doanh thu của Bill: Hiển thị chi tiết doanh thu theo từng dịch vụ cho từng Bill.
+* Xóa Doanh thu: Xóa thông tin doanh thu không hợp lệ hoặc không còn cần thiết.
+d. Báo cáo
+* Theo Bill: Hiển thị chi tiết doanh thu, chi phí, và lãi/lỗ cho từng Bill.
+* Theo khách hàng: Tổng hợp số lượng Bill, tổng doanh thu, tổng chi phí, và lãi/lỗ theo từng khách hàng.
+* Theo nhà cung cấp: Tổng hợp tổng chi phí đầu vào của từng nhà cung cấp.
+* Lãi/lỗ: Tổng kết doanh thu, chi phí, và lợi nhuận trong kỳ báo cáo.
+e. Cài đặt
+* Quản lý danh mục: Thêm, chỉnh sửa, hoặc xóa danh mục khách hàng, dịch vụ, loại chi phí.
+* Google Sheets: Kết nối phần mềm với Google Sheets để lưu trữ dữ liệu.
+* Khởi tạo dữ liệu mẫu: Tạo dữ liệu mẫu để người dùng thử nghiệm các tính năng.
+2. Phân hệ chi tiết
+a. Người dùng (Admin/User)
+* Phân quyền:
+   * Admin: Quản lý mọi tính năng, bao gồm tạo mới Bill, thiết lập giá bán dịch vụ, quản lý danh mục.
+   * User thông thường: Chỉ nhập liệu các chi phí thực tế và xem báo cáo phù hợp với quyền hạn.
+b. Các kết nối (Google Sheets)
+* Đồng bộ dữ liệu: Xuất/nhập dữ liệu từ Google Sheets để lưu trữ dài hạn.
+* Kiểm tra kết nối: Xác nhận trạng thái kết nối với Google Sheets.
+3. Lợi ích của từng phân hệ
+* Tính toán tự động: Tự động tính lãi/lỗ theo từng Bill và từng khách hàng.
+* Quản lý tiện lợi: Tích hợp tất cả thông tin quan trọng trong một hệ thống dễ sử dụng.
+* Tùy chỉnh linh hoạt: Dễ dàng thay đổi danh mục, khách hàng, hoặc dịch vụ mà không cần chỉnh sửa trực tiếp mã.
