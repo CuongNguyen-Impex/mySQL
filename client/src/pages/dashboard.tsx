@@ -32,9 +32,9 @@ export default function Dashboard() {
     <div className="p-4 lg:p-8">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-bold">Tổng quan</h1>
           <p className="text-muted-foreground">
-            Overview of your logistics operations
+            Tổng quan hoạt động logistics của bạn
           </p>
         </div>
         <div className="mt-4 lg:mt-0">
@@ -59,30 +59,30 @@ export default function Dashboard() {
         ) : (
           <>
             <StatsCard 
-              title="Total Bills"
+              title="Tổng số hóa đơn"
               value={dashboard?.totalBills || 0}
               icon="receipt"
               trend={dashboard?.billsTrend || 0}
             />
             <StatsCard 
-              title="Total Revenue"
-              value={typeof dashboard?.totalRevenue === 'number' ? dashboard.totalRevenue.toFixed(2) : Number(dashboard?.totalRevenue || 0).toFixed(2)}
-              prefix="$"
+              title="Tổng doanh thu"
+              value={typeof dashboard?.totalRevenue === 'number' ? dashboard.totalRevenue : Number(dashboard?.totalRevenue || 0)}
+              prefix=""
               icon="payments"
               trend={dashboard?.revenueTrend || 0}
             />
             <StatsCard 
-              title="Total Costs"
-              value={typeof dashboard?.totalCosts === 'number' ? dashboard.totalCosts.toFixed(2) : Number(dashboard?.totalCosts || 0).toFixed(2)}
-              prefix="$"
+              title="Tổng chi phí"
+              value={typeof dashboard?.totalCosts === 'number' ? dashboard.totalCosts : Number(dashboard?.totalCosts || 0)}
+              prefix=""
               icon="money_off"
               trend={dashboard?.costsTrend || 0}
               trendReversed
             />
             <StatsCard 
-              title="Profit"
-              value={typeof dashboard?.totalProfit === 'number' ? dashboard.totalProfit.toFixed(2) : Number(dashboard?.totalProfit || 0).toFixed(2)}
-              prefix="$"
+              title="Lợi nhuận"
+              value={typeof dashboard?.totalProfit === 'number' ? dashboard.totalProfit : Number(dashboard?.totalProfit || 0)}
+              prefix=""
               icon="insights"
               trend={dashboard?.profitTrend || 0}
             />

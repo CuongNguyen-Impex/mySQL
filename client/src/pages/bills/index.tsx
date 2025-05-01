@@ -102,9 +102,9 @@ export default function Bills() {
     <div className="p-4 lg:p-8">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Bills Management</h1>
+          <h1 className="text-2xl font-bold">Quản lý Hóa Đơn</h1>
           <p className="text-muted-foreground">
-            Create and manage your logistics bills
+            Tạo và quản lý các hóa đơn logistics
           </p>
         </div>
         <div className="mt-4 lg:mt-0 flex gap-2">
@@ -117,24 +117,24 @@ export default function Bills() {
             </SheetTrigger>
             <SheetContent>
               <SheetHeader>
-                <SheetTitle>Filter Bills</SheetTitle>
+                <SheetTitle>Lọc Hóa Đơn</SheetTitle>
                 <SheetDescription>
-                  Apply filters to find specific bills
+                  Áp dụng bộ lọc để tìm kiếm hóa đơn cụ thể
                 </SheetDescription>
               </SheetHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status">Trạng thái</Label>
                   <Select value={status} onValueChange={setStatus}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All Statuses" />
+                      <SelectValue placeholder="Tất cả trạng thái" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                      <SelectItem value="Pending">Chờ xử lý</SelectItem>
+                      <SelectItem value="In Progress">Đang xử lý</SelectItem>
+                      <SelectItem value="Completed">Hoàn thành</SelectItem>
+                      <SelectItem value="Cancelled">Hủy bỏ</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
