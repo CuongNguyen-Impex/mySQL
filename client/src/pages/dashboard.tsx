@@ -41,7 +41,7 @@ export default function Dashboard() {
           <Link href="/bills">
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              New Bill
+              Hóa đơn mới
             </Button>
           </Link>
         </div>
@@ -93,7 +93,7 @@ export default function Dashboard() {
       {/* Recent Bills */}
       <Card className="mb-8">
         <CardHeader className="pb-2">
-          <CardTitle>Recent Bills</CardTitle>
+          <CardTitle>Hóa đơn gần đây</CardTitle>
         </CardHeader>
         <BillList 
           bills={bills}
@@ -102,10 +102,10 @@ export default function Dashboard() {
         />
         <CardFooter className="flex justify-between px-6 py-4 border-t">
           <p className="text-sm text-muted-foreground">
-            Showing {bills.length} of {dashboard?.totalBills || 0} bills
+            Đang hiển thị {bills.length} trong tổng số {dashboard?.totalBills || 0} hóa đơn
           </p>
           <Link href="/bills">
-            <Button variant="link">View All Bills</Button>
+            <Button variant="link">Xem tất cả hóa đơn</Button>
           </Link>
         </CardFooter>
       </Card>
@@ -115,7 +115,7 @@ export default function Dashboard() {
         {/* By Customer */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle>Performance by Customer</CardTitle>
+            <CardTitle>Hiệu suất theo khách hàng</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -137,7 +137,7 @@ export default function Dashboard() {
         {/* By Service */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle>Performance by Service</CardTitle>
+            <CardTitle>Hiệu suất theo dịch vụ</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (

@@ -142,11 +142,11 @@
   }
   
   .status-badge-pending {
-    @apply bg-primary text-primary-foreground;
+    @apply bg-warning text-warning-foreground;
   }
   
   .status-badge-in-progress {
-    @apply bg-warning text-warning-foreground;
+    @apply bg-primary text-primary-foreground;
   }
   
   .status-badge-cancelled {

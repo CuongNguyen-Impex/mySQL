@@ -29,7 +29,7 @@ export function PerformanceChart({
           <div key={index}>
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm font-medium">{item[nameKey]}</span>
-              <span className={cn("text-sm", valueColorClass)}>${value.toFixed(2)}</span>
+              <span className={cn("text-sm", valueColorClass)}>{value.toLocaleString('vi-VN', { maximumFractionDigits: 0 })}</span>
             </div>
             <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
               <div 
