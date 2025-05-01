@@ -144,7 +144,7 @@ export default function ProfitLossReport() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className="text-2xl font-bold text-success">
-                ${(data?.summary?.totalRevenue || 0).toFixed(2)}
+                {parseFloat(data?.summary?.totalRevenue || 0).toLocaleString('vi-VN')}
               </div>
             )}
           </CardContent>
@@ -158,7 +158,7 @@ export default function ProfitLossReport() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className="text-2xl font-bold text-destructive">
-                ${(data?.summary?.totalCosts || 0).toFixed(2)}
+                {parseFloat(data?.summary?.totalCosts || 0).toLocaleString('vi-VN')}
               </div>
             )}
           </CardContent>
@@ -172,7 +172,7 @@ export default function ProfitLossReport() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className={cn("text-2xl font-bold", getProfitClass(data?.summary?.netProfit || 0))}>
-                ${(data?.summary?.netProfit || 0).toFixed(2)}
+                {parseFloat(data?.summary?.netProfit || 0).toLocaleString('vi-VN')}
                 <span className="text-sm font-normal ml-2">
                   ({(data?.summary?.profitMargin || 0).toFixed(1)}%)
                 </span>
@@ -191,9 +191,9 @@ export default function ProfitLossReport() {
         <TabsContent value="table">
           <Card>
             <CardHeader>
-              <CardTitle>Period Breakdown</CardTitle>
+              <CardTitle>Phân tích theo kỳ</CardTitle>
               <CardDescription>
-                Profit and loss breakdown by period
+                Phân tích lợi nhuận và lỗ theo từng kỳ
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -208,12 +208,12 @@ export default function ProfitLossReport() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Period</TableHead>
-                      <TableHead className="text-right">Bills</TableHead>
-                      <TableHead className="text-right">Revenue</TableHead>
-                      <TableHead className="text-right">Costs</TableHead>
-                      <TableHead className="text-right">Profit</TableHead>
-                      <TableHead className="text-right">Margin %</TableHead>
+                      <TableHead>Kỳ</TableHead>
+                      <TableHead className="text-right">Hóa đơn</TableHead>
+                      <TableHead className="text-right">Doanh thu</TableHead>
+                      <TableHead className="text-right">Chi phí</TableHead>
+                      <TableHead className="text-right">Lợi nhuận</TableHead>
+                      <TableHead className="text-right">Tỉ suất %</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -234,7 +234,7 @@ export default function ProfitLossReport() {
                     {(data?.periods?.length === 0 || !data?.periods) && (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                          No data found for the selected time period
+                          Không có dữ liệu cho khoảng thời gian đã chọn
                         </TableCell>
                       </TableRow>
                     )}
@@ -248,9 +248,9 @@ export default function ProfitLossReport() {
         <TabsContent value="chart">
           <Card>
             <CardHeader>
-              <CardTitle>Profit and Loss Trend</CardTitle>
+              <CardTitle>Xu hướng lợi nhuận và lỗ</CardTitle>
               <CardDescription>
-                Visual representation of profit and loss over time
+                Biểu đồ lợi nhuận và lỗ theo thời gian
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -270,9 +270,9 @@ export default function ProfitLossReport() {
                       <YAxis />
                       <Tooltip formatter={(value) => `$${parseFloat(value).toFixed(2)}`} />
                       <Legend />
-                      <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--success))" />
-                      <Bar dataKey="costs" name="Costs" fill="hsl(var(--destructive))" />
-                      <Bar dataKey="profit" name="Profit" fill="hsl(var(--primary))" />
+                      <Bar dataKey="revenue" name="Doanh thu" fill="hsl(var(--success))" />
+                      <Bar dataKey="costs" name="Chi phí" fill="hsl(var(--destructive))" />
+                      <Bar dataKey="profit" name="Lợi nhuận" fill="hsl(var(--primary))" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
