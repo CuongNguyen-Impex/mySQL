@@ -156,16 +156,16 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="overflow-x-auto border rounded-md">
+        <div className="overflow-x-auto border rounded-md max-w-full w-full">
           <table className="w-full border-collapse">
             <thead className="bg-muted">
               <tr className="text-left">
-                <th className="p-3 font-medium">STT</th>
-                <th className="p-3 font-medium">Loại chi phí</th>
-                <th className="p-3 font-medium">Nhà cung cấp</th>
-                <th className="p-3 font-medium">Số tiền</th>
-                <th className="p-3 font-medium">Ngày tháng</th>
-                <th className="p-3 font-medium">Ghi chú</th>
+                <th className="p-3 font-medium w-[60px]">STT</th>
+                <th className="p-3 font-medium w-[180px]">Loại chi phí</th>
+                <th className="p-3 font-medium w-[180px]">Nhà cung cấp</th>
+                <th className="p-3 font-medium w-[120px]">Số tiền</th>
+                <th className="p-3 font-medium w-[130px]">Ngày tháng</th>
+                <th className="p-3 font-medium w-[300px]">Ghi chú</th>
                 <th className="p-3 font-medium w-[60px]">Xóa</th>
               </tr>
             </thead>
@@ -311,8 +311,9 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
                       render={({ field }) => (
                         <FormItem className="mb-0">
                           <FormControl>
-                            <Input
+                            <Textarea
                               placeholder="Ghi chú"
+                              className="min-h-[70px] w-full"
                               {...field}
                             />
                           </FormControl>

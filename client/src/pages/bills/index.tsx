@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, Filter } from "lucide-react";
+import { PlusCircle, Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -47,6 +47,8 @@ export default function Bills() {
   const [serviceFilter, setServiceFilter] = useState<string>("");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [billNoFilter, setBillNoFilter] = useState<string>("");
+  const [filteredBills, setFilteredBills] = useState<Bill[]>([]);
 
   // Fetch bills with filters
   const { data, isLoading, refetch } = useQuery({
@@ -70,6 +72,18 @@ export default function Bills() {
   });
 
   const bills = data?.bills || [];
+
+  // Effect to filter bills by bill number
+  useEffect(() => {
+    if (billNoFilter) {
+      const filtered = bills.filter(bill =>
+        bill.billNo.toLowerCase().includes(billNoFilter.toLowerCase())
+      );
+      setFilteredBills(filtered);
+    } else {
+      setFilteredBills(bills);
+    }
+  }, [bills, billNoFilter]);
 
   const handleFilterApply = () => {
     refetch();
@@ -227,11 +241,33 @@ export default function Bills() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Bills</CardTitle>
-          <CardDescription>
-            View and manage all your logistics bills
-          </CardDescription>
+        <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
+          <div>
+            <CardTitle>Bills</CardTitle>
+            <CardDescription>
+              View and manage all your logistics bills
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Tìm theo số hóa đơn..."
+                value={billNoFilter}
+                onChange={(e) => setBillNoFilter(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            {billNoFilter && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setBillNoFilter('')}
+                className="h-9">
+                Xóa
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" className="w-full">
@@ -242,23 +278,23 @@ export default function Bills() {
               <TabsTrigger value="completed">Completed</TabsTrigger>
             </TabsList>
             <TabsContent value="all">
-              <BillList bills={bills} isLoading={isLoading} />
+              <BillList bills={filteredBills} isLoading={isLoading} />
             </TabsContent>
             <TabsContent value="pending">
               <BillList
-                bills={bills.filter((bill: Bill) => bill.status === "Pending")}
+                bills={filteredBills.filter((bill: Bill) => bill.status === "Pending")}
                 isLoading={isLoading}
               />
             </TabsContent>
             <TabsContent value="inProgress">
               <BillList
-                bills={bills.filter((bill: Bill) => bill.status === "In Progress")}
+                bills={filteredBills.filter((bill: Bill) => bill.status === "In Progress")}
                 isLoading={isLoading}
               />
             </TabsContent>
             <TabsContent value="completed">
               <BillList
-                bills={bills.filter((bill: Bill) => bill.status === "Completed")}
+                bills={filteredBills.filter((bill: Bill) => bill.status === "Completed")}
                 isLoading={isLoading}
               />
             </TabsContent>
