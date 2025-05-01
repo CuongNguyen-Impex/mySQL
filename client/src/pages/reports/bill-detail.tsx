@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,7 +15,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function BillDetailReport() {
   const today = new Date();
-  const oneMonthAgo = subMonths(today, 1);
+  const oneMonthAgo = subMonths(today, 3); // Thay đổi thành 3 tháng để hiển thị đủ dữ liệu bill
   
   const [date, setDate] = useState<DateRange>({
     from: oneMonthAgo,
@@ -169,7 +169,7 @@ export default function BillDetailReport() {
                   </TableHeader>
                   <TableBody>
                     {data?.bills?.map((bill: any) => (
-                      <>
+                      <React.Fragment key={`bill-${bill.id}`}>
                         {/* Bill info row - with costs */}
                         {bill.costs?.map((cost: any, costIndex: number) => (
                           <TableRow key={`${bill.id}-cost-${costIndex}`}>
@@ -252,7 +252,7 @@ export default function BillDetailReport() {
                             {subtotals.byBill[bill.billNo]?.profit.toLocaleString('vi-VN') || '0'}
                           </TableCell>
                         </TableRow>
-                      </>
+                      </React.Fragment>
                     ))}
                     
                     {/* Grand total */}
