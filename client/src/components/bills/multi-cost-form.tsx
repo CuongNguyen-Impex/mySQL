@@ -156,17 +156,17 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="overflow-x-auto border rounded-md max-w-full w-full">
+        <div className="overflow-x-auto border rounded-md max-w-full w-full" style={{ minWidth: "1000px" }}>
           <table className="w-full border-collapse">
             <thead className="bg-muted">
               <tr className="text-left">
-                <th className="p-3 font-medium w-[60px]">STT</th>
-                <th className="p-3 font-medium w-[180px]">Loại chi phí</th>
-                <th className="p-3 font-medium w-[180px]">Nhà cung cấp</th>
-                <th className="p-3 font-medium w-[120px]">Số tiền</th>
-                <th className="p-3 font-medium w-[130px]">Ngày tháng</th>
-                <th className="p-3 font-medium w-[300px]">Ghi chú</th>
-                <th className="p-3 font-medium w-[60px]">Xóa</th>
+                <th className="p-3 font-medium w-[50px]">STT</th>
+                <th className="p-3 font-medium w-[150px]">Loại chi phí</th>
+                <th className="p-3 font-medium w-[150px]">Nhà cung cấp</th>
+                <th className="p-3 font-medium w-[100px]">Số tiền</th>
+                <th className="p-3 font-medium w-[120px]">Ngày tháng</th>
+                <th className="p-3 font-medium w-[450px]">Ghi chú</th>
+                <th className="p-3 font-medium w-[50px]">Xóa</th>
               </tr>
             </thead>
             <tbody>
@@ -313,7 +313,7 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
                           <FormControl>
                             <Textarea
                               placeholder="Ghi chú"
-                              className="min-h-[70px] w-full"
+                              className="min-h-[100px] w-full"
                               {...field}
                             />
                           </FormControl>
