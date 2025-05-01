@@ -98,15 +98,15 @@ export default function BillList({ bills, isLoading, showActions = true, onBillD
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Bill No.</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Service</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Revenue</TableHead>
-            <TableHead className="text-right">Costs</TableHead>
-            <TableHead className="text-right">Profit</TableHead>
-            {showActions && <TableHead className="text-right">Actions</TableHead>}
+            <TableHead>Số Hóa Đơn</TableHead>
+            <TableHead>Ngày Tạo</TableHead>
+            <TableHead>Khách Hàng</TableHead>
+            <TableHead>Dịch Vụ</TableHead>
+            <TableHead>Trạng Thái</TableHead>
+            <TableHead className="text-right">Doanh Thu</TableHead>
+            <TableHead className="text-right">Chi Phí</TableHead>
+            <TableHead className="text-right">Lợi Nhuận</TableHead>
+            {showActions && <TableHead className="text-right">Thao Tác</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -171,10 +171,10 @@ export default function BillList({ bills, isLoading, showActions = true, onBillD
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogTitle>Bạn có chắc chắn không?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the
-                                bill and all associated costs and revenue records.
+                                Hành động này không thể hoàn tác. Nó sẽ xóa vĩnh viễn
+                                hóa đơn và tất cả các bản ghi chi phí và doanh thu liên quan.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -199,7 +199,7 @@ export default function BillList({ bills, isLoading, showActions = true, onBillD
           {bills.length === 0 && (
             <TableRow>
               <TableCell colSpan={showActions ? 9 : 8} className="text-center py-6 text-muted-foreground">
-                No bills found.
+                Không tìm thấy hóa đơn nào.
               </TableCell>
             </TableRow>
           )}

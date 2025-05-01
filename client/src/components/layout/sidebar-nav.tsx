@@ -76,55 +76,55 @@ export default function SidebarNav({ className, user }: SidebarNavProps) {
       
       <div className="p-4">
         <div className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider mb-2">
-          Main
+          Danh mục chính
         </div>
         <nav className="space-y-1">
           <NavItem 
             href="/" 
             icon={<LayoutDashboard className="h-5 w-5" />} 
-            label="Dashboard" 
+            label="Tổng quan" 
             active={isActive("/")}
           />
           <NavItem 
             href="/bills" 
             icon={<FileText className="h-5 w-5" />} 
-            label="Bills" 
+            label="Hóa đơn" 
             active={isActive("/bills")}
           />
           <NavItem 
             href="/reports" 
             icon={<BarChart3 className="h-5 w-5" />} 
-            label="Reports" 
+            label="Báo cáo" 
             active={isActive("/reports")}
           />
           <NavItem 
             href="/settings" 
             icon={<Settings className="h-5 w-5" />} 
-            label="Settings" 
+            label="Cài đặt" 
             active={isActive("/settings")}
           />
         </nav>
         
         <div className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider mt-6 mb-2">
-          Management
+          Quản lý
         </div>
         <nav className="space-y-1">
           <NavItem 
             href="/customers" 
             icon={<Users className="h-5 w-5" />} 
-            label="Customers" 
+            label="Khách hàng" 
             active={isActive("/customers")}
           />
           <NavItem 
             href="/suppliers" 
             icon={<Store className="h-5 w-5" />} 
-            label="Suppliers" 
+            label="Nhà cung cấp" 
             active={isActive("/suppliers")}
           />
           <NavItem 
             href="/pricing" 
             icon={<DollarSign className="h-5 w-5" />} 
-            label="Pricing" 
+            label="Bảng giá" 
             active={isActive("/pricing")}
           />
         </nav>

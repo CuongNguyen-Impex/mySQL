@@ -12,10 +12,14 @@ export function formatCurrency(value: number | string | null | undefined, option
   
   if (isNaN(numValue)) return "";
   
-  const precision = options.precision ?? 2;
-  const symbol = options.symbol ?? '$';
+  const precision = options.precision ?? 0;
+  const symbol = options.symbol ?? '';
   
-  return `${symbol}${numValue.toFixed(precision)}`;
+  // Format with thousand separators
+  return `${symbol}${numValue.toLocaleString('vi-VN', {
+    minimumFractionDigits: precision,
+    maximumFractionDigits: precision
+  })}`;
 }
 
 export function formatDate(date: Date | string | null | undefined): string {
