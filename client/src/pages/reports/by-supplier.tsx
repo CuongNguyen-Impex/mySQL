@@ -20,11 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import type { DateRange } from "react-day-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ReportsBySupplier() {
   const [timeframe, setTimeframe] = useState("month");
-  const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [costTypeFilter, setCostTypeFilter] = useState("");
 
   // Fetch supplier report data
@@ -119,7 +120,7 @@ export default function ReportsBySupplier() {
                 <label className="text-sm font-medium mb-1 block">Khoảng ngày</label>
                 <DatePickerWithRange 
                   date={dateRange} 
-                  setDate={setDateRange} 
+                  setDate={(date) => setDateRange(date || { from: undefined, to: undefined })} 
                 />
               </div>
             )}
