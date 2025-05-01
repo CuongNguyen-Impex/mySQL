@@ -24,8 +24,17 @@ import type { DateRange } from "react-day-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ReportsBySupplier() {
-  const [timeframe, setTimeframe] = useState("month");
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [timeframe, setTimeframe] = useState("quarter");
+  
+  // Thiết lập khoảng thời gian mặc định 6 tháng (180 ngày)
+  const today = new Date();
+  const sixMonthsAgo = new Date(today);
+  sixMonthsAgo.setMonth(today.getMonth() - 6);
+  
+  const [dateRange, setDateRange] = useState<DateRange>({ 
+    from: sixMonthsAgo, 
+    to: today 
+  });
   const [costTypeFilter, setCostTypeFilter] = useState("");
 
   // Fetch supplier report data

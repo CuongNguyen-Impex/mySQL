@@ -25,8 +25,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export default function ReportsByCustomer() {
-  const [timeframe, setTimeframe] = useState("month");
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined, to: Date | undefined }>({ from: undefined, to: undefined });
+  const [timeframe, setTimeframe] = useState("quarter");
+  
+  // Thiết lập khoảng thời gian mặc định 6 tháng (180 ngày)
+  const today = new Date();
+  const sixMonthsAgo = new Date(today);
+  sixMonthsAgo.setMonth(today.getMonth() - 6);
+  
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined, to: Date | undefined }>({ 
+    from: sixMonthsAgo, 
+    to: today 
+  });
 
   // Fetch customer report data
   const { data, isLoading } = useQuery({
