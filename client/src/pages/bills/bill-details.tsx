@@ -37,6 +37,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import BillForm from "@/components/bills/bill-form";
 import CostForm from "@/components/bills/cost-form";
+import MultiCostForm from "@/components/bills/multi-cost-form";
 import RevenueForm from "@/components/bills/revenue-form";
 import CostList from "@/components/bills/cost-list";
 import RevenueList from "@/components/bills/revenue-list";
@@ -294,8 +295,8 @@ export default function BillDetails() {
           <div className="border-b">
             <div className="px-4">
               <TabsList className="w-full justify-start h-12">
-                <TabsTrigger value="costs" className="flex-1 max-w-[200px]">Costs</TabsTrigger>
-                <TabsTrigger value="revenue" className="flex-1 max-w-[200px]">Revenue</TabsTrigger>
+                <TabsTrigger value="costs" className="flex-1 max-w-[200px]">Chi phí</TabsTrigger>
+                <TabsTrigger value="revenue" className="flex-1 max-w-[200px]">Doanh thu</TabsTrigger>
               </TabsList>
             </div>
           </div>
@@ -304,21 +305,21 @@ export default function BillDetails() {
           <TabsContent value="costs" className="p-0">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-medium">Cost Details</h3>
+                <h3 className="text-lg font-medium">Chi tiết chi phí</h3>
                 <Dialog open={isAddCostDialogOpen} onOpenChange={setIsAddCostDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
-                      Add Cost
+                      Thêm chi phí
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px]">
+                  <DialogContent className="sm:max-w-[700px]">
                     <DialogHeader>
-                      <DialogTitle>Add New Cost</DialogTitle>
+                      <DialogTitle>Thêm chi phí</DialogTitle>
                       <DialogDescription>
-                        Enter the details for the new cost
+                        Bạn có thể thêm nhiều chi phí cùng lúc
                       </DialogDescription>
                     </DialogHeader>
-                    <CostForm billId={bill.id} onSuccess={handleCostAddSuccess} />
+                    <MultiCostForm billId={bill.id} onSuccess={handleCostAddSuccess} />
                   </DialogContent>
                 </Dialog>
               </div>
