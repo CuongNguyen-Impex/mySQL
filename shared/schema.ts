@@ -1,0 +1,252 @@
+import { pgTable, text, serial, integer, timestamp, date, decimal, boolean, primaryKey } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { relations } from "drizzle-orm";
+import { z } from "zod";
+
+// Users table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  role: text("role").notNull().default("user"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+export const insertUserSchema = createInsertSchema(users, {
+  username: (schema) => schema.min(3, "Username must be at least 3 characters"),
+  password: (schema) => schema.min(6, "Password must be at least 6 characters"),
+  role: (schema) => schema.refine(val => ["admin", "user"].includes(val), "Role must be either 'admin' or 'user'")
+});
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+// Customers table
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  contactPerson: text("contact_person"),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertCustomerSchema = createInsertSchema(customers, {
+  name: (schema) => schema.min(2, "Name must be at least 2 characters"),
+  email: (schema) => schema.email("Invalid email address").optional().nullable()
+});
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type Customer = typeof customers.$inferSelect;
+
+// Services table
+export const services = pgTable("services", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertServiceSchema = createInsertSchema(services, {
+  name: (schema) => schema.min(2, "Name must be at least 2 characters")
+});
+export type InsertService = z.infer<typeof insertServiceSchema>;
+export type Service = typeof services.$inferSelect;
+
+// Suppliers table
+export const suppliers = pgTable("suppliers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  contactPerson: text("contact_person"),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertSupplierSchema = createInsertSchema(suppliers, {
+  name: (schema) => schema.min(2, "Name must be at least 2 characters"),
+  email: (schema) => schema.email("Invalid email address").optional().nullable()
+});
+export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type Supplier = typeof suppliers.$inferSelect;
+
+// Cost Types table
+export const costTypes = pgTable("cost_types", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertCostTypeSchema = createInsertSchema(costTypes, {
+  name: (schema) => schema.min(2, "Name must be at least 2 characters")
+});
+export type InsertCostType = z.infer<typeof insertCostTypeSchema>;
+export type CostType = typeof costTypes.$inferSelect;
+
+// Bills table
+export const bills = pgTable("bills", {
+  id: serial("id").primaryKey(),
+  billNo: text("bill_no").notNull(),
+  date: date("date").notNull(),
+  customerId: integer("customer_id").references(() => customers.id, { onDelete: 'cascade' }).notNull(),
+  serviceId: integer("service_id").references(() => services.id, { onDelete: 'cascade' }).notNull(),
+  status: text("status").notNull().default("Pending"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertBillSchema = createInsertSchema(bills, {
+  billNo: (schema) => schema.min(1, "Bill number is required"),
+  status: (schema) => schema.refine(
+    val => ["Pending", "In Progress", "Completed", "Cancelled"].includes(val),
+    "Status must be one of: Pending, In Progress, Completed, Cancelled"
+  )
+});
+export type InsertBill = z.infer<typeof insertBillSchema>;
+export type Bill = typeof bills.$inferSelect;
+
+// Costs table
+export const costs = pgTable("costs", {
+  id: serial("id").primaryKey(),
+  billId: integer("bill_id").references(() => bills.id, { onDelete: 'cascade' }).notNull(),
+  costTypeId: integer("cost_type_id").references(() => costTypes.id, { onDelete: 'cascade' }).notNull(),
+  supplierId: integer("supplier_id").references(() => suppliers.id, { onDelete: 'cascade' }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  date: date("date").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertCostSchema = createInsertSchema(costs, {
+  amount: (schema) => schema.refine(val => parseFloat(val) > 0, "Amount must be greater than 0")
+});
+export type InsertCost = z.infer<typeof insertCostSchema>;
+export type Cost = typeof costs.$inferSelect;
+
+// Prices table (for service pricing by customer)
+export const prices = pgTable("prices", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").references(() => customers.id, { onDelete: 'cascade' }).notNull(),
+  serviceId: integer("service_id").references(() => services.id, { onDelete: 'cascade' }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+}, (table) => {
+  return {
+    pk: primaryKey({ columns: [table.customerId, table.serviceId] })
+  };
+});
+
+export const insertPriceSchema = createInsertSchema(prices, {
+  price: (schema) => schema.refine(val => parseFloat(val) > 0, "Price must be greater than 0")
+});
+export type InsertPrice = z.infer<typeof insertPriceSchema>;
+export type Price = typeof prices.$inferSelect;
+
+// Revenue table
+export const revenues = pgTable("revenues", {
+  id: serial("id").primaryKey(),
+  billId: integer("bill_id").references(() => bills.id, { onDelete: 'cascade' }).notNull(),
+  serviceId: integer("service_id").references(() => services.id, { onDelete: 'cascade' }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  date: date("date").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertRevenueSchema = createInsertSchema(revenues, {
+  amount: (schema) => schema.refine(val => parseFloat(val) > 0, "Amount must be greater than 0")
+});
+export type InsertRevenue = z.infer<typeof insertRevenueSchema>;
+export type Revenue = typeof revenues.$inferSelect;
+
+// Google Sheets Settings
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertSettingSchema = createInsertSchema(settings);
+export type InsertSetting = z.infer<typeof insertSettingSchema>;
+export type Setting = typeof settings.$inferSelect;
+
+// Relations
+export const billsRelations = relations(bills, ({ one, many }) => ({
+  customer: one(customers, {
+    fields: [bills.customerId],
+    references: [customers.id]
+  }),
+  service: one(services, {
+    fields: [bills.serviceId],
+    references: [services.id]
+  }),
+  costs: many(costs),
+  revenues: many(revenues)
+}));
+
+export const costsRelations = relations(costs, ({ one }) => ({
+  bill: one(bills, {
+    fields: [costs.billId],
+    references: [bills.id]
+  }),
+  costType: one(costTypes, {
+    fields: [costs.costTypeId],
+    references: [costTypes.id]
+  }),
+  supplier: one(suppliers, {
+    fields: [costs.supplierId],
+    references: [suppliers.id]
+  })
+}));
+
+export const revenuesRelations = relations(revenues, ({ one }) => ({
+  bill: one(bills, {
+    fields: [revenues.billId],
+    references: [bills.id]
+  }),
+  service: one(services, {
+    fields: [revenues.serviceId],
+    references: [services.id]
+  })
+}));
+
+export const pricesRelations = relations(prices, ({ one }) => ({
+  customer: one(customers, {
+    fields: [prices.customerId],
+    references: [customers.id]
+  }),
+  service: one(services, {
+    fields: [prices.serviceId],
+    references: [services.id]
+  })
+}));
+
+export const customersRelations = relations(customers, ({ many }) => ({
+  bills: many(bills),
+  prices: many(prices)
+}));
+
+export const servicesRelations = relations(services, ({ many }) => ({
+  bills: many(bills),
+  revenues: many(revenues),
+  prices: many(prices)
+}));
+
+export const suppliersRelations = relations(suppliers, ({ many }) => ({
+  costs: many(costs)
+}));
+
+export const costTypesRelations = relations(costTypes, ({ many }) => ({
+  costs: many(costs)
+}));
