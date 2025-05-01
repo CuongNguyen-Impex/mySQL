@@ -29,71 +29,92 @@ export default function BillDetailReport() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['reports', 'bill-detail', startDate, endDate],
     queryFn: async () => {
-      try {
-        const fromDate = date?.from ? date.from.toISOString() : sixMonthsAgo.toISOString();
-        const toDate = date?.to ? date.to.toISOString() : today.toISOString();
-
-        const res = await apiRequest('GET', `/api/reports/bills?fromDate=${fromDate}&toDate=${toDate}`);
-
-        if (res.ok) {
-          const data = await res.json();
-          return data;
-        }
-        
-        throw new Error('Error fetching data');
-      } catch (error) {
-        console.error('Error fetching detail report:', error);
-        return {};
-      }
+      const response = await apiRequest('GET', `/api/reports/bills?fromDate=${startDate}&toDate=${endDate}`);
+      return await response.json();
     }
   });
 
-  const exportReport = async () => {
-    try {
-      const fromDate = date?.from ? date.from.toISOString() : sixMonthsAgo.toISOString();
-      const toDate = date?.to ? date.to.toISOString() : today.toISOString();
-      
-      window.open(`/api/reports/bills/export?fromDate=${fromDate}&toDate=${toDate}`, '_blank');
-    } catch (error) {
-      console.error('Error exporting report:', error);
+  const handleExport = async () => {
+    const response = await apiRequest(
+      'GET', 
+      `/api/reports/bills/export?fromDate=${startDate}&toDate=${endDate}`
+    );
+    
+    // Create download link
+    const url = window.URL.createObjectURL(await response.blob());
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bill-detail-report-${startDate}-to-${endDate}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const handleDateChange = (dateRange: DateRange | undefined) => {
+    if (dateRange) {
+      setDate(dateRange);
     }
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Báo cáo chi tiết theo hóa đơn</h2>
-        <div className="flex space-x-2">
-          <DateRangePicker date={date} setDate={(value) => setDate(value || { from: sixMonthsAgo, to: today })} />
-          <Button variant="outline" onClick={() => refetch()}>
-            <FilterIcon className="mr-2 h-4 w-4" />
-            Lọc
-          </Button>
-          <Button variant="outline" onClick={exportReport}>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Báo cáo chi tiết hóa đơn</h2>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline"
+            onClick={handleExport}
+            disabled={isLoading || !data || data.bills?.length === 0}
+          >
             <Download className="mr-2 h-4 w-4" />
-            Xuất Excel
+            Xuất báo cáo
           </Button>
         </div>
       </div>
-
-      <Tabs defaultValue="table" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="table">Chi tiết hóa đơn</TabsTrigger>
+      
+      <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+        <Card className="w-full sm:w-auto">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-md font-medium">Bộ lọc</CardTitle>
+            <CardDescription>
+              Lọc theo thời gian
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-2">
+                <DateRangePicker
+                  date={date}
+                  setDate={handleDateChange}
+                />
+              </div>
+              <Button onClick={() => refetch()} className="w-full sm:w-auto">
+                <FilterIcon className="mr-2 h-4 w-4" />
+                Lọc dữ liệu
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Tabs defaultValue="details">
+        <TabsList>
+          <TabsTrigger value="details">Chi tiết hóa đơn</TabsTrigger>
           <TabsTrigger value="summary">Tóm tắt chi phí</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="table">
+        <TabsContent value="details">
           <Card>
             <CardHeader>
               <CardTitle>Chi tiết chi phí và doanh thu theo hóa đơn</CardTitle>
               <CardDescription>
-                Thông tin chi tiết về chi phí, doanh thu và lợi nhuận của từng hóa đơn
+                Từ ngày {format(new Date(startDate), 'dd/MM/yyyy')} đến {format(new Date(endDate), 'dd/MM/yyyy')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
                   <Skeleton className="h-10 w-full" />
                   <Skeleton className="h-10 w-full" />
                   <Skeleton className="h-10 w-full" />
@@ -142,57 +163,58 @@ export default function BillDetailReport() {
                               return (
                                 <TableRow key={`${bill.id}-cost-${costIndex}`}>
                                   <TableCell>{rowNumber}</TableCell>
+                                  <TableCell>{format(new Date(bill.date), 'dd/MM/yyyy')}</TableCell>
+                                  <TableCell>{bill.billNo}</TableCell>
+                                  <TableCell>{cost.costType?.name || 'N/A'}</TableCell>
+                                  <TableCell>{bill.customer?.name || 'N/A'}</TableCell>
+                                  <TableCell>{cost.supplier?.name || 'N/A'}</TableCell>
+                                  <TableCell className="text-right">{allocatedRevenue.toLocaleString('vi-VN')}</TableCell>
+                                  <TableCell className="text-right">{totalCostAmount.toLocaleString('vi-VN')}</TableCell>
+                                  <TableCell className={cn("text-right", profit >= 0 ? "text-success" : "text-destructive")}>
+                                    {profit.toLocaleString('vi-VN')}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                            
+                            {/* If no costs but has bill */}
+                            {(!billCosts || billCosts.length === 0) && (
+                              <TableRow key={`${bill.id}-no-costs`}>
+                                <TableCell>{++rowNumber}</TableCell>
                                 <TableCell>{format(new Date(bill.date), 'dd/MM/yyyy')}</TableCell>
                                 <TableCell>{bill.billNo}</TableCell>
-                                <TableCell>{cost.costType?.name || 'N/A'}</TableCell>
+                                <TableCell>N/A</TableCell>
                                 <TableCell>{bill.customer?.name || 'N/A'}</TableCell>
-                                <TableCell>{cost.supplier?.name || 'N/A'}</TableCell>
-                                <TableCell className="text-right">{allocatedRevenue.toLocaleString('vi-VN')}</TableCell>
-                                <TableCell className="text-right">{totalCostAmount.toLocaleString('vi-VN')}</TableCell>
-                                <TableCell className={cn("text-right", profit >= 0 ? "text-success" : "text-destructive")}>
-                                  {profit.toLocaleString('vi-VN')}
-                                </TableCell>
+                                <TableCell>N/A</TableCell>
+                                <TableCell className="text-right">{totalRevenue.toLocaleString('vi-VN')}</TableCell>
+                                <TableCell className="text-right">0</TableCell>
+                                <TableCell className="text-right text-success">{totalRevenue.toLocaleString('vi-VN')}</TableCell>
                               </TableRow>
-                            );
-                          })}
-                          
-                          {/* If no costs but has bill */}
-                          {(!billCosts || billCosts.length === 0) && (
-                            <TableRow key={`${bill.id}-no-costs`}>
-                              <TableCell>1</TableCell>
-                              <TableCell>{format(new Date(bill.date), 'dd/MM/yyyy')}</TableCell>
-                              <TableCell>{bill.billNo}</TableCell>
-                              <TableCell>N/A</TableCell>
-                              <TableCell>{bill.customer?.name || 'N/A'}</TableCell>
-                              <TableCell>N/A</TableCell>
-                              <TableCell className="text-right">{totalRevenue.toLocaleString('vi-VN')}</TableCell>
-                              <TableCell className="text-right">0</TableCell>
-                              <TableCell className="text-right text-success">{totalRevenue.toLocaleString('vi-VN')}</TableCell>
+                            )}
+                            
+                            {/* Subtotal for this bill */}
+                            <TableRow key={`${bill.id}-subtotal`} className="bg-muted/50">
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell className="font-medium">Tổng cộng {bill.billNo}</TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell className="text-right font-medium">
+                                {totalRevenue.toLocaleString('vi-VN')}
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                {totalCost.toLocaleString('vi-VN')}
+                              </TableCell>
+                              <TableCell className={cn("text-right font-medium", 
+                                totalProfit >= 0 ? "text-success" : "text-destructive")}>
+                                {totalProfit.toLocaleString('vi-VN')}
+                              </TableCell>
                             </TableRow>
-                          )}
-                          
-                          {/* Subtotal for this bill */}
-                          <TableRow key={`${bill.id}-subtotal`} className="bg-muted/50">
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell className="font-medium">Tổng cộng {bill.billNo}</TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell className="text-right font-medium">
-                              {totalRevenue.toLocaleString('vi-VN')}
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {totalCost.toLocaleString('vi-VN')}
-                            </TableCell>
-                            <TableCell className={cn("text-right font-medium", 
-                              totalProfit >= 0 ? "text-success" : "text-destructive")}>
-                              {totalProfit.toLocaleString('vi-VN')}
-                            </TableCell>
-                          </TableRow>
-                        </React.Fragment>
-                      );
-                    })}
+                          </React.Fragment>
+                        );
+                      });
+                    })()}
                     
                     {/* Grand total */}
                     {data?.bills?.length > 0 && (
@@ -277,7 +299,6 @@ export default function BillDetailReport() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {/* Tính toán summary từ dữ liệu trả về */}
                     {(() => {
                       // Tạo bảng thống kê theo loại chi phí
                       const costTypeSummary: Array<{costTypeId: number, costTypeName: string, billCount: number, totalAmount: number, percentage: number}> = [];
@@ -311,7 +332,7 @@ export default function BillDetailReport() {
                       // Chuyển đổi sang mảng và tính phần trăm
                       costTypeMap.forEach(summary => {
                         summary.billCount = summary.billIds.size;
-                        summary.percentage = (summary.totalAmount / totalCost) * 100;
+                        summary.percentage = totalCost > 0 ? (summary.totalAmount / totalCost) * 100 : 0;
                         costTypeSummary.push(summary);
                       });
                       

@@ -11,7 +11,7 @@ import Reports from "./pages/reports";
 import ReportsByCustomer from "./pages/reports/by-customer";
 import ReportsBySupplier from "./pages/reports/by-supplier";
 import ReportsProfitLoss from "./pages/reports/profit-loss";
-import BillDetailReport from "./pages/reports/bill-detail";
+import BillDetailReport from "./pages/reports/bill-detail-fixed";
 import Settings from "./pages/settings";
 import SettingsCategories from "./pages/settings/categories";
 import SettingsGoogleSheets from "./pages/settings/google-sheets";
