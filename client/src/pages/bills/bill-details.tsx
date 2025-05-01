@@ -198,14 +198,14 @@ export default function BillDetails() {
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
-                    Edit
+                    Chỉnh sửa
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
-                    <DialogTitle>Edit Bill</DialogTitle>
+                    <DialogTitle>Chỉnh sửa hóa đơn</DialogTitle>
                     <DialogDescription>
-                      Update the details for this bill
+                      Cập nhật thông tin cho hóa đơn này
                     </DialogDescription>
                   </DialogHeader>
                   <BillForm bill={bill} onSuccess={handleBillUpdateSuccess} />
@@ -216,24 +216,23 @@ export default function BillDetails() {
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
+                    Xóa
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the
-                      bill and all associated costs and revenue records.
+                      Hành động này không thể hoàn tác. Hóa đơn và tất cả các chi phí, doanh thu liên quan sẽ bị xóa vĩnh viễn.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>Hủy</AlertDialogCancel>
                     <AlertDialogAction 
                       onClick={() => deleteBillMutation.mutate()}
                       className="bg-destructive hover:bg-destructive/90"
                     >
-                      Delete
+                      Xóa
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -244,11 +243,11 @@ export default function BillDetails() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
-              <p className="text-sm text-muted-foreground">Bill Number</p>
+              <p className="text-sm text-muted-foreground">Số hóa đơn</p>
               <p className="text-base font-medium">{bill?.billNo}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Date</p>
+              <p className="text-sm text-muted-foreground">Ngày tạo</p>
               <p className="text-base font-medium">{new Date(bill?.date).toLocaleDateString()}</p>
             </div>
             <div>
@@ -332,18 +331,18 @@ export default function BillDetails() {
           <TabsContent value="revenue" className="p-0">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-medium">Revenue Details</h3>
+                <h3 className="text-lg font-medium">Chi tiết doanh thu</h3>
                 <Dialog open={isAddRevenueDialogOpen} onOpenChange={setIsAddRevenueDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
-                      Add Revenue
+                      Thêm doanh thu
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
-                      <DialogTitle>Add New Revenue</DialogTitle>
+                      <DialogTitle>Thêm doanh thu</DialogTitle>
                       <DialogDescription>
-                        Enter the details for the new revenue
+                        Nhập thông tin cho doanh thu mới
                       </DialogDescription>
                     </DialogHeader>
                     <RevenueForm 
