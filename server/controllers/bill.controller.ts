@@ -156,7 +156,10 @@ export const getBillById = async (req: Request, res: Response) => {
 export const updateBill = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const billData = insertBillSchema.parse(req.body);
+    
+    // Tránh validate toàn bộ bill khi chỉ cập nhật một trường (ví dụ: status)
+    // Cho phép update từng phần
+    const billData = req.body;
     
     const existingBill = await db.query.bills.findFirst({
       where: eq(bills.id, Number(id))
@@ -188,15 +191,7 @@ export const updateBill = async (req: Request, res: Response) => {
     return res.status(200).json(billWithRelations);
   } catch (error) {
     console.error("Error updating bill:", error);
-    
-    if (error instanceof ZodError) {
-      const validationError = fromZodError(error);
-      return res.status(400).json({
-        message: "Validation error",
-        errors: validationError.details
-      });
-    }
-    
+        
     return res.status(500).json({
       message: "Server error updating bill"
     });
