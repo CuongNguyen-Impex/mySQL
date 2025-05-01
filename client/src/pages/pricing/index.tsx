@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, MoreHorizontal } from "lucide-react";
@@ -229,7 +229,7 @@ export default function Pricing() {
                 <SelectValue placeholder="All Customers" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Customers</SelectItem>
+                <SelectItem value="all_customers">All Customers</SelectItem>
                 {customers?.map((customer: any) => (
                   <SelectItem key={customer.id} value={customer.id.toString()}>
                     {customer.name}
@@ -243,7 +243,7 @@ export default function Pricing() {
                 <SelectValue placeholder="All Services" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Services</SelectItem>
+                <SelectItem value="all_services">All Services</SelectItem>
                 {services?.map((service: any) => (
                   <SelectItem key={service.id} value={service.id.toString()}>
                     {service.name}
