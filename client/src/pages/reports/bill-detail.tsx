@@ -134,7 +134,7 @@ export default function BillDetailReport() {
                             
                             return (
                               <TableRow key={`${bill.id}-cost-${costIndex}`}>
-                                <TableCell>{billIndex * 100 + costIndex + 1}</TableCell>
+                                <TableCell>{costIndex + 1}</TableCell>
                                 <TableCell>{format(new Date(bill.date), 'dd/MM/yyyy')}</TableCell>
                                 <TableCell>{bill.billNo}</TableCell>
                                 <TableCell>{cost.costType?.name || 'N/A'}</TableCell>
@@ -152,7 +152,7 @@ export default function BillDetailReport() {
                           {/* If no costs but has bill */}
                           {(!billCosts || billCosts.length === 0) && (
                             <TableRow key={`${bill.id}-no-costs`}>
-                              <TableCell>{billIndex * 100 + 1}</TableCell>
+                              <TableCell>1</TableCell>
                               <TableCell>{format(new Date(bill.date), 'dd/MM/yyyy')}</TableCell>
                               <TableCell>{bill.billNo}</TableCell>
                               <TableCell>N/A</TableCell>
