@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 
 export default function ReportsByCustomer() {
   const [timeframe, setTimeframe] = useState("month");
-  const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined, to: Date | undefined }>({ from: undefined, to: undefined });
 
   // Fetch customer report data
   const { data, isLoading } = useQuery({

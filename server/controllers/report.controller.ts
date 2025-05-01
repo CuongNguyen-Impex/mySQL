@@ -200,7 +200,7 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
       },
       with: {
         bills: {
-          where: between(bills.date, dateRange.from, dateRange.to),
+          where: between(bills.date, dateRange.from.toISOString(), dateRange.to.toISOString()),
           with: {
             costs: true,
             revenues: true
@@ -800,7 +800,7 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
     
     // Get all bills with costs, revenues, customer, and service relationships
     const billsWithDetails = await db.query.bills.findMany({
-      where: between(bills.date, startOfDay(dateFrom), endOfDay(dateTo)),
+      where: between(bills.date, startOfDay(dateFrom).toISOString(), endOfDay(dateTo).toISOString()),
       with: {
         customer: true,
         service: true,
