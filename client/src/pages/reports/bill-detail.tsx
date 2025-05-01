@@ -15,21 +15,23 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function BillDetailReport() {
   const today = new Date();
-  const oneMonthAgo = subMonths(today, 3); // Thay đổi thành 3 tháng để hiển thị đủ dữ liệu bill
+  // Thiết lập khoảng thời gian mặc định 6 tháng để đảm bảo hiển thị đủ dữ liệu hóa đơn cũ
+  const sixMonthsAgo = new Date(today);
+  sixMonthsAgo.setMonth(today.getMonth() - 6);
   
   const [date, setDate] = useState<DateRange>({
-    from: oneMonthAgo,
+    from: sixMonthsAgo,
     to: today
   });
 
-  const startDate = date?.from ? format(date.from, 'yyyy-MM-dd') : format(oneMonthAgo, 'yyyy-MM-dd');
+  const startDate = date?.from ? format(date.from, 'yyyy-MM-dd') : format(sixMonthsAgo, 'yyyy-MM-dd');
   const endDate = date?.to ? format(date.to, 'yyyy-MM-dd') : format(today, 'yyyy-MM-dd');
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['reports', 'bill-detail', startDate, endDate],
     queryFn: async () => {
       try {
-        const fromDate = date?.from ? date.from.toISOString() : oneMonthAgo.toISOString();
+        const fromDate = date?.from ? date.from.toISOString() : sixMonthsAgo.toISOString();
         const toDate = date?.to ? date.to.toISOString() : today.toISOString();
 
         const res = await apiRequest('GET', `/api/reports/bills?fromDate=${fromDate}&toDate=${toDate}`);
@@ -49,7 +51,7 @@ export default function BillDetailReport() {
 
   const exportReport = async () => {
     try {
-      const fromDate = date?.from ? date.from.toISOString() : oneMonthAgo.toISOString();
+      const fromDate = date?.from ? date.from.toISOString() : sixMonthsAgo.toISOString();
       const toDate = date?.to ? date.to.toISOString() : today.toISOString();
       
       window.open(`/api/reports/bills/export?fromDate=${fromDate}&toDate=${toDate}`, '_blank');

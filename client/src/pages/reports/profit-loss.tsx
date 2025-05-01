@@ -27,8 +27,17 @@ import { cn } from "@/lib/utils";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export default function ProfitLossReport() {
-  const [timeframe, setTimeframe] = useState("month");
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [timeframe, setTimeframe] = useState("quarter");
+  
+  // Thiết lập khoảng thời gian mặc định 6 tháng (180 ngày)
+  const today = new Date();
+  const sixMonthsAgo = new Date(today);
+  sixMonthsAgo.setMonth(today.getMonth() - 6);
+  
+  const [dateRange, setDateRange] = useState<DateRange>({ 
+    from: sixMonthsAgo, 
+    to: today 
+  });
 
   // Fetch profit/loss report data
   const { data, isLoading } = useQuery({
