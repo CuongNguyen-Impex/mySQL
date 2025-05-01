@@ -739,9 +739,9 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
         });
       }
     } else {
-      // Default to last 30 days if no dates provided
+      // Default to last 90 days if no dates provided
       dateTo = new Date();
-      dateFrom = subDays(dateTo, 30);
+      dateFrom = subDays(dateTo, 90);
     }
     
     // Get all bills with costs, revenues, customer, and service relationships
@@ -760,6 +760,9 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
       },
       orderBy: desc(bills.date)
     });
+    
+    // Log for debugging
+    console.log(`Found ${billsWithDetails.length} bills for report in range ${dateFrom.toISOString()} to ${dateTo.toISOString()}`);
     
     return res.status(200).json({
       bills: billsWithDetails,
