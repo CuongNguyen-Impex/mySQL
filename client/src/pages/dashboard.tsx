@@ -66,14 +66,14 @@ export default function Dashboard() {
             />
             <StatsCard 
               title="Total Revenue"
-              value={(dashboard?.totalRevenue || 0).toFixed(2)}
+              value={typeof dashboard?.totalRevenue === 'number' ? dashboard.totalRevenue.toFixed(2) : Number(dashboard?.totalRevenue || 0).toFixed(2)}
               prefix="$"
               icon="payments"
               trend={dashboard?.revenueTrend || 0}
             />
             <StatsCard 
               title="Total Costs"
-              value={(dashboard?.totalCosts || 0).toFixed(2)}
+              value={typeof dashboard?.totalCosts === 'number' ? dashboard.totalCosts.toFixed(2) : Number(dashboard?.totalCosts || 0).toFixed(2)}
               prefix="$"
               icon="money_off"
               trend={dashboard?.costsTrend || 0}
@@ -81,7 +81,7 @@ export default function Dashboard() {
             />
             <StatsCard 
               title="Profit"
-              value={(dashboard?.totalProfit || 0).toFixed(2)}
+              value={typeof dashboard?.totalProfit === 'number' ? dashboard.totalProfit.toFixed(2) : Number(dashboard?.totalProfit || 0).toFixed(2)}
               prefix="$"
               icon="insights"
               trend={dashboard?.profitTrend || 0}

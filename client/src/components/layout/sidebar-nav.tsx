@@ -28,18 +28,17 @@ type NavItemProps = {
 
 function NavItem({ href, icon, label, active }: NavItemProps) {
   return (
-    <Link href={href}>
-      <a
-        className={cn(
-          "flex items-center px-3 py-2 rounded-md text-sm font-medium",
-          active
-            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-        )}
-      >
-        {icon}
-        <span className="ml-3">{label}</span>
-      </a>
+    <Link 
+      href={href}
+      className={cn(
+        "flex items-center px-3 py-2 rounded-md text-sm font-medium",
+        active
+          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+      )}
+    >
+      {icon}
+      <span className="ml-3">{label}</span>
     </Link>
   );
 }

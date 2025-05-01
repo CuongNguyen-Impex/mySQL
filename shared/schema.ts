@@ -138,10 +138,6 @@ export const prices = pgTable("prices", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
-}, (table) => {
-  return {
-    pk: primaryKey({ columns: [table.customerId, table.serviceId] })
-  };
 });
 
 export const insertPriceSchema = createInsertSchema(prices, {
