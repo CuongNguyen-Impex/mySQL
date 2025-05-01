@@ -52,6 +52,8 @@ export default function BillDetails() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddCostDialogOpen, setIsAddCostDialogOpen] = useState(false);
   const [isAddRevenueDialogOpen, setIsAddRevenueDialogOpen] = useState(false);
+  const [status, setStatus] = useState("");
+  const [isStatusUpdateLoading, setIsStatusUpdateLoading] = useState(false);
 
   // Fetch bill details
   const { 
