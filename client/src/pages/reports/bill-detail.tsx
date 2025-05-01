@@ -270,33 +270,75 @@ export default function BillDetailReport() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data?.costTypeSummary?.map((item: any) => (
-                      <TableRow key={item.costTypeId}>
-                        <TableCell className="font-medium">{item.costTypeName}</TableCell>
-                        <TableCell className="text-right">{item.billCount}</TableCell>
-                        <TableCell className="text-right">{parseFloat(item.totalAmount).toLocaleString('vi-VN')}</TableCell>
-                        <TableCell className="text-right">
-                          {item.percentage.toFixed(1)}%
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {/* Tính toán summary từ dữ liệu trả về */}
+                    {(() => {
+                      // Tạo bảng thống kê theo loại chi phí
+                      const costTypeSummary: Array<{costTypeId: number, costTypeName: string, billCount: number, totalAmount: number, percentage: number}> = [];
+                      const costTypeMap = new Map();
+                      let totalCost = 0;
+                      
+                      // Tính toán tổng chi phí theo từng loại
+                      data?.bills?.forEach((bill: any) => {
+                        (bill.costs || []).forEach((cost: any) => {
+                          const costTypeId = cost.costType?.id;
+                          const costTypeName = cost.costType?.name || 'Không xác định';
+                          const amount = parseFloat(cost.amount || 0);
+                          totalCost += amount;
+                          
+                          if (!costTypeMap.has(costTypeId)) {
+                            costTypeMap.set(costTypeId, {
+                              costTypeId,
+                              costTypeName,
+                              billCount: 0,
+                              billIds: new Set(),
+                              totalAmount: 0,
+                            });
+                          }
+                          
+                          const summary = costTypeMap.get(costTypeId);
+                          summary.totalAmount += amount;
+                          summary.billIds.add(bill.id);
+                        });
+                      });
+                      
+                      // Chuyển đổi sang mảng và tính phần trăm
+                      costTypeMap.forEach(summary => {
+                        summary.billCount = summary.billIds.size;
+                        summary.percentage = (summary.totalAmount / totalCost) * 100;
+                        costTypeSummary.push(summary);
+                      });
+                      
+                      return costTypeSummary.map((item) => (
+                        <TableRow key={item.costTypeId}>
+                          <TableCell className="font-medium">{item.costTypeName}</TableCell>
+                          <TableCell className="text-right">{item.billCount}</TableCell>
+                          <TableCell className="text-right">{item.totalAmount.toLocaleString('vi-VN')}</TableCell>
+                          <TableCell className="text-right">
+                            {item.percentage.toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                      ));
+                    })()}
                     
-                    {data?.costTypeSummary?.length > 0 && (
+                    {/* Tổng cộng */}
+                    {data?.bills?.length > 0 && (
                       <TableRow className="bg-primary/5 font-bold">
                         <TableCell>TỔNG CỘNG</TableCell>
                         <TableCell className="text-right">
                           {data.bills?.length || 0}
                         </TableCell>
                         <TableCell className="text-right">
-                          {data.costTypeSummary.reduce(
-                            (sum: number, item: any) => sum + parseFloat(item.totalAmount), 0
-                          ).toLocaleString('vi-VN')}
+                          {data.bills.reduce((sum: number, bill: any) => {
+                            return sum + (bill.costs || []).reduce(
+                              (s: number, cost: any) => s + parseFloat(cost.amount || 0), 0
+                            );
+                          }, 0).toLocaleString('vi-VN')}
                         </TableCell>
                         <TableCell className="text-right">100%</TableCell>
                       </TableRow>
                     )}
                     
-                    {(!data?.costTypeSummary || data.costTypeSummary.length === 0) && (
+                    {(!data?.bills || data.bills.length === 0) && (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
                           Không có dữ liệu cho khoảng thời gian đã chọn
