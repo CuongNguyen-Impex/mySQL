@@ -721,3 +721,198 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getBillDetailReport = async (req: Request, res: Response) => {
+  try {
+    const { fromDate, toDate } = req.query;
+    
+    // Parse and validate dates
+    let dateFrom, dateTo;
+    
+    if (fromDate && toDate) {
+      dateFrom = parseISO(fromDate as string);
+      dateTo = parseISO(toDate as string);
+      
+      if (!isValid(dateFrom) || !isValid(dateTo)) {
+        return res.status(400).json({
+          message: "Invalid date format"
+        });
+      }
+    } else {
+      // Default to last 30 days if no dates provided
+      dateTo = new Date();
+      dateFrom = subDays(dateTo, 30);
+    }
+    
+    // Get all bills with costs, revenues, customer, and service relationships
+    const billsWithDetails = await db.query.bills.findMany({
+      where: between(bills.date, startOfDay(dateFrom), endOfDay(dateTo)),
+      with: {
+        customer: true,
+        service: true,
+        costs: {
+          with: {
+            supplier: true,
+            costType: true
+          }
+        },
+        revenues: true
+      },
+      orderBy: desc(bills.date)
+    });
+    
+    return res.status(200).json({
+      bills: billsWithDetails,
+      dateRange: {
+        from: dateFrom,
+        to: dateTo
+      }
+    });
+  } catch (error) {
+    console.error("Error getting bill detail report:", error);
+    return res.status(500).json({
+      message: "Server error getting bill detail report"
+    });
+  }
+};
+
+export const exportBillDetailReport = async (req: Request, res: Response) => {
+  try {
+    const { fromDate, toDate } = req.query;
+    
+    // Parse and validate dates
+    let dateFrom, dateTo;
+    
+    if (fromDate && toDate) {
+      dateFrom = parseISO(fromDate as string);
+      dateTo = parseISO(toDate as string);
+      
+      if (!isValid(dateFrom) || !isValid(dateTo)) {
+        return res.status(400).json({
+          message: "Invalid date format"
+        });
+      }
+    } else {
+      // Default to last 30 days if no dates provided
+      dateTo = new Date();
+      dateFrom = subDays(dateTo, 30);
+    }
+    
+    // Get all bills with costs, revenues, customer, and service relationships
+    const billsWithDetails = await db.query.bills.findMany({
+      where: between(bills.date, startOfDay(dateFrom), endOfDay(dateTo)),
+      with: {
+        customer: true,
+        service: true,
+        costs: {
+          with: {
+            supplier: true,
+            costType: true
+          }
+        },
+        revenues: true
+      },
+      orderBy: desc(bills.date)
+    });
+    
+    // Create CSV Writer
+    const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+    const path = require('path');
+    const filePath = path.join(__dirname, '..', 'temp', `bill_detail_report_${new Date().getTime()}.csv`);
+    
+    // Prepare data for CSV format (flatten nested data)
+    const csvRows: any[] = [];
+    
+    billsWithDetails.forEach(bill => {
+      // For bills with no costs or revenues, add a single row
+      if (bill.costs.length === 0 && bill.revenues.length === 0) {
+        csvRows.push({
+          billNo: bill.billNo,
+          date: bill.date,
+          customerName: bill.customer?.name || 'N/A',
+          serviceName: bill.service?.name || 'N/A',
+          supplierName: 'N/A',
+          costType: 'N/A',
+          costAmount: 0,
+          revenueAmount: 0,
+          profit: 0
+        });
+        return;
+      }
+      
+      // Calculate total revenue for this bill
+      const totalRevenue = bill.revenues.reduce((sum, revenue) => sum + parseFloat(revenue.amount.toString()), 0);
+      
+      // For bills with costs, add one row per cost
+      if (bill.costs.length > 0) {
+        bill.costs.forEach(cost => {
+          // Calculate profit share for this cost
+          const costAmount = parseFloat(cost.amount.toString());
+          const profitShare = (totalRevenue / bill.costs.length) - costAmount;
+          
+          csvRows.push({
+            billNo: bill.billNo,
+            date: bill.date,
+            customerName: bill.customer?.name || 'N/A',
+            serviceName: bill.service?.name || 'N/A',
+            supplierName: cost.supplier?.name || 'N/A',
+            costType: cost.costType?.name || 'N/A',
+            costAmount: costAmount,
+            revenueAmount: totalRevenue / bill.costs.length, // Divide revenue equally among costs
+            profit: profitShare
+          });
+        });
+      }
+      // For bills with revenues but no costs
+      else if (bill.revenues.length > 0) {
+        csvRows.push({
+          billNo: bill.billNo,
+          date: bill.date,
+          customerName: bill.customer?.name || 'N/A',
+          serviceName: bill.service?.name || 'N/A',
+          supplierName: 'N/A',
+          costType: 'N/A',
+          costAmount: 0,
+          revenueAmount: totalRevenue,
+          profit: totalRevenue
+        });
+      }
+    });
+    
+    // Create and write CSV file
+    const csvWriter = createCsvWriter({
+      path: filePath,
+      header: [
+        { id: 'billNo', title: 'Hóa đơn' },
+        { id: 'date', title: 'Ngày' },
+        { id: 'customerName', title: 'Khách hàng' },
+        { id: 'serviceName', title: 'Dịch vụ' },
+        { id: 'supplierName', title: 'Nhà cung cấp' },
+        { id: 'costType', title: 'Loại chi phí' },
+        { id: 'costAmount', title: 'Chi phí' },
+        { id: 'revenueAmount', title: 'Doanh thu' },
+        { id: 'profit', title: 'Lãi/Lỗ' },
+      ]
+    });
+    
+    await csvWriter.writeRecords(csvRows);
+    
+    // Send the file
+    return res.download(filePath, `bao_cao_chi_tiet_hoa_don_${dateFrom.toISOString().split('T')[0]}_${dateTo.toISOString().split('T')[0]}.csv`, (err) => {
+      if (err) {
+        console.error("Error sending report file:", err);
+      }
+      
+      // Clean up the temp file
+      const fs = require('fs');
+      fs.unlink(filePath, (err: any) => {
+        if (err) console.error("Error deleting temp file:", err);
+      });
+    });
+  } catch (error) {
+    console.error("Error exporting bill detail report:", error);
+    return res.status(500).json({
+      message: "Server error exporting bill detail report"
+    });
+  }
+};
