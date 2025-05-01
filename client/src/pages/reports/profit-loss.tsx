@@ -85,45 +85,45 @@ export default function ProfitLossReport() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Profit & Loss Report</h1>
+            <h1 className="text-2xl font-bold">Báo cáo lợi nhuận & lỗ</h1>
             <p className="text-muted-foreground">
-              Comprehensive profit and loss analysis
+              Phân tích lợi nhuận và lỗ toàn diện
             </p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 mt-4 lg:mt-0">
           <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
-            Export
+            Xuất file
           </Button>
         </div>
       </div>
 
       <Card className="mb-6">
         <CardHeader className="pb-3">
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Customize the report period</CardDescription>
+          <CardTitle>Bộ lọc</CardTitle>
+          <CardDescription>Tùy chỉnh kỳ báo cáo</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="w-full md:w-1/3">
-              <label className="text-sm font-medium mb-1 block">Timeframe</label>
+              <label className="text-sm font-medium mb-1 block">Khung thời gian</label>
               <Select value={timeframe} onValueChange={setTimeframe}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select timeframe" />
+                  <SelectValue placeholder="Chọn khung thời gian" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="week">Last 7 days</SelectItem>
-                  <SelectItem value="month">Last 30 days</SelectItem>
-                  <SelectItem value="quarter">Last 90 days</SelectItem>
-                  <SelectItem value="year">Last 12 months</SelectItem>
-                  <SelectItem value="custom">Custom range</SelectItem>
+                  <SelectItem value="week">7 ngày qua</SelectItem>
+                  <SelectItem value="month">30 ngày qua</SelectItem>
+                  <SelectItem value="quarter">90 ngày qua</SelectItem>
+                  <SelectItem value="year">12 tháng qua</SelectItem>
+                  <SelectItem value="custom">Tùy chỉnh</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {timeframe === "custom" && (
               <div className="w-full md:w-2/3">
-                <label className="text-sm font-medium mb-1 block">Date Range</label>
+                <label className="text-sm font-medium mb-1 block">Khoảng ngày</label>
                 <DatePickerWithRange 
                   date={dateRange} 
                   setDate={setDateRange} 
@@ -137,7 +137,7 @@ export default function ProfitLossReport() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Tổng doanh thu</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -151,7 +151,7 @@ export default function ProfitLossReport() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Costs</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Tổng chi phí</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -165,7 +165,7 @@ export default function ProfitLossReport() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Net Profit</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Lợi nhuận ròng</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -184,8 +184,8 @@ export default function ProfitLossReport() {
 
       <Tabs defaultValue="table" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="table">Table View</TabsTrigger>
-          <TabsTrigger value="chart">Chart View</TabsTrigger>
+          <TabsTrigger value="table">Xem dạng bảng</TabsTrigger>
+          <TabsTrigger value="chart">Xem dạng biểu đồ</TabsTrigger>
         </TabsList>
         
         <TabsContent value="table">
