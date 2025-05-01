@@ -77,46 +77,46 @@ export default function ReportsBySupplier() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Supplier Expenses Report</h1>
+            <h1 className="text-2xl font-bold">Báo cáo chi phí nhà cung cấp</h1>
             <p className="text-muted-foreground">
-              Analysis of expenses by supplier
+              Phân tích chi phí theo từng nhà cung cấp
             </p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 mt-4 lg:mt-0">
           <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
-            Export
+            Xuất file
           </Button>
         </div>
       </div>
 
       <Card className="mb-6">
         <CardHeader className="pb-3">
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Customize the report period and cost type</CardDescription>
+          <CardTitle>Bộ lọc</CardTitle>
+          <CardDescription>Tùy chỉnh thời gian và loại chi phí</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="w-full md:w-1/4">
-              <label className="text-sm font-medium mb-1 block">Timeframe</label>
+              <label className="text-sm font-medium mb-1 block">Khoảng thời gian</label>
               <Select value={timeframe} onValueChange={setTimeframe}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select timeframe" />
+                  <SelectValue placeholder="Chọn khoảng thời gian" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="week">Last 7 days</SelectItem>
-                  <SelectItem value="month">Last 30 days</SelectItem>
-                  <SelectItem value="quarter">Last 90 days</SelectItem>
-                  <SelectItem value="year">Last 12 months</SelectItem>
-                  <SelectItem value="custom">Custom range</SelectItem>
+                  <SelectItem value="week">7 ngày gần đây</SelectItem>
+                  <SelectItem value="month">30 ngày gần đây</SelectItem>
+                  <SelectItem value="quarter">90 ngày gần đây</SelectItem>
+                  <SelectItem value="year">12 tháng gần đây</SelectItem>
+                  <SelectItem value="custom">Tùy chỉnh</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             {timeframe === "custom" && (
               <div className="w-full md:w-2/4">
-                <label className="text-sm font-medium mb-1 block">Date Range</label>
+                <label className="text-sm font-medium mb-1 block">Khoảng ngày</label>
                 <DatePickerWithRange 
                   date={dateRange} 
                   setDate={setDateRange} 
@@ -125,13 +125,13 @@ export default function ReportsBySupplier() {
             )}
             
             <div className="w-full md:w-1/4">
-              <label className="text-sm font-medium mb-1 block">Cost Type</label>
+              <label className="text-sm font-medium mb-1 block">Loại chi phí</label>
               <Select value={costTypeFilter} onValueChange={setCostTypeFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All cost types" />
+                  <SelectValue placeholder="Tất cả loại chi phí" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all_cost_types">All cost types</SelectItem>
+                  <SelectItem value="all_cost_types">Tất cả loại chi phí</SelectItem>
                   {costTypes?.map((type: any) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
                       {type.name}
@@ -146,9 +146,9 @@ export default function ReportsBySupplier() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Supplier Expenses</CardTitle>
+          <CardTitle>Chi phí nhà cung cấp</CardTitle>
           <CardDescription>
-            Summary of expenses by supplier
+            Tổng hợp chi phí theo từng nhà cung cấp
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -164,12 +164,12 @@ export default function ReportsBySupplier() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Cost Types</TableHead>
-                  <TableHead className="text-right">Transactions</TableHead>
-                  <TableHead className="text-right">Total Amount</TableHead>
-                  <TableHead className="text-right">Average Cost</TableHead>
-                  <TableHead className="text-right">Percentage</TableHead>
+                  <TableHead>Nhà cung cấp</TableHead>
+                  <TableHead>Loại chi phí</TableHead>
+                  <TableHead className="text-right">Số giao dịch</TableHead>
+                  <TableHead className="text-right">Tổng chi phí</TableHead>
+                  <TableHead className="text-right">Chi phí trung bình</TableHead>
+                  <TableHead className="text-right">Tỉ lệ %</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -178,8 +178,8 @@ export default function ReportsBySupplier() {
                     <TableCell className="font-medium">{supplier.name}</TableCell>
                     <TableCell>{supplier.costTypeNames.join(", ")}</TableCell>
                     <TableCell className="text-right">{supplier.transactionCount}</TableCell>
-                    <TableCell className="text-right font-medium">${parseFloat(supplier.totalAmount).toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${parseFloat(supplier.averageCost).toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium">{parseFloat(supplier.totalAmount).toLocaleString('vi-VN')}</TableCell>
+                    <TableCell className="text-right">{parseFloat(supplier.averageCost).toLocaleString('vi-VN')}</TableCell>
                     <TableCell className="text-right">{supplier.percentage.toFixed(1)}%</TableCell>
                   </TableRow>
                 ))}
