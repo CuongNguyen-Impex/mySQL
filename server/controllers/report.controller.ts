@@ -28,17 +28,17 @@ const getDateRange = (timeframe?: string, from?: string, to?: string) => {
       fromDate = subDays(now, 7);
       break;
     case 'month':
-      fromDate = subDays(now, 30);
+      fromDate = subDays(now, 90); // Increased from 30 to 90 days
       break;
     case 'quarter':
-      fromDate = subDays(now, 90);
+      fromDate = subDays(now, 180); // Increased from 90 to 180 days
       break;
     case 'year':
       fromDate = subYears(now, 1);
       break;
     default:
-      // Default to last 30 days
-      fromDate = subDays(now, 30);
+      // Default to last 90 days
+      fromDate = subDays(now, 90);
   }
   
   return {
@@ -796,9 +796,9 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
         });
       }
     } else {
-      // Default to last 30 days if no dates provided
+      // Default to last 90 days if no dates provided
       dateTo = new Date();
-      dateFrom = subDays(dateTo, 30);
+      dateFrom = subDays(dateTo, 90);
     }
     
     // Get all bills with costs, revenues, customer, and service relationships
