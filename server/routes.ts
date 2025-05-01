@@ -88,9 +88,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/reports/by-customer`, optionalAuthMiddleware, reportController.getReportByCustomer);
   app.get(`${apiPrefix}/reports/by-supplier`, optionalAuthMiddleware, reportController.getReportBySupplier);
   app.get(`${apiPrefix}/reports/profit-loss`, optionalAuthMiddleware, reportController.getProfitLossReport);
+  app.get(`${apiPrefix}/reports/bills`, optionalAuthMiddleware, reportController.getBillDetailReport);
   app.get(`${apiPrefix}/reports/by-customer/export`, optionalAuthMiddleware, reportController.exportReportByCustomer);
   app.get(`${apiPrefix}/reports/by-supplier/export`, optionalAuthMiddleware, reportController.exportReportBySupplier);
   app.get(`${apiPrefix}/reports/profit-loss/export`, optionalAuthMiddleware, reportController.exportProfitLossReport);
+  app.get(`${apiPrefix}/reports/bills/export`, optionalAuthMiddleware, reportController.exportBillDetailReport);
 
   // GOOGLE SHEETS ROUTES
   app.get(`${apiPrefix}/settings/google-sheets`, optionalAuthMiddleware, googleSheetsController.getSettings);
