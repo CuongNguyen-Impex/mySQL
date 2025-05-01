@@ -221,10 +221,10 @@ export default function ProfitLossReport() {
                       <TableRow key={period.label}>
                         <TableCell className="font-medium">{period.label}</TableCell>
                         <TableCell className="text-right">{period.billCount}</TableCell>
-                        <TableCell className="text-right">${parseFloat(period.revenue).toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${parseFloat(period.costs).toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{parseFloat(period.revenue).toLocaleString('vi-VN')}</TableCell>
+                        <TableCell className="text-right">{parseFloat(period.costs).toLocaleString('vi-VN')}</TableCell>
                         <TableCell className={cn("text-right font-medium", getProfitClass(period.profit))}>
-                          ${parseFloat(period.profit).toFixed(2)}
+                          {parseFloat(period.profit).toLocaleString('vi-VN')}
                         </TableCell>
                         <TableCell className={cn("text-right", getMarginClass(period.margin))}>
                           {period.margin.toFixed(1)}%
@@ -268,7 +268,7 @@ export default function ProfitLossReport() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="label" />
                       <YAxis />
-                      <Tooltip formatter={(value) => `$${parseFloat(value).toFixed(2)}`} />
+                      <Tooltip formatter={(value) => `${parseFloat(value).toLocaleString('vi-VN')}`} />
                       <Legend />
                       <Bar dataKey="revenue" name="Doanh thu" fill="hsl(var(--success))" />
                       <Bar dataKey="costs" name="Chi phí" fill="hsl(var(--destructive))" />
