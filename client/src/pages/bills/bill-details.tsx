@@ -440,7 +440,7 @@ export default function BillDetails() {
                       Thêm chi phí
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[700px]">
+                  <DialogContent className="sm:max-w-[1200px] w-[95vw]">
                     <DialogHeader>
                       <DialogTitle>Thêm chi phí</DialogTitle>
                       <DialogDescription>

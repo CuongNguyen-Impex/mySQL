@@ -58,6 +58,7 @@ interface MultiCostFormProps {
 }
 
 export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps) {
+
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   

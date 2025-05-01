@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, subMonths } from 'date-fns';
+import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { DatePickerWithRange as DateRangePicker } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarIcon, Download, FilterIcon } from "lucide-react";
+import { Download, FilterIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -60,69 +59,12 @@ export default function BillDetailReport() {
     }
   };
 
-  // Calculate subtotals by bill and cost type
-  const calculateSubtotals = () => {
-    if (!data?.bills || !Array.isArray(data.bills)) return { byBill: {}, byCostType: {} };
-    
-    const byBill = {};
-    const byCostType = {};
-    
-    data.bills.forEach(bill => {
-      // Initialize if not exists
-      if (!byBill[bill.billNo]) {
-        byBill[bill.billNo] = {
-          totalCost: 0,
-          totalRevenue: 0,
-          profit: 0
-        };
-      }
-      
-      // Calculate for each bill
-      const billCosts = bill.costs || [];
-      const billRevenues = bill.revenues || [];
-      
-      const totalCost = billCosts.reduce((sum, cost) => sum + parseFloat(cost.amount || 0), 0);
-      const totalRevenue = billRevenues.reduce((sum, revenue) => sum + parseFloat(revenue.amount || 0), 0);
-      const profit = totalRevenue - totalCost;
-      
-      byBill[bill.billNo].totalCost = totalCost;
-      byBill[bill.billNo].totalRevenue = totalRevenue;
-      byBill[bill.billNo].profit = profit;
-      
-      // Calculate by cost type
-      billCosts.forEach(cost => {
-        const costTypeName = cost.costType?.name || 'Không xác định';
-        
-        if (!byCostType[costTypeName]) {
-          byCostType[costTypeName] = {
-            totalAmount: 0,
-            billCount: 0,
-            bills: new Set()
-          };
-        }
-        
-        byCostType[costTypeName].totalAmount += parseFloat(cost.amount || 0);
-        byCostType[costTypeName].bills.add(bill.billNo);
-      });
-    });
-    
-    // Convert sets to counts
-    Object.keys(byCostType).forEach(costType => {
-      byCostType[costType].billCount = byCostType[costType].bills.size;
-      delete byCostType[costType].bills; // Remove the set, we just need the count
-    });
-    
-    return { byBill, byCostType };
-  };
-  
-  const subtotals = calculateSubtotals();
-
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">Báo cáo chi tiết theo hóa đơn</h2>
         <div className="flex space-x-2">
-          <DateRangePicker date={date} setDate={setDate} />
+          <DateRangePicker date={date} setDate={(value) => setDate(value || { from: sixMonthsAgo, to: today })} />
           <Button variant="outline" onClick={() => refetch()}>
             <FilterIcon className="mr-2 h-4 w-4" />
             Lọc
@@ -160,125 +102,137 @@ export default function BillDetailReport() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Hóa đơn</TableHead>
-                      <TableHead>Nhà cung cấp</TableHead>
+                      <TableHead>STT</TableHead>
+                      <TableHead>Ngày</TableHead>
+                      <TableHead>Số bill</TableHead>
                       <TableHead>Loại chi phí</TableHead>
-                      <TableHead className="text-right">Chi phí</TableHead>
                       <TableHead>Khách hàng</TableHead>
-                      <TableHead className="text-right">Doanh thu</TableHead>
+                      <TableHead>Nhà cung cấp</TableHead>
+                      <TableHead className="text-right">Giá bán</TableHead>
+                      <TableHead className="text-right">Giá mua</TableHead>
                       <TableHead className="text-right">Lãi/Lỗ</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data?.bills?.map((bill: any) => (
-                      <React.Fragment key={`bill-${bill.id}`}>
-                        {/* Bill info row - with costs */}
-                        {bill.costs?.map((cost: any, costIndex: number) => (
-                          <TableRow key={`${bill.id}-cost-${costIndex}`}>
-                            {costIndex === 0 ? (
-                              <TableCell rowSpan={Math.max(1, (bill.costs?.length || 0) + (bill.revenues?.length || 0) + 1)} className="font-medium">
-                                {bill.billNo}<br/>
-                                <span className="text-xs text-muted-foreground">{bill.date}</span>
-                              </TableCell>
-                            ) : null}
-                            <TableCell>{cost.supplier?.name || 'N/A'}</TableCell>
-                            <TableCell>{cost.costType?.name || 'N/A'}</TableCell>
-                            <TableCell className="text-right">{parseFloat(cost.amount || 0).toLocaleString('vi-VN')}</TableCell>
-                            <TableCell>{bill.customer?.name || 'N/A'}</TableCell>
-                            {costIndex === 0 ? (
-                              <TableCell rowSpan={bill.costs?.length || 1} className="text-right">
-                                {/* Show revenue if there are any */}
-                                {bill.revenues?.map((revenue: any, idx: number) => (
-                                  <div key={`${bill.id}-revenue-${idx}`}>
-                                    {parseFloat(revenue.amount || 0).toLocaleString('vi-VN')}
-                                  </div>
-                                ))}
-                              </TableCell>
-                            ) : null}
-                            {costIndex === 0 ? (
-                              <TableCell rowSpan={bill.costs?.length || 1} className="text-right">
-                                {/* Profit for each cost compared to total revenue */}
-                                {bill.costs?.map((costItem: any, idx: number) => {
-                                  const totalRevenue = bill.revenues?.reduce((sum: number, rev: any) => sum + parseFloat(rev.amount || 0), 0) || 0;
-                                  const costAmount = parseFloat(costItem.amount || 0);
-                                  const profitShare = (totalRevenue / (bill.costs?.length || 1)) - costAmount;
-                                  const colorClass = profitShare >= 0 ? 'text-success' : 'text-destructive';
-                                  
-                                  return (
-                                    <div key={`${bill.id}-profit-${idx}`} className={colorClass}>
-                                      {profitShare.toLocaleString('vi-VN')}
-                                    </div>
-                                  );
-                                })}
-                              </TableCell>
-                            ) : null}
+                    {data?.bills?.map((bill: any, billIndex: number) => {
+                      // Pre-calculate bill totals
+                      const billCosts = bill.costs || [];
+                      const billRevenues = bill.revenues || [];
+                      const totalCost = billCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount || 0), 0);
+                      const totalRevenue = billRevenues.reduce((sum: number, rev: any) => sum + parseFloat(rev.amount || 0), 0);
+                      const totalProfit = totalRevenue - totalCost;
+                            
+                      return (
+                        <React.Fragment key={`bill-${bill.id}`}>
+                          {/* Cost rows */}
+                          {billCosts.map((cost: any, costIndex: number) => {
+                            // Calculate revenue per cost if available 
+                            const totalCostAmount = parseFloat(cost.amount || 0);
+                            const costShare = billCosts.length > 0 ? 1 / billCosts.length : 1;
+                            const allocatedRevenue = totalRevenue * costShare;
+                            const profit = allocatedRevenue - totalCostAmount;
+                            
+                            return (
+                              <TableRow key={`${bill.id}-cost-${costIndex}`}>
+                                <TableCell>{billIndex * 100 + costIndex + 1}</TableCell>
+                                <TableCell>{format(new Date(bill.date), 'dd/MM/yyyy')}</TableCell>
+                                <TableCell>{bill.billNo}</TableCell>
+                                <TableCell>{cost.costType?.name || 'N/A'}</TableCell>
+                                <TableCell>{bill.customer?.name || 'N/A'}</TableCell>
+                                <TableCell>{cost.supplier?.name || 'N/A'}</TableCell>
+                                <TableCell className="text-right">{allocatedRevenue.toLocaleString('vi-VN')}</TableCell>
+                                <TableCell className="text-right">{totalCostAmount.toLocaleString('vi-VN')}</TableCell>
+                                <TableCell className={cn("text-right", profit >= 0 ? "text-success" : "text-destructive")}>
+                                  {profit.toLocaleString('vi-VN')}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          
+                          {/* If no costs but has bill */}
+                          {(!billCosts || billCosts.length === 0) && (
+                            <TableRow key={`${bill.id}-no-costs`}>
+                              <TableCell>{billIndex * 100 + 1}</TableCell>
+                              <TableCell>{format(new Date(bill.date), 'dd/MM/yyyy')}</TableCell>
+                              <TableCell>{bill.billNo}</TableCell>
+                              <TableCell>N/A</TableCell>
+                              <TableCell>{bill.customer?.name || 'N/A'}</TableCell>
+                              <TableCell>N/A</TableCell>
+                              <TableCell className="text-right">{totalRevenue.toLocaleString('vi-VN')}</TableCell>
+                              <TableCell className="text-right">0</TableCell>
+                              <TableCell className="text-right text-success">{totalRevenue.toLocaleString('vi-VN')}</TableCell>
+                            </TableRow>
+                          )}
+                          
+                          {/* Subtotal for this bill */}
+                          <TableRow key={`${bill.id}-subtotal`} className="bg-muted/50">
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell className="font-medium">Tổng cộng {bill.billNo}</TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell className="text-right font-medium">
+                              {totalRevenue.toLocaleString('vi-VN')}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {totalCost.toLocaleString('vi-VN')}
+                            </TableCell>
+                            <TableCell className={cn("text-right font-medium", 
+                              totalProfit >= 0 ? "text-success" : "text-destructive")}>
+                              {totalProfit.toLocaleString('vi-VN')}
+                            </TableCell>
                           </TableRow>
-                        ))}
-                        
-                        {/* If no costs but has bill */}
-                        {(!bill.costs || bill.costs.length === 0) && (
-                          <TableRow key={`${bill.id}-no-costs`}>
-                            <TableCell className="font-medium">
-                              {bill.billNo}<br/>
-                              <span className="text-xs text-muted-foreground">{bill.date}</span>
-                            </TableCell>
-                            <TableCell>N/A</TableCell>
-                            <TableCell>N/A</TableCell>
-                            <TableCell className="text-right">0</TableCell>
-                            <TableCell>{bill.customer?.name || 'N/A'}</TableCell>
-                            <TableCell className="text-right">
-                              {bill.revenues?.map((revenue: any, idx: number) => (
-                                <div key={`${bill.id}-revenue-${idx}`}>
-                                  {parseFloat(revenue.amount || 0).toLocaleString('vi-VN')}
-                                </div>
-                              ))}
-                            </TableCell>
-                            <TableCell className="text-right text-success">
-                              {bill.revenues?.reduce((sum: number, rev: any) => sum + parseFloat(rev.amount || 0), 0).toLocaleString('vi-VN') || '0'}
-                            </TableCell>
-                          </TableRow>
-                        )}
-                        
-                        {/* Subtotal for this bill */}
-                        <TableRow key={`${bill.id}-subtotal`} className="bg-muted/50">
-                          <TableCell colSpan={3} className="font-medium">Tổng cộng {bill.billNo}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            {subtotals.byBill[bill.billNo]?.totalCost.toLocaleString('vi-VN') || '0'}
-                          </TableCell>
-                          <TableCell></TableCell>
-                          <TableCell className="text-right font-medium">
-                            {subtotals.byBill[bill.billNo]?.totalRevenue.toLocaleString('vi-VN') || '0'}
-                          </TableCell>
-                          <TableCell className={cn("text-right font-medium", 
-                            subtotals.byBill[bill.billNo]?.profit >= 0 ? "text-success" : "text-destructive")}>
-                            {subtotals.byBill[bill.billNo]?.profit.toLocaleString('vi-VN') || '0'}
-                          </TableCell>
-                        </TableRow>
-                      </React.Fragment>
-                    ))}
+                        </React.Fragment>
+                      );
+                    })}
                     
                     {/* Grand total */}
                     {data?.bills?.length > 0 && (
                       <TableRow className="bg-primary/5 font-bold">
-                        <TableCell colSpan={3}>TỔNG CỘNG</TableCell>
+                        <TableCell colSpan={6}>TỔNG CỘNG</TableCell>
                         <TableCell className="text-right">
-                          {Object.values(subtotals.byBill).reduce((sum: number, bill: any) => sum + bill.totalCost, 0).toLocaleString('vi-VN')}
+                          {data.bills.reduce((sum: number, bill: any) => {
+                            const revTotal = (bill.revenues || []).reduce(
+                              (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
+                            );
+                            return sum + revTotal;
+                          }, 0).toLocaleString('vi-VN')}
                         </TableCell>
-                        <TableCell></TableCell>
                         <TableCell className="text-right">
-                          {Object.values(subtotals.byBill).reduce((sum: number, bill: any) => sum + bill.totalRevenue, 0).toLocaleString('vi-VN')}
+                          {data.bills.reduce((sum: number, bill: any) => {
+                            const costTotal = (bill.costs || []).reduce(
+                              (s: number, cost: any) => s + parseFloat(cost.amount || 0), 0
+                            );
+                            return sum + costTotal;
+                          }, 0).toLocaleString('vi-VN')}
                         </TableCell>
                         <TableCell className={cn("text-right", 
-                          Object.values(subtotals.byBill).reduce((sum: number, bill: any) => sum + bill.profit, 0) >= 0 
-                            ? "text-success" : "text-destructive")}>
-                          {Object.values(subtotals.byBill).reduce((sum: number, bill: any) => sum + bill.profit, 0).toLocaleString('vi-VN')}
+                          data.bills.reduce((sum: number, bill: any) => {
+                            const revTotal = (bill.revenues || []).reduce(
+                              (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
+                            );
+                            const costTotal = (bill.costs || []).reduce(
+                              (s: number, cost: any) => s + parseFloat(cost.amount || 0), 0
+                            );
+                            return sum + (revTotal - costTotal);
+                          }, 0) >= 0 ? "text-success" : "text-destructive")}>
+                          {data.bills.reduce((sum: number, bill: any) => {
+                            const revTotal = (bill.revenues || []).reduce(
+                              (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
+                            );
+                            const costTotal = (bill.costs || []).reduce(
+                              (s: number, cost: any) => s + parseFloat(cost.amount || 0), 0
+                            );
+                            return sum + (revTotal - costTotal);
+                          }, 0).toLocaleString('vi-VN')}
                         </TableCell>
                       </TableRow>
                     )}
                     
                     {(data?.bills?.length === 0 || !data?.bills) && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                        <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
                           Không có dữ liệu cho khoảng thời gian đã chọn
                         </TableCell>
                       </TableRow>
@@ -316,36 +270,33 @@ export default function BillDetailReport() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {Object.entries(subtotals.byCostType).map(([costType, data]: [string, any]) => (
-                      <TableRow key={costType}>
-                        <TableCell className="font-medium">{costType}</TableCell>
-                        <TableCell className="text-right">{data.billCount}</TableCell>
-                        <TableCell className="text-right">{data.totalAmount.toLocaleString('vi-VN')}</TableCell>
+                    {data?.costTypeSummary?.map((item: any) => (
+                      <TableRow key={item.costTypeId}>
+                        <TableCell className="font-medium">{item.costTypeName}</TableCell>
+                        <TableCell className="text-right">{item.billCount}</TableCell>
+                        <TableCell className="text-right">{parseFloat(item.totalAmount).toLocaleString('vi-VN')}</TableCell>
                         <TableCell className="text-right">
-                          {(data.totalAmount / Object.values(subtotals.byCostType).reduce(
-                            (sum: number, type: any) => sum + type.totalAmount, 0
-                          ) * 100).toFixed(1)}%
+                          {item.percentage.toFixed(1)}%
                         </TableCell>
                       </TableRow>
                     ))}
                     
-                    {Object.keys(subtotals.byCostType).length > 0 && (
+                    {data?.costTypeSummary?.length > 0 && (
                       <TableRow className="bg-primary/5 font-bold">
                         <TableCell>TỔNG CỘNG</TableCell>
                         <TableCell className="text-right">
-                          {/* Count unique bills across all cost types */}
-                          {data?.bills?.length || 0}
+                          {data.bills?.length || 0}
                         </TableCell>
                         <TableCell className="text-right">
-                          {Object.values(subtotals.byCostType).reduce(
-                            (sum: number, type: any) => sum + type.totalAmount, 0
+                          {data.costTypeSummary.reduce(
+                            (sum: number, item: any) => sum + parseFloat(item.totalAmount), 0
                           ).toLocaleString('vi-VN')}
                         </TableCell>
                         <TableCell className="text-right">100%</TableCell>
                       </TableRow>
                     )}
                     
-                    {Object.keys(subtotals.byCostType).length === 0 && (
+                    {(!data?.costTypeSummary || data.costTypeSummary.length === 0) && (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
                           Không có dữ liệu cho khoảng thời gian đã chọn
