@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "./hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import AppShell from "./components/layout/app-shell";
 import Dashboard from "./pages/dashboard";
@@ -18,11 +19,13 @@ import SettingsGoogleSheets from "./pages/settings/google-sheets";
 import Customers from "./pages/customers";
 import Suppliers from "./pages/suppliers";
 import Pricing from "./pages/pricing";
+import AuthPage from "./pages/auth";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/login" component={AuthPage} />
       <Route path="/bills" component={Bills} />
       <Route path="/bills/:id" component={BillDetails} />
       <Route path="/reports" component={Reports} />
@@ -44,10 +47,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
-        <Router />
-      </AppShell>
-      <Toaster />
+      <AuthProvider>
+        <AppShell>
+          <Router />
+        </AppShell>
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
