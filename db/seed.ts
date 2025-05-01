@@ -1,11 +1,31 @@
 import { db } from "./index";
 import * as schema from "../shared/schema.js";
+import bcrypt from "bcryptjs";
 
-const { customers, services, suppliers, costTypes, bills, costs, revenues, prices } = schema;
+const { customers, services, suppliers, costTypes, bills, costs, revenues, prices, users } = schema;
 
 async function seed() {
   try {
     console.log("Starting seed process...");
+    
+    // Seed users if they don't exist
+    const userCount = await db.select().from(users).execute();
+    if (userCount.length === 0) {
+      console.log("Seeding default admin user...");
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash("admin123", salt);
+      
+      const userData = {
+        username: "admin",
+        password: hashedPassword,
+        role: "admin"
+      };
+      
+      await db.insert(users).values(userData);
+      console.log("✅ Created default admin user (username: admin, password: admin123)");
+    } else {
+      console.log("ℹ️ Users already exist, skipping user seed");
+    }
     
     // Check if data already exists in any table
     const customerCount = await db.select().from(customers).execute();

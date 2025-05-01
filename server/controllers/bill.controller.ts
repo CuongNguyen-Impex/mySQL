@@ -157,10 +157,7 @@ export const updateBill = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
-    // Tránh validate toàn bộ bill khi chỉ cập nhật một trường (ví dụ: status)
-    // Cho phép update từng phần
-    const billData = req.body;
-    
+    // Lấy dữ liệu bill hiện tại
     const existingBill = await db.query.bills.findFirst({
       where: eq(bills.id, Number(id))
     });
@@ -171,24 +168,54 @@ export const updateBill = async (req: Request, res: Response) => {
       });
     }
     
-    const [updatedBill] = await db.update(bills)
-      .set({
-        ...billData,
-        updatedAt: new Date()
-      })
-      .where(eq(bills.id, Number(id)))
-      .returning();
-    
-    // Get bill with relations
-    const billWithRelations = await db.query.bills.findFirst({
-      where: eq(bills.id, updatedBill.id),
-      with: {
-        customer: true,
-        service: true
+    // Khi cập nhật trạng thái, chỉ cập nhật trường status
+    if (req.body.status) {
+      const [updatedBill] = await db.update(bills)
+        .set({
+          status: req.body.status,
+          updatedAt: new Date()
+        })
+        .where(eq(bills.id, Number(id)))
+        .returning();
+      
+      // Get bill with relations
+      const billWithRelations = await db.query.bills.findFirst({
+        where: eq(bills.id, updatedBill.id),
+        with: {
+          customer: true,
+          service: true
+        }
+      });
+      
+      return res.status(200).json(billWithRelations);
+    } else {
+      // Khi cập nhật toàn bộ bill, kiểm tra kiểu dữ liệu date
+      const billData = { ...req.body };
+
+      // Đảm bảo date được xử lý đúng (nếu có)
+      if (billData.date && typeof billData.date === 'string') {
+        billData.date = new Date(billData.date);
       }
-    });
-    
-    return res.status(200).json(billWithRelations);
+
+      const [updatedBill] = await db.update(bills)
+        .set({
+          ...billData,
+          updatedAt: new Date()
+        })
+        .where(eq(bills.id, Number(id)))
+        .returning();
+      
+      // Get bill with relations
+      const billWithRelations = await db.query.bills.findFirst({
+        where: eq(bills.id, updatedBill.id),
+        with: {
+          customer: true,
+          service: true
+        }
+      });
+      
+      return res.status(200).json(billWithRelations);
+    }
   } catch (error) {
     console.error("Error updating bill:", error);
         
