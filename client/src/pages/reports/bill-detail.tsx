@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { DateRangePicker } from "@/components/date-range-picker";
+import { DatePickerWithRange as DateRangePicker } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -32,7 +32,7 @@ export default function BillDetailReport() {
         const fromDate = date?.from ? date.from.toISOString() : oneMonthAgo.toISOString();
         const toDate = date?.to ? date.to.toISOString() : today.toISOString();
 
-        const res = await apiRequest(`/api/reports/bills?fromDate=${fromDate}&toDate=${toDate}`);
+        const res = await apiRequest('GET', `/api/reports/bills?fromDate=${fromDate}&toDate=${toDate}`);
 
         if (res.ok) {
           const data = await res.json();
