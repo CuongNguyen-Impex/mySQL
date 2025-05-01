@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
+import { formatCurrency, getProfitColorClass } from "@/lib/utils";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -139,12 +140,7 @@ export default function BillDetails() {
     return statusMap[status] || "";
   };
 
-  // Get profit/loss color
-  const getProfitColorClass = (value: number) => {
-    if (value > 0) return "text-success";
-    if (value < 0) return "text-destructive";
-    return "text-muted-foreground";
-  };
+  // This is a local function but we're now using the imported one from utils
 
   if (isLoading) {
     return (
@@ -251,30 +247,30 @@ export default function BillDetails() {
               <p className="text-base font-medium">{new Date(bill?.date).toLocaleDateString()}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Customer</p>
+              <p className="text-sm text-muted-foreground">Khách hàng</p>
               <p className="text-base font-medium">{bill?.customer?.name}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Service</p>
+              <p className="text-sm text-muted-foreground">Dịch vụ</p>
               <p className="text-base font-medium">{bill?.service?.name}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Status</p>
+              <p className="text-sm text-muted-foreground">Trạng thái</p>
               <Badge className={cn("mt-1", getStatusBadgeClass(bill?.status))}>
                 {bill?.status}
               </Badge>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Notes</p>
+              <p className="text-sm text-muted-foreground">Ghi chú</p>
               <p className="text-base font-medium">{bill?.notes || "—"}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Revenue</p>
-              <p className="text-base font-medium text-success">${totalRevenue.toFixed(2)}</p>
+              <p className="text-sm text-muted-foreground">Tổng doanh thu</p>
+              <p className="text-base font-medium text-success">{formatCurrency(totalRevenue)}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Costs</p>
-              <p className="text-base font-medium text-destructive">${totalCosts.toFixed(2)}</p>
+              <p className="text-sm text-muted-foreground">Tổng chi phí</p>
+              <p className="text-base font-medium text-destructive">{formatCurrency(totalCosts)}</p>
             </div>
           </div>
           <div className="mt-6 pt-6 border-t">
