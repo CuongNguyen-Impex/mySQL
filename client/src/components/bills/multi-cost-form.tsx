@@ -156,199 +156,214 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {fields.map((field, index) => (
-          <Card key={field.id} className="mb-4">
-            <CardContent className="pt-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-medium">Chi phí #{index + 1}</h3>
-                {fields.length > 1 && (
+        <div className="overflow-x-auto border rounded-md">
+          <table className="w-full border-collapse">
+            <thead className="bg-muted">
+              <tr className="text-left">
+                <th className="p-3 font-medium">STT</th>
+                <th className="p-3 font-medium">Loại chi phí</th>
+                <th className="p-3 font-medium">Nhà cung cấp</th>
+                <th className="p-3 font-medium">Số tiền</th>
+                <th className="p-3 font-medium">Ngày tháng</th>
+                <th className="p-3 font-medium">Ghi chú</th>
+                <th className="p-3 font-medium w-[60px]">Xóa</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fields.map((field, index) => (
+                <tr key={field.id} className="border-t hover:bg-muted/50">
+                  <td className="p-3 align-top pt-4">{index + 1}</td>
+                  <td className="p-3 align-top">
+                    <FormField
+                      control={form.control}
+                      name={`costs.${index}.costTypeId`}
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <Select
+                            disabled={isLoadingCostTypes}
+                            onValueChange={(value) => field.onChange(parseInt(value))}
+                            value={field.value?.toString()}
+                            defaultValue={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn loại chi phí" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {costTypes?.map((costType: any) => (
+                                <SelectItem
+                                  key={costType.id}
+                                  value={costType.id.toString()}
+                                >
+                                  {costType.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </td>
+                  <td className="p-3 align-top">
+                    <FormField
+                      control={form.control}
+                      name={`costs.${index}.supplierId`}
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <Select
+                            disabled={isLoadingSuppliers}
+                            onValueChange={(value) => field.onChange(parseInt(value))}
+                            value={field.value?.toString()}
+                            defaultValue={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn nhà cung cấp" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {suppliers?.map((supplier: any) => (
+                                <SelectItem
+                                  key={supplier.id}
+                                  value={supplier.id.toString()}
+                                >
+                                  {supplier.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </td>
+                  <td className="p-3 align-top">
+                    <FormField
+                      control={form.control}
+                      name={`costs.${index}.amount`}
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Nhập số tiền"
+                              className="w-[120px]"
+                              {...field}
+                              onChange={(e) => {
+                                const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                                field.onChange(value);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </td>
+                  <td className="p-3 align-top">
+                    <FormField
+                      control={form.control}
+                      name={`costs.${index}.date`}
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-[120px] pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "dd/MM/yyyy")
+                                  ) : (
+                                    <span>Chọn ngày</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </td>
+                  <td className="p-3 align-top">
+                    <FormField
+                      control={form.control}
+                      name={`costs.${index}.notes`}
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <FormControl>
+                            <Input
+                              placeholder="Ghi chú"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <input 
+                      type="hidden" 
+                      {...form.register(`costs.${index}.billId`, { valueAsNumber: true })} 
+                      value={billId}
+                    />
+                  </td>
+                  <td className="p-3 align-top text-center">
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(index)}
+                        className="h-8 w-8"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={7} className="p-3">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => remove(index)}
+                    onClick={addNewCost}
+                    className="w-full"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Plus className="h-4 w-4 mr-2" /> Thêm dòng mới
                   </Button>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name={`costs.${index}.costTypeId`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Loại chi phí</FormLabel>
-                      <Select
-                        disabled={isLoadingCostTypes}
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        value={field.value?.toString()}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Chọn loại chi phí" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {costTypes?.map((costType: any) => (
-                            <SelectItem
-                              key={costType.id}
-                              value={costType.id.toString()}
-                            >
-                              {costType.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
 
-                <FormField
-                  control={form.control}
-                  name={`costs.${index}.supplierId`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nhà cung cấp</FormLabel>
-                      <Select
-                        disabled={isLoadingSuppliers}
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        value={field.value?.toString()}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Chọn nhà cung cấp" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {suppliers?.map((supplier: any) => (
-                            <SelectItem
-                              key={supplier.id}
-                              value={supplier.id.toString()}
-                            >
-                              {supplier.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name={`costs.${index}.amount`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Số tiền</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Nhập số tiền"
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
-                            field.onChange(value);
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name={`costs.${index}.date`}
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Ngày</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "dd/MM/yyyy")
-                              ) : (
-                                <span>Chọn ngày</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name={`costs.${index}.notes`}
-                render={({ field }) => (
-                  <FormItem className="mt-4">
-                    <FormLabel>Ghi chú</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Nhập ghi chú về chi phí này"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Thông tin thêm về chi phí (không bắt buộc)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <input 
-                type="hidden" 
-                {...form.register(`costs.${index}.billId`, { valueAsNumber: true })} 
-                value={billId}
-              />
-            </CardContent>
-          </Card>
-        ))}
-
-        <div className="space-y-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={addNewCost}
-          >
-            <Plus className="h-4 w-4 mr-2" /> Thêm chi phí khác
+        <div className="flex justify-end pt-4">
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Đang lưu..." : "Lưu tất cả chi phí"}
           </Button>
-
-          <div className="flex justify-end">
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Đang lưu..." : "Lưu tất cả chi phí"}
-            </Button>
-          </div>
         </div>
       </form>
     </Form>

@@ -188,7 +188,7 @@ export default function BillDetails() {
       <Card className="mb-8">
         <CardHeader className="pb-2">
           <CardTitle className="flex justify-between items-center">
-            <span>Bill Information</span>
+            <span>Thông tin hóa đơn</span>
             <div className="flex gap-2">
               <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogTrigger asChild>
@@ -275,9 +275,9 @@ export default function BillDetails() {
           </div>
           <div className="mt-6 pt-6 border-t">
             <div className="flex items-center justify-between">
-              <p className="text-lg font-medium">Profit</p>
+              <p className="text-lg font-medium">Lợi nhuận</p>
               <p className={cn("text-lg font-bold", getProfitColorClass(profit))}>
-                ${profit.toFixed(2)}
+                {formatCurrency(profit)}
               </p>
             </div>
           </div>
