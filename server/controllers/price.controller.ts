@@ -13,11 +13,9 @@ export const getPrices = async (req: Request, res: Response) => {
       with: {
         customer: true,
         service: true
-      },
-      orderBy: [
-        customers.name,
-        services.name
-      ]
+      }
+      // Không thể sắp xếp trực tiếp bằng trường của bảng liên kết
+      // Sẽ sắp xếp kết quả ở client side
     });
     
     if (customerId && serviceId) {
@@ -37,8 +35,8 @@ export const getPrices = async (req: Request, res: Response) => {
         with: {
           customer: true,
           service: true
-        },
-        orderBy: services.name
+        }
+        // orderBy đã bỏ vì lỗi cột không tồn tại
       });
     } else if (serviceId) {
       query = db.query.prices.findMany({
@@ -47,7 +45,7 @@ export const getPrices = async (req: Request, res: Response) => {
           customer: true,
           service: true
         },
-        orderBy: customers.name
+        // orderBy đã bỏ vì lỗi cột không tồn tại
       });
     }
     
