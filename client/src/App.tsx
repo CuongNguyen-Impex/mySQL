@@ -11,6 +11,7 @@ import Reports from "./pages/reports";
 import ReportsByCustomer from "./pages/reports/by-customer";
 import ReportsBySupplier from "./pages/reports/by-supplier";
 import ReportsProfitLoss from "./pages/reports/profit-loss";
+import BillDetailReport from "./pages/reports/bill-detail";
 import Settings from "./pages/settings";
 import SettingsCategories from "./pages/settings/categories";
 import SettingsGoogleSheets from "./pages/settings/google-sheets";
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/reports/by-customer" component={ReportsByCustomer} />
       <Route path="/reports/by-supplier" component={ReportsBySupplier} />
       <Route path="/reports/profit-loss" component={ReportsProfitLoss} />
+      <Route path="/reports/bill-detail" component={BillDetailReport} />
       <Route path="/settings" component={Settings} />
       <Route path="/settings/categories" component={SettingsCategories} />
       <Route path="/settings/google-sheets" component={SettingsGoogleSheets} />

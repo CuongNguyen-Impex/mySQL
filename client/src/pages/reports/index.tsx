@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { BarChart3, Users, Store, Wallet, ArrowRight } from "lucide-react";
+import { BarChart3, Users, Store, Wallet, ArrowRight, FileText } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +16,12 @@ export default function Reports() {
       description: "Xem chi phí chi tiết theo nhà cung cấp để tối ưu hóa quá trình mua hàng",
       icon: <Store className="h-6 w-6" />,
       href: "/reports/by-supplier",
+    },
+    {
+      title: "Chi tiết theo hóa đơn",
+      description: "Xem chi tiết chi phí, doanh thu và lợi nhuận cho từng hóa đơn",
+      icon: <FileText className="h-6 w-6" />,
+      href: "/reports/bill-detail",
     },
     {
       title: "Lợi nhuận & Lỗ",
