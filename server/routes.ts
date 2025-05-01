@@ -30,7 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/bills`, optionalAuthMiddleware, billController.getBills);
   app.post(`${apiPrefix}/bills`, authMiddleware, billController.createBill);
   app.get(`${apiPrefix}/bills/:id`, optionalAuthMiddleware, billController.getBillById);
-  app.patch(`${apiPrefix}/bills/:id`, authMiddleware, billController.updateBill);
+  app.patch(`${apiPrefix}/bills/:id`, optionalAuthMiddleware, billController.updateBill);
   app.delete(`${apiPrefix}/bills/:id`, authMiddleware, billController.deleteBill);
 
   // COST ROUTES

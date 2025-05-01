@@ -75,9 +75,19 @@ export default function BillDetails() {
       return apiRequest("PATCH", `/api/bills/${params.id}`, updatedBill);
     },
     onSuccess: () => {
+      // Invalidate bill-related queries
       queryClient.invalidateQueries({ queryKey: [`/api/bills/${params.id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/bills"] });
+      
+      // Invalidate dashboard data
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      
+      // Invalidate all report queries
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/by-customer"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/by-supplier"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/profit-loss"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/bills"] });
+      
       toast({
         title: "Trạng thái đã cập nhật",
         description: `Trạng thái hóa đơn đã được cập nhật thành ${status}`,
@@ -107,11 +117,17 @@ export default function BillDetails() {
       return apiRequest("DELETE", `/api/bills/${params.id}`);
     },
     onSuccess: () => {
+      // Invalidate all queries that might be affected
       queryClient.invalidateQueries({ queryKey: ["/api/bills"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/by-customer"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/by-supplier"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/profit-loss"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/bills"] });
+      
       toast({
-        title: "Bill deleted",
-        description: "The bill has been successfully deleted",
+        title: "Đã xóa hóa đơn",
+        description: "Hóa đơn đã được xóa thành công",
       });
       navigate("/bills");
     },
@@ -160,27 +176,50 @@ export default function BillDetails() {
   const handleBillUpdateSuccess = () => {
     setIsEditDialogOpen(false);
     refetch();
+    
+    // Invalidate all queries that might be affected
+    queryClient.invalidateQueries({ queryKey: ["/api/bills"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/by-customer"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/by-supplier"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/profit-loss"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/bills"] });
+    
     toast({
-      title: "Success",
-      description: "Bill updated successfully",
+      title: "Thành công",
+      description: "Hóa đơn đã được cập nhật",
     });
   };
 
   const handleCostAddSuccess = () => {
     setIsAddCostDialogOpen(false);
     refetch();
+    
+    // Invalidate all queries that might be affected
+    queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/by-supplier"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/profit-loss"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/bills"] });
+    
     toast({
-      title: "Success",
-      description: "Cost added successfully",
+      title: "Thành công",
+      description: "Chi phí đã được thêm",
     });
   };
 
   const handleRevenueAddSuccess = () => {
     setIsAddRevenueDialogOpen(false);
     refetch();
+    
+    // Invalidate all queries that might be affected
+    queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/by-customer"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/profit-loss"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/reports/bills"] });
+    
     toast({
-      title: "Success",
-      description: "Revenue added successfully",
+      title: "Thành công",
+      description: "Doanh thu đã được thêm",
     });
   };
 
