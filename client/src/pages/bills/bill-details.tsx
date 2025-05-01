@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { formatCurrency, getProfitColorClass } from "@/lib/utils";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { formatCurrency, getProfitColorClass, getStatusColor } from "@/lib/utils";
+import { ArrowLeft, Edit, Trash2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -13,6 +13,13 @@ import {
   CardFooter
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -54,6 +61,36 @@ export default function BillDetails() {
   const [isAddRevenueDialogOpen, setIsAddRevenueDialogOpen] = useState(false);
   const [status, setStatus] = useState("");
   const [isStatusUpdateLoading, setIsStatusUpdateLoading] = useState(false);
+  
+  // Status update mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
+      if (!bill) throw new Error("Bill not found");
+      
+      const updatedBill = {
+        ...bill,
+        status: newStatus
+      };
+      
+      return apiRequest("PATCH", `/api/bills/${params.id}`, updatedBill);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/bills/${params.id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bills"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      toast({
+        title: "Trạng thái đã cập nhật",
+        description: `Trạng thái hóa đơn đã được cập nhật thành ${status}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Lỗi",
+        description: `Không thể cập nhật trạng thái: ${error}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Fetch bill details
   const { 
@@ -99,6 +136,25 @@ export default function BillDetails() {
   ) || 0;
 
   const profit = totalRevenue - totalCosts;
+
+  // Update status when the bill data changes
+  useEffect(() => {
+    if (bill?.status) {
+      setStatus(bill.status);
+    }
+  }, [bill]);
+  
+  // Handle status update
+  const handleStatusUpdate = () => {
+    if (!status || status === bill?.status) return;
+    
+    setIsStatusUpdateLoading(true);
+    updateStatusMutation.mutate(status, {
+      onSettled: () => {
+        setIsStatusUpdateLoading(false);
+      }
+    });
+  };
 
   // Functions to handle form submission success
   const handleBillUpdateSuccess = () => {
@@ -276,11 +332,47 @@ export default function BillDetails() {
             </div>
           </div>
           <div className="mt-6 pt-6 border-t">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-6">
               <p className="text-lg font-medium">Lợi nhuận</p>
               <p className={cn("text-lg font-bold", getProfitColorClass(profit))}>
                 {formatCurrency(profit)}
               </p>
+            </div>
+            
+            <div className="border-t pt-6">
+              <p className="text-base font-medium mb-2">Cập nhật trạng thái</p>
+              <div className="flex items-center gap-2">
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Chọn trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  onClick={handleStatusUpdate} 
+                  disabled={isStatusUpdateLoading || status === bill?.status}
+                >
+                  {isStatusUpdateLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Đang cập nhật...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" /> Cập nhật trạng thái
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
