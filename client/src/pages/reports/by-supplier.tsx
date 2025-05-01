@@ -131,7 +131,7 @@ export default function ReportsBySupplier() {
                   <SelectValue placeholder="All cost types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All cost types</SelectItem>
+                  <SelectItem value="all_cost_types">All cost types</SelectItem>
                   {costTypes?.map((type: any) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
                       {type.name}
