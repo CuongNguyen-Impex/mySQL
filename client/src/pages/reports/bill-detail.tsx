@@ -186,9 +186,12 @@ export default function BillDetailReport() {
                           
                           {/* Subtotal for this bill */}
                           <TableRow key={`${bill.id}-subtotal`} className="bg-muted/50">
-                            <TableCell colSpan={2}></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
                             <TableCell className="font-medium">Tổng cộng {bill.billNo}</TableCell>
-                            <TableCell colSpan={3}></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
                             <TableCell className="text-right font-medium">
                               {totalRevenue.toLocaleString('vi-VN')}
                             </TableCell>
@@ -210,8 +213,13 @@ export default function BillDetailReport() {
                     {/* Grand total */}
                     {data?.bills?.length > 0 && (
                       <TableRow className="bg-primary/5 font-bold">
-                        <TableCell colSpan={6}>TỔNG CỘNG</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell className="font-bold">TỔNG CỘNG</TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell className="text-right font-bold">
                           {data.bills.reduce((sum: number, bill: any) => {
                             const revTotal = (bill.revenues || []).reduce(
                               (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
@@ -219,17 +227,17 @@ export default function BillDetailReport() {
                             return sum + revTotal;
                           }, 0).toLocaleString('vi-VN')}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-bold">
                           {data.bills.reduce((sum: number, bill: any) => {
                             return sum + (bill.totalHoaDonCost || 0);
                           }, 0).toLocaleString('vi-VN')}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-bold">
                           {data.bills.reduce((sum: number, bill: any) => {
                             return sum + (bill.totalTraHoCost || 0);
                           }, 0).toLocaleString('vi-VN')}
                         </TableCell>
-                        <TableCell className={cn("text-right", 
+                        <TableCell className={cn("text-right font-bold", 
                           data.bills.reduce((sum: number, bill: any) => {
                             return sum + (bill.profit || 0);
                           }, 0) >= 0 ? "text-success" : "text-destructive")}>
@@ -334,18 +342,18 @@ export default function BillDetailReport() {
                     {/* Tổng cộng */}
                     {data?.bills?.length > 0 && (
                       <TableRow className="bg-primary/5 font-bold">
-                        <TableCell>TỔNG CỘNG</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="font-bold">TỔNG CỘNG</TableCell>
+                        <TableCell className="text-right font-bold">
                           {data.bills?.length || 0}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-bold">
                           {data.bills.reduce((sum: number, bill: any) => {
                             return sum + (bill.costs || []).reduce(
                               (s: number, cost: any) => s + parseFloat(cost.amount || 0), 0
                             );
                           }, 0).toLocaleString('vi-VN')}
                         </TableCell>
-                        <TableCell className="text-right">100%</TableCell>
+                        <TableCell className="text-right font-bold">100%</TableCell>
                       </TableRow>
                     )}
                     
