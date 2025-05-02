@@ -253,11 +253,18 @@ export default function BillDetail() {
         
         <TabsContent value="costs" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Chi phí liên quan</CardTitle>
-              <CardDescription>
-                Danh sách các chi phí liên quan đến hóa đơn này
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle>Chi phí liên quan</CardTitle>
+                <CardDescription>
+                  Danh sách các chi phí liên quan đến hóa đơn này
+                </CardDescription>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Hóa đơn</Badge>
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">Trả hộ</Badge>
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Ko hóa đơn</Badge>
+              </div>
             </CardHeader>
             <CardContent>
               {bill.costs && bill.costs.length > 0 ? (
@@ -275,20 +282,30 @@ export default function BillDetail() {
                     </thead>
                     <tbody>
                       {bill.costs.map((cost: any) => {
-                        // Tìm các thuộc tính được chọn (value = "true")
-                        const selectedAttributes = cost.attributeValues?.filter((attr: any) => attr.value === "true") || [];
-                        const attributeLabels = selectedAttributes.map((attr: any) => attr.attribute?.name).filter(Boolean);
+                        // Xử lý các thuộc tính
+                        const selectedAttributes = cost.attributeValues?.filter((attr: any) => 
+                          attr.value === "true" && attr.attribute?.name
+                        ) || [];
                         
-                        // Xác định màu sắc cho badge
+                        // Tạo danh sách tên thuộc tính
+                        const attributeLabels = selectedAttributes.map((attr: any) => attr.attribute.name);
+                        
+                        // Hàm xác định màu sắc cho badge
                         const getBadgeColor = (attrName: string) => {
-                          if (attrName === "Hóa đơn") return "bg-green-100 text-green-800 hover:bg-green-200";
-                          if (attrName === "Trả hộ") return "bg-blue-100 text-blue-800 hover:bg-blue-200";
-                          if (attrName === "Ko hóa đơn") return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200";
-                          return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+                          switch(attrName) {
+                            case "Hóa đơn": 
+                              return "bg-green-100 text-green-800 border-green-300";
+                            case "Trả hộ": 
+                              return "bg-blue-100 text-blue-800 border-blue-300";
+                            case "Ko hóa đơn": 
+                              return "bg-yellow-100 text-yellow-800 border-yellow-300";
+                            default: 
+                              return "bg-gray-100 text-gray-800 border-gray-300";
+                          }
                         };
                         
                         return (
-                          <tr key={cost.id} className="border-b">
+                          <tr key={cost.id} className="border-b hover:bg-muted/50 transition-colors">
                             <td className="py-3">{cost.costType?.name || 'N/A'}</td>
                             <td className="py-3">{cost.supplier?.name || 'N/A'}</td>
                             <td className="py-3">
@@ -297,7 +314,7 @@ export default function BillDetail() {
                                   attributeLabels.map((attrName: string, index: number) => (
                                     <Badge 
                                       key={index} 
-                                      variant="secondary" 
+                                      variant="outline" 
                                       className={getBadgeColor(attrName)}
                                     >
                                       {attrName}
@@ -314,16 +331,20 @@ export default function BillDetail() {
                           </tr>
                         );
                       })}
-                      <tr className="bg-muted/50">
-                        <td colSpan={4} className="py-3 font-medium">Tổng cộng</td>
-                        <td className="py-3 text-right font-medium">{formatCurrency(totalCost)}</td>
+                      
+                      {/* Tổng cộng */}
+                      <tr className="bg-muted/50 font-medium">
+                        <td colSpan={4} className="py-3">Tổng cộng</td>
+                        <td className="py-3 text-right">{formatCurrency(totalCost)}</td>
                         <td></td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <p className="text-muted-foreground">Không có chi phí nào được ghi nhận cho hóa đơn này</p>
+                <div className="py-8 text-center">
+                  <p className="text-muted-foreground">Không có chi phí nào được ghi nhận cho hóa đơn này</p>
+                </div>
               )}
             </CardContent>
           </Card>
