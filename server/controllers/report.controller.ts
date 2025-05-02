@@ -4,6 +4,48 @@ import { bills, costs, revenues, customers, services, suppliers, costTypes, cost
 import { eq, and, desc, between, sql, count, sum, avg } from "drizzle-orm";
 import { subDays, subMonths, subYears, parseISO, isValid, startOfDay, endOfDay } from "date-fns";
 
+// Helper function to classify costs by their attributes
+const createCostAttributeMap = async () => {
+  // Get all costs with their attribute values
+  const costsWithAttributes = await db.query.costs.findMany({
+    with: {
+      attributeValues: {
+        with: {
+          attribute: true
+        }
+      }
+    }
+  });
+  
+  // Create a map of cost attribute types for quick lookup
+  const costAttributeMap = new Map<number, string>();
+  
+  // Default is to consider as 'Hóa đơn' if not specified
+  costsWithAttributes.forEach(cost => {
+    // Default to 'Hóa đơn' if no attribute values
+    costAttributeMap.set(cost.id, "Hóa đơn");
+    
+    // If has attribute values, determine type
+    if (cost.attributeValues && cost.attributeValues.length > 0) {
+      // Find attribute with name 'Trả hộ'
+      const traHoAttribute = cost.attributeValues.find(av => 
+        av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
+      
+      // Find attribute with name 'Ko hóa đơn'
+      const koHoaDonAttribute = cost.attributeValues.find(av => 
+        av.attribute && av.attribute.name === "Ko hóa đơn" && av.value === "true");
+      
+      if (traHoAttribute) {
+        costAttributeMap.set(cost.id, "Trả hộ");
+      } else if (koHoaDonAttribute) {
+        costAttributeMap.set(cost.id, "Ko hóa đơn");
+      }
+    }
+  });
+  
+  return costAttributeMap;
+};
+
 // Get date range based on timeframe string
 const getDateRange = (timeframe?: string, from?: string, to?: string) => {
   // If custom timeframe with valid dates, use them
@@ -49,36 +91,8 @@ const getDateRange = (timeframe?: string, from?: string, to?: string) => {
 
 export const getDashboardData = async (req: Request, res: Response) => {
   try {
-    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
-    const costsWithAttributes = await db.query.costs.findMany({
-      with: {
-        attributeValues: {
-          with: {
-            attribute: true
-          }
-        }
-      }
-    });
-    
-    // Create a map of cost attribute types for quick lookup
-    const costAttributeMap = new Map<number, string>();
-    
-    // Default is to consider as 'Hóa đơn' if not specified
-    costsWithAttributes.forEach(cost => {
-      // Default to 'Hóa đơn' if no attribute values
-      costAttributeMap.set(cost.id, "Hóa đơn");
-      
-      // If has attribute values, determine type
-      if (cost.attributeValues && cost.attributeValues.length > 0) {
-        // Find attribute with name 'Trả hộ'
-        const traHoAttribute = cost.attributeValues.find(av => 
-          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
-        
-        if (traHoAttribute) {
-          costAttributeMap.set(cost.id, "Trả hộ");
-        }
-      }
-    });
+    // Use the helper function to get cost attribute map
+    const costAttributeMap = await createCostAttributeMap();
     
     // Count total bills
     const billsResult = await db.select({
@@ -105,6 +119,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
     // Separate costs by attribute type
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
+    let totalKoHoaDonCosts = 0;
     
     allCosts.forEach(cost => {
       const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
@@ -112,13 +127,15 @@ export const getDashboardData = async (req: Request, res: Response) => {
       
       if (costType === "Trả hộ") {
         totalTraHoCosts += amount;
+      } else if (costType === "Ko hóa đơn") {
+        totalKoHoaDonCosts += amount;
       } else {
         totalHoaDonCosts += amount;
       }
     });
     
-    // Calculate total costs (both types combined)
-    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
+    // Calculate total costs (all types combined)
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
     
     // Calculate profit - only based on 'Hóa đơn' costs as per business rules
     const totalProfit = totalRevenue - totalHoaDonCosts;
@@ -272,36 +289,8 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
     const { timeframe, from, to } = req.query;
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
-    const costsWithAttributes = await db.query.costs.findMany({
-      with: {
-        attributeValues: {
-          with: {
-            attribute: true
-          }
-        }
-      }
-    });
-    
-    // Create a map of cost attribute types for quick lookup
-    const costAttributeMap = new Map<number, string>();
-    
-    // Default is to consider as 'Hóa đơn' if not specified
-    costsWithAttributes.forEach(cost => {
-      // Default to 'Hóa đơn' if no attribute values
-      costAttributeMap.set(cost.id, "Hóa đơn");
-      
-      // If has attribute values, determine type
-      if (cost.attributeValues && cost.attributeValues.length > 0) {
-        // Find attribute with name 'Trả hộ'
-        const traHoAttribute = cost.attributeValues.find(av => 
-          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
-        
-        if (traHoAttribute) {
-          costAttributeMap.set(cost.id, "Trả hộ");
-        }
-      }
-    });
+    // Use the helper function to get cost attribute map
+    const costAttributeMap = await createCostAttributeMap();
     
     // Get all customers with their bills
     const customersWithBills = await db.query.customers.findMany({
