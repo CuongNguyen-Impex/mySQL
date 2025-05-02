@@ -849,7 +849,6 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
     let totalRevenue = 0;
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
-    let totalKoHoaDonCosts = 0;
     
     billsInRange.forEach(bill => {
       // Sum costs based on their attribute type
@@ -859,8 +858,6 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
         
         if (costType === "Trả hộ") {
           totalTraHoCosts += parseFloat(cost.amount.toString());
-        } else if (costType === "Ko hóa đơn") {
-          totalKoHoaDonCosts += parseFloat(cost.amount.toString());
         } else { // "Hóa đơn"
           totalHoaDonCosts += parseFloat(cost.amount.toString());
         }
@@ -873,7 +870,7 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
     });
     
     // Calculate total costs (all types combined)
-    const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
     
     // Only use 'Hóa đơn' costs for net profit calculation
     const netProfit = totalRevenue - totalHoaDonCosts;
@@ -890,8 +887,7 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
           bills: [],
           revenues: [],
           hoaDonCosts: [],
-          traHoCosts: [],
-          koHoaDonCosts: []
+          traHoCosts: []
         };
       }
       
