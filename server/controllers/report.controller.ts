@@ -956,7 +956,6 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
         revenue: periodRevenue.toFixed(2),
         hoaDonCosts: periodHoaDonCosts.toFixed(2),
         traHoCosts: periodTraHoCosts.toFixed(2),
-
         totalCosts: periodTotalCosts.toFixed(2),
         profit: periodProfit.toFixed(2),
         margin: periodMargin.toFixed(2)
@@ -978,7 +977,6 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       'Doanh thu', 
       'Chi phí Hóa đơn', 
       'Chi phí Trả hộ', 
-      'Chi phí Ko hóa đơn', 
       'Tổng chi phí', 
       'Lợi nhuận', 
       'Tỷ suất Lợi nhuận (%)'
@@ -990,7 +988,6 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       period.revenue,
       period.hoaDonCosts,
       period.traHoCosts,
-      period.koHoaDonCosts,
       period.totalCosts,
       period.profit,
       period.margin
@@ -1003,7 +1000,6 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       totalRevenue.toFixed(2),
       totalHoaDonCosts.toFixed(2),
       totalTraHoCosts.toFixed(2),
-      totalKoHoaDonCosts.toFixed(2),
       totalCosts.toFixed(2),
       netProfit.toFixed(2),
       profitMargin.toFixed(2)
