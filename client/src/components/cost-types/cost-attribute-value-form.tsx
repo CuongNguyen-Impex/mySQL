@@ -114,43 +114,103 @@ export default function CostAttributeValueForm({
     );
   }
 
+  // Find the important attributes (Hóa đơn, Trả hộ, Ko hóa đơn)
+  const importantAttrNames = ["Hóa đơn", "Trả hộ", "Ko hóa đơn"];
+  const importantAttributes = attributes.filter(attr => 
+    importantAttrNames.includes(attr.name)
+  );
+
   return (
     <Card className="mt-4">
       <CardContent className="pt-6">
         <div className="space-y-4">
-          <h3 className="text-sm font-medium">Cost Type Attributes</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {attributes.map((attribute) => {
-              const currentValue = attributeValues.find(
-                (av) => av.costTypeAttributeId === attribute.id
-              )?.value || "";
-              
-              return (
-                <div key={attribute.id} className="space-y-2">
-                  <Label htmlFor={`attribute-${attribute.id}`}>{attribute.name}</Label>
-                  <Select
-                    value={currentValue}
-                    onValueChange={(value) =>
-                      handleAttributeValueChange(attribute.id, value)
-                    }
-                  >
-                    <SelectTrigger id={`attribute-${attribute.id}`}>
-                      <SelectValue placeholder={`Select ${attribute.name}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {attribute.name === "Trả hộ" || attribute.name === "Hóa đơn" || attribute.name === "Ko hóa đơn" ? (
-                        <>
-                          <SelectItem value="true">Có</SelectItem>
-                          <SelectItem value="false">Không</SelectItem>
-                        </>
-                      ) : (
-                        <SelectItem value="">-- Không xác định --</SelectItem>
-                      )}                     
-                    </SelectContent>
-                  </Select>
+          <h3 className="text-sm font-medium">Loại Chi Phí</h3>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label>Chọn một loại</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  {importantAttributes.map((attribute) => {
+                    const attributeId = attribute.id;
+                    const currentValue = attributeValues.find(
+                      (av) => av.costTypeAttributeId === attributeId
+                    )?.value || "";
+                    const isSelected = currentValue === "true";
+                    
+                    return (
+                      <div 
+                        key={attributeId}
+                        className={`border rounded-md p-3 cursor-pointer transition-colors ${isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                        onClick={() => {
+                          // Set all attributes to false first
+                          const newValues = importantAttributes.map(attr => ({
+                            costTypeAttributeId: attr.id,
+                            value: "false"
+                          }));
+                          
+                          // Then set the selected one to true
+                          const updatedValues = newValues.map(item => 
+                            item.costTypeAttributeId === attributeId 
+                              ? { ...item, value: "true" } 
+                              : item
+                          );
+                          
+                          setAttributeValues(updatedValues);
+                          onAttributeValuesChange(updatedValues);
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium">{attribute.name}</div>
+                          {isSelected && (
+                            <div className="ml-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            </div>
+            
+            {/* Other non-important attributes if any */}
+            {attributes.filter(attr => !importantAttrNames.includes(attr.name)).length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 mt-4">
+                <h4 className="text-sm font-medium col-span-full mb-2">Thuộc tính khác</h4>
+                {attributes
+                  .filter(attr => !importantAttrNames.includes(attr.name))
+                  .map((attribute) => {
+                    const currentValue = attributeValues.find(
+                      (av) => av.costTypeAttributeId === attribute.id
+                    )?.value || "";
+                    
+                    return (
+                      <div key={attribute.id} className="space-y-2">
+                        <Label htmlFor={`attribute-${attribute.id}`}>{attribute.name}</Label>
+                        <Select
+                          value={currentValue}
+                          onValueChange={(value) =>
+                            handleAttributeValueChange(attribute.id, value)
+                          }
+                        >
+                          <SelectTrigger id={`attribute-${attribute.id}`}>
+                            <SelectValue placeholder={`Select ${attribute.name}`} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">-- Không xác định --</SelectItem>
+                            <SelectItem value="true">Có</SelectItem>
+                            <SelectItem value="false">Không</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })
+                }
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
