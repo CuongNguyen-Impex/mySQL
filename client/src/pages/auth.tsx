@@ -27,15 +27,15 @@ type LoginValues = z.infer<typeof loginSchema>;
 export default function AuthPage() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading, login } = useAuth();
+  const { user, isLoading, isAuthenticated, login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (isAuthenticated) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),

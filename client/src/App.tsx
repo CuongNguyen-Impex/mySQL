@@ -26,22 +26,22 @@ import AuthPage from "./pages/auth";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
       <Route path="/login" component={AuthPage} />
-      <Route path="/bills" component={Bills} />
-      <Route path="/bills/:id" component={BillDetails} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/reports/by-customer" component={ReportsByCustomer} />
-      <Route path="/reports/by-supplier" component={ReportsBySupplier} />
-      <Route path="/reports/profit-loss" component={ReportsProfitLoss} />
-      <Route path="/reports/bill-detail" component={BillDetailReport} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/settings/categories" component={SettingsCategories} />
-      <Route path="/settings/google-sheets" component={SettingsGoogleSheets} />
-      <Route path="/settings/cost-type-attributes" component={CostTypeAttributes} />
-      <Route path="/customers" component={Customers} />
-      <Route path="/suppliers" component={Suppliers} />
-      <Route path="/pricing" component={Pricing} />
+      <ProtectedRoute path="/" component={Dashboard} />
+      <ProtectedRoute path="/bills" component={Bills} />
+      <ProtectedRoute path="/bills/:id" component={BillDetails} />
+      <ProtectedRoute path="/reports" component={Reports} />
+      <ProtectedRoute path="/reports/by-customer" component={ReportsByCustomer} />
+      <ProtectedRoute path="/reports/by-supplier" component={ReportsBySupplier} />
+      <ProtectedRoute path="/reports/profit-loss" component={ReportsProfitLoss} />
+      <ProtectedRoute path="/reports/bill-detail" component={BillDetailReport} />
+      <ProtectedRoute path="/settings" component={Settings} />
+      <ProtectedRoute path="/settings/categories" component={SettingsCategories} />
+      <ProtectedRoute path="/settings/google-sheets" component={SettingsGoogleSheets} />
+      <ProtectedRoute path="/settings/cost-type-attributes" component={CostTypeAttributes} />
+      <ProtectedRoute path="/customers" component={Customers} />
+      <ProtectedRoute path="/suppliers" component={Suppliers} />
+      <ProtectedRoute path="/pricing" component={Pricing} />
       <Route component={NotFound} />
     </Switch>
   );
