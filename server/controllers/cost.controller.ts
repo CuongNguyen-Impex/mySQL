@@ -73,6 +73,12 @@ export const createCost = async (req: Request, res: Response) => {
           if (!valueData.value) continue;
           
           // Create the attribute value
+          console.log("Creating new attribute value for new cost:", {
+            costId: newCost.id,
+            attributeId: valueData.costTypeAttributeId,
+            value: valueData.value,
+          });
+          
           await tx.insert(costAttributeValues).values({
             costId: newCost.id,
             attributeId: valueData.costTypeAttributeId,
@@ -189,6 +195,12 @@ export const updateCost = async (req: Request, res: Response) => {
           if (!valueData.value) continue;
           
           // Create the attribute value
+          console.log("Creating attribute value:", {
+            costId: updatedCost.id,
+            attributeId: valueData.costTypeAttributeId,
+            value: valueData.value,
+          });
+          
           await tx.insert(costAttributeValues).values({
             costId: updatedCost.id,
             attributeId: valueData.costTypeAttributeId,

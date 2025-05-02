@@ -147,6 +147,7 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
       ...values,
       attributeValues: attributeValues,
     };
+    console.log("Submitting cost with data:", dataToSubmit);
     mutation.mutate(dataToSubmit);
   };
   
