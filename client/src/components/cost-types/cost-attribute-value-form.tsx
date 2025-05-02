@@ -40,7 +40,7 @@ export default function CostAttributeValueForm({
       
       // Make sure we prioritize important attributes
       return filteredAttrs.sort((a, b) => {
-        const importantNames = ["Hóa đơn", "Trả hộ", "Ko hóa đơn"];
+        const importantNames = ["Hóa đơn", "Trả hộ"];
         const aIndex = importantNames.indexOf(a.name);
         const bIndex = importantNames.indexOf(b.name);
         
@@ -114,8 +114,8 @@ export default function CostAttributeValueForm({
     );
   }
 
-  // Find the important attributes (Hóa đơn, Trả hộ, Ko hóa đơn)
-  const importantAttrNames = ["Hóa đơn", "Trả hộ", "Ko hóa đơn"];
+  // Find the important attributes (Hóa đơn, Trả hộ)
+  const importantAttrNames = ["Hóa đơn", "Trả hộ"];
   const importantAttributes = attributes.filter(attr => 
     importantAttrNames.includes(attr.name)
   );
