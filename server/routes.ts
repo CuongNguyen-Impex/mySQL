@@ -30,97 +30,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/auth/me`, optionalAuthMiddleware, authController.getCurrentUser);
 
   // BILL ROUTES
-  app.get(`${apiPrefix}/bills`, optionalAuthMiddleware, billController.getBills);
+  app.get(`${apiPrefix}/bills`, authMiddleware, billController.getBills);
   app.post(`${apiPrefix}/bills`, authMiddleware, billController.createBill);
-  app.get(`${apiPrefix}/bills/:id`, optionalAuthMiddleware, billController.getBillById);
-  app.patch(`${apiPrefix}/bills/:id`, optionalAuthMiddleware, billController.updateBill);
+  app.get(`${apiPrefix}/bills/:id`, authMiddleware, billController.getBillById);
+  app.patch(`${apiPrefix}/bills/:id`, authMiddleware, billController.updateBill);
   app.delete(`${apiPrefix}/bills/:id`, authMiddleware, billController.deleteBill);
 
   // COST ROUTES
-  app.get(`${apiPrefix}/costs`, optionalAuthMiddleware, costController.getCosts);
-  app.post(`${apiPrefix}/costs`, (req, res, next) => {
-    // Bypass authentication temporarily for testing
-    next();
-  }, costController.createCost);
-  app.get(`${apiPrefix}/costs/:id`, optionalAuthMiddleware, costController.getCostById);
-  app.patch(`${apiPrefix}/costs/:id`, (req, res, next) => {
-    // Bypass authentication temporarily for testing
-    next();
-  }, costController.updateCost);
+  app.get(`${apiPrefix}/costs`, authMiddleware, costController.getCosts);
+  app.post(`${apiPrefix}/costs`, authMiddleware, costController.createCost);
+  app.get(`${apiPrefix}/costs/:id`, authMiddleware, costController.getCostById);
+  app.patch(`${apiPrefix}/costs/:id`, authMiddleware, costController.updateCost);
   app.delete(`${apiPrefix}/costs/:id`, authMiddleware, costController.deleteCost);
 
   // REVENUE ROUTES
-  app.get(`${apiPrefix}/revenues`, optionalAuthMiddleware, revenueController.getRevenues);
+  app.get(`${apiPrefix}/revenues`, authMiddleware, revenueController.getRevenues);
   app.post(`${apiPrefix}/revenues`, authMiddleware, revenueController.createRevenue);
-  app.get(`${apiPrefix}/revenues/:id`, optionalAuthMiddleware, revenueController.getRevenueById);
+  app.get(`${apiPrefix}/revenues/:id`, authMiddleware, revenueController.getRevenueById);
   app.patch(`${apiPrefix}/revenues/:id`, authMiddleware, revenueController.updateRevenue);
   app.delete(`${apiPrefix}/revenues/:id`, authMiddleware, revenueController.deleteRevenue);
 
   // CUSTOMER ROUTES
-  app.get(`${apiPrefix}/customers`, optionalAuthMiddleware, customerController.getCustomers);
+  app.get(`${apiPrefix}/customers`, authMiddleware, customerController.getCustomers);
   app.post(`${apiPrefix}/customers`, authMiddleware, customerController.createCustomer);
-  app.get(`${apiPrefix}/customers/:id`, optionalAuthMiddleware, customerController.getCustomerById);
+  app.get(`${apiPrefix}/customers/:id`, authMiddleware, customerController.getCustomerById);
   app.patch(`${apiPrefix}/customers/:id`, authMiddleware, customerController.updateCustomer);
   app.delete(`${apiPrefix}/customers/:id`, authMiddleware, customerController.deleteCustomer);
 
   // SUPPLIER ROUTES
-  app.get(`${apiPrefix}/suppliers`, optionalAuthMiddleware, supplierController.getSuppliers);
+  app.get(`${apiPrefix}/suppliers`, authMiddleware, supplierController.getSuppliers);
   app.post(`${apiPrefix}/suppliers`, authMiddleware, supplierController.createSupplier);
-  app.get(`${apiPrefix}/suppliers/:id`, optionalAuthMiddleware, supplierController.getSupplierById);
+  app.get(`${apiPrefix}/suppliers/:id`, authMiddleware, supplierController.getSupplierById);
   app.patch(`${apiPrefix}/suppliers/:id`, authMiddleware, supplierController.updateSupplier);
   app.delete(`${apiPrefix}/suppliers/:id`, authMiddleware, supplierController.deleteSupplier);
 
   // SERVICE ROUTES
-  app.get(`${apiPrefix}/services`, optionalAuthMiddleware, serviceController.getServices);
+  app.get(`${apiPrefix}/services`, authMiddleware, serviceController.getServices);
   app.post(`${apiPrefix}/services`, authMiddleware, serviceController.createService);
-  app.get(`${apiPrefix}/services/:id`, optionalAuthMiddleware, serviceController.getServiceById);
+  app.get(`${apiPrefix}/services/:id`, authMiddleware, serviceController.getServiceById);
   app.patch(`${apiPrefix}/services/:id`, authMiddleware, serviceController.updateService);
   app.delete(`${apiPrefix}/services/:id`, authMiddleware, serviceController.deleteService);
 
   // COST TYPE ROUTES
-  app.get(`${apiPrefix}/cost-types`, optionalAuthMiddleware, costTypeController.getCostTypes);
+  app.get(`${apiPrefix}/cost-types`, authMiddleware, costTypeController.getCostTypes);
   app.post(`${apiPrefix}/cost-types`, authMiddleware, costTypeController.createCostType);
-  app.get(`${apiPrefix}/cost-types/:id`, optionalAuthMiddleware, costTypeController.getCostTypeById);
+  app.get(`${apiPrefix}/cost-types/:id`, authMiddleware, costTypeController.getCostTypeById);
   app.patch(`${apiPrefix}/cost-types/:id`, authMiddleware, costTypeController.updateCostType);
   app.delete(`${apiPrefix}/cost-types/:id`, authMiddleware, costTypeController.deleteCostType);
 
   // COST TYPE ATTRIBUTE ROUTES
-  app.get(`${apiPrefix}/cost-type-attributes`, optionalAuthMiddleware, costTypeAttributeController.getCostTypeAttributes);
+  app.get(`${apiPrefix}/cost-type-attributes`, authMiddleware, costTypeAttributeController.getCostTypeAttributes);
   app.post(`${apiPrefix}/cost-type-attributes`, authMiddleware, costTypeAttributeController.createCostTypeAttribute);
-  app.get(`${apiPrefix}/cost-type-attributes/:id`, optionalAuthMiddleware, costTypeAttributeController.getCostTypeAttributeById);
+  app.get(`${apiPrefix}/cost-type-attributes/:id`, authMiddleware, costTypeAttributeController.getCostTypeAttributeById);
   app.patch(`${apiPrefix}/cost-type-attributes/:id`, authMiddleware, costTypeAttributeController.updateCostTypeAttribute);
   app.delete(`${apiPrefix}/cost-type-attributes/:id`, authMiddleware, costTypeAttributeController.deleteCostTypeAttribute);
 
   // COST ATTRIBUTE VALUE ROUTES
-  app.get(`${apiPrefix}/cost-attribute-values`, optionalAuthMiddleware, costAttributeValueController.getCostAttributeValues);
-  app.post(`${apiPrefix}/cost-attribute-values`, (req, res, next) => {
-    // Bypass authentication temporarily for testing
-    next();
-  }, costAttributeValueController.createCostAttributeValue);
-  app.get(`${apiPrefix}/cost-attribute-values/:id`, optionalAuthMiddleware, costAttributeValueController.getCostAttributeValueById);
+  app.get(`${apiPrefix}/cost-attribute-values`, authMiddleware, costAttributeValueController.getCostAttributeValues);
+  app.post(`${apiPrefix}/cost-attribute-values`, authMiddleware, costAttributeValueController.createCostAttributeValue);
+  app.get(`${apiPrefix}/cost-attribute-values/:id`, authMiddleware, costAttributeValueController.getCostAttributeValueById);
   app.delete(`${apiPrefix}/cost-attribute-values/:id`, authMiddleware, costAttributeValueController.deleteCostAttributeValue);
 
   // PRICE ROUTES
-  app.get(`${apiPrefix}/prices`, optionalAuthMiddleware, priceController.getPrices);
+  app.get(`${apiPrefix}/prices`, authMiddleware, priceController.getPrices);
   app.post(`${apiPrefix}/prices`, authMiddleware, priceController.createPrice);
-  app.get(`${apiPrefix}/prices/:id`, optionalAuthMiddleware, priceController.getPriceById);
+  app.get(`${apiPrefix}/prices/:id`, authMiddleware, priceController.getPriceById);
   app.patch(`${apiPrefix}/prices/:id`, authMiddleware, priceController.updatePrice);
   app.delete(`${apiPrefix}/prices/:id`, authMiddleware, priceController.deletePrice);
-  app.get(`${apiPrefix}/prices/customer/:customerId/service/:serviceId`, optionalAuthMiddleware, priceController.getPriceByCustomerAndService);
+  app.get(`${apiPrefix}/prices/customer/:customerId/service/:serviceId`, authMiddleware, priceController.getPriceByCustomerAndService);
 
   // REPORT ROUTES
-  app.get(`${apiPrefix}/dashboard`, optionalAuthMiddleware, reportController.getDashboardData);
-  app.get(`${apiPrefix}/reports/by-customer`, optionalAuthMiddleware, reportController.getReportByCustomer);
-  app.get(`${apiPrefix}/reports/by-supplier`, optionalAuthMiddleware, reportController.getReportBySupplier);
-  app.get(`${apiPrefix}/reports/profit-loss`, optionalAuthMiddleware, reportController.getProfitLossReport);
-  app.get(`${apiPrefix}/reports/bills`, optionalAuthMiddleware, reportController.getBillDetailReport);
-  app.get(`${apiPrefix}/reports/by-customer/export`, optionalAuthMiddleware, reportController.exportReportByCustomer);
-  app.get(`${apiPrefix}/reports/by-supplier/export`, optionalAuthMiddleware, reportController.exportReportBySupplier);
-  app.get(`${apiPrefix}/reports/profit-loss/export`, optionalAuthMiddleware, reportController.exportProfitLossReport);
-  app.get(`${apiPrefix}/reports/bills/export`, optionalAuthMiddleware, reportController.exportBillDetailReport);
+  app.get(`${apiPrefix}/dashboard`, authMiddleware, reportController.getDashboardData);
+  app.get(`${apiPrefix}/reports/by-customer`, authMiddleware, reportController.getReportByCustomer);
+  app.get(`${apiPrefix}/reports/by-supplier`, authMiddleware, reportController.getReportBySupplier);
+  app.get(`${apiPrefix}/reports/profit-loss`, authMiddleware, reportController.getProfitLossReport);
+  app.get(`${apiPrefix}/reports/bills`, authMiddleware, reportController.getBillDetailReport);
+  app.get(`${apiPrefix}/reports/by-customer/export`, authMiddleware, reportController.exportReportByCustomer);
+  app.get(`${apiPrefix}/reports/by-supplier/export`, authMiddleware, reportController.exportReportBySupplier);
+  app.get(`${apiPrefix}/reports/profit-loss/export`, authMiddleware, reportController.exportProfitLossReport);
+  app.get(`${apiPrefix}/reports/bills/export`, authMiddleware, reportController.exportBillDetailReport);
 
   // GOOGLE SHEETS ROUTES
-  app.get(`${apiPrefix}/settings/google-sheets`, optionalAuthMiddleware, googleSheetsController.getSettings);
+  app.get(`${apiPrefix}/settings/google-sheets`, authMiddleware, googleSheetsController.getSettings);
   app.post(`${apiPrefix}/settings/google-sheets`, authMiddleware, googleSheetsController.saveSettings);
   app.post(`${apiPrefix}/settings/google-sheets/test`, authMiddleware, googleSheetsController.testConnection);
   app.post(`${apiPrefix}/settings/google-sheets/sync`, authMiddleware, googleSheetsController.syncData);
