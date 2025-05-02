@@ -28,6 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -95,6 +96,8 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
     }
   }, [isEditing, existingAttributeValues]);
 
+  const { toast } = useToast();
+
   // Create or update cost
   const mutation = useMutation({
     mutationFn: async (values: any) => {
@@ -105,10 +108,32 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
       }
     },
     onSuccess: () => {
+      // Invalidate queries to update data
       queryClient.invalidateQueries({ queryKey: [`/api/bills/${billId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/by-customer"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/by-supplier"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/profit-loss"] });
+      
+      // Show success toast
+      toast({
+        title: isEditing ? "Chi phí đã được cập nhật" : "Chi phí đã được thêm",
+        description: "Dữ liệu đã được lưu vào cơ sở dữ liệu và báo cáo đã được cập nhật.",
+        variant: "default",
+      });
+      
+      // Execute callback if provided
       if (onSuccess) onSuccess();
+      
+      // Reset form
       form.reset(defaultValues);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Có lỗi xảy ra",
+        description: error?.message || "Không thể lưu chi phí. Vui lòng thử lại sau.",
+        variant: "destructive",
+      });
     },
   });
 
