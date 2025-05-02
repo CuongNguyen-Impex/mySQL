@@ -156,7 +156,7 @@ export default function ProfitLossReport() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className="text-2xl font-bold text-success">
-                {parseFloat(data?.summary?.totalRevenue || 0).toLocaleString('vi-VN')}
+                {(data?.summary?.totalRevenue || 0).toLocaleString('vi-VN')}
               </div>
             )}
           </CardContent>

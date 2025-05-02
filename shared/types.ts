@@ -182,6 +182,8 @@ export interface SupplierReport {
 export interface ProfitLossReport {
   summary: {
     totalRevenue: number;
+    hoaDonCosts: number;
+    traHoCosts: number;
     totalCosts: number;
     netProfit: number;
     profitMargin: number;
@@ -191,7 +193,9 @@ export interface ProfitLossReport {
     label: string;
     billCount: number;
     revenue: number;
-    costs: number;
+    hoaDonCosts: number;
+    traHoCosts: number;
+    totalCosts: number;
     profit: number;
     margin: number;
   }[];
