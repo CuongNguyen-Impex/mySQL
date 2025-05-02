@@ -22,6 +22,33 @@ import {
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+// Định nghĩa kiểu cho dữ liệu nhà cung cấp từ API
+interface SupplierReportData {
+  id: number;
+  name: string;
+  costTypeNames: string[];
+  transactionCount: number;
+  hoaDonAmount: string;
+  traHoAmount: string;
+  totalAmount: string;
+  averageCost: string;
+  percentage: number;
+  [key: string]: string | number | string[];
+}
+
+interface SupplierReportResponse {
+  suppliers: SupplierReportData[];
+  timeframe: string;
+  dateRange: {
+    from: string;
+    to: string;
+  };
+  totalHoaDonCosts: number;
+  totalTraHoCosts: number;
+  totalCosts: number;
+}
 
 export default function ReportsBySupplier() {
   const [timeframe, setTimeframe] = useState("quarter");
@@ -38,7 +65,7 @@ export default function ReportsBySupplier() {
   const [costTypeFilter, setCostTypeFilter] = useState("");
 
   // Fetch supplier report data
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<SupplierReportResponse>({
     queryKey: [
       "/api/reports/by-supplier", 
       timeframe, 
@@ -49,7 +76,7 @@ export default function ReportsBySupplier() {
   });
 
   // Fetch cost types for filter
-  const { data: costTypes } = useQuery({
+  const { data: costTypes = [] } = useQuery<any[]>({
     queryKey: ["/api/cost-types"],
   });
 
@@ -177,17 +204,21 @@ export default function ReportsBySupplier() {
                   <TableHead>Nhà cung cấp</TableHead>
                   <TableHead>Loại chi phí</TableHead>
                   <TableHead className="text-right">Số giao dịch</TableHead>
+                  <TableHead className="text-right">Chi phí (Hóa đơn)</TableHead>
+                  <TableHead className="text-right">Chi phí (Trả hộ)</TableHead>
                   <TableHead className="text-right">Tổng chi phí</TableHead>
                   <TableHead className="text-right">Chi phí trung bình</TableHead>
                   <TableHead className="text-right">Tỉ lệ %</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data?.suppliers?.map((supplier: any) => (
+                {data?.suppliers?.map((supplier: SupplierReportData) => (
                   <TableRow key={supplier.id}>
                     <TableCell className="font-medium">{supplier.name}</TableCell>
                     <TableCell>{supplier.costTypeNames.join(", ")}</TableCell>
                     <TableCell className="text-right">{supplier.transactionCount}</TableCell>
+                    <TableCell className="text-right">{parseFloat(supplier.hoaDonAmount || '0').toLocaleString('vi-VN')}</TableCell>
+                    <TableCell className="text-right">{parseFloat(supplier.traHoAmount || '0').toLocaleString('vi-VN')}</TableCell>
                     <TableCell className="text-right font-medium">{parseFloat(supplier.totalAmount).toLocaleString('vi-VN')}</TableCell>
                     <TableCell className="text-right">{parseFloat(supplier.averageCost).toLocaleString('vi-VN')}</TableCell>
                     <TableCell className="text-right">{supplier.percentage.toFixed(1)}%</TableCell>
