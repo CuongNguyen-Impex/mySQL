@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -32,16 +33,19 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 import { costFormSchema } from "@shared/types";
-import { Cost } from "@shared/types";
+import { Cost, CostWithRelations } from "@shared/types";
+import CostAttributeValueForm, { AttributeValueData } from "@/components/cost-types/cost-attribute-value-form";
 
 interface CostFormProps {
-  cost?: Cost;
+  cost?: CostWithRelations;
   billId: number;
   onSuccess?: () => void;
 }
 
 export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   const isEditing = !!cost;
+  const [selectedCostTypeId, setSelectedCostTypeId] = useState<number | undefined>(cost?.costTypeId);
+  const [attributeValues, setAttributeValues] = useState<AttributeValueData[]>([]);
   
   // Convert form default values
   const defaultValues = cost
@@ -73,6 +77,23 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   const { data: suppliers, isLoading: isLoadingSuppliers } = useQuery({
     queryKey: ["/api/suppliers"],
   });
+  
+  // Fetch attribute values for editing
+  const { data: existingAttributeValues } = useQuery({
+    queryKey: ["/api/cost-attribute-values", cost?.id],
+    enabled: isEditing && !!cost?.id,
+  });
+  
+  // Set initial attribute values when editing
+  useEffect(() => {
+    if (isEditing && existingAttributeValues?.length > 0) {
+      const formattedValues = existingAttributeValues.map((av: any) => ({
+        costTypeAttributeId: av.costTypeAttributeId,
+        value: av.value,
+      }));
+      setAttributeValues(formattedValues);
+    }
+  }, [isEditing, existingAttributeValues]);
 
   // Create or update cost
   const mutation = useMutation({
@@ -92,8 +113,26 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   });
 
   const onSubmit = (values: any) => {
-    mutation.mutate(values);
+    // Combine form values with attribute values
+    const dataToSubmit = {
+      ...values,
+      attributeValues: attributeValues,
+    };
+    mutation.mutate(dataToSubmit);
   };
+  
+  // Handle cost type change
+  const handleCostTypeChange = (costTypeId: number) => {
+    setSelectedCostTypeId(costTypeId);
+    form.setValue("costTypeId", costTypeId);
+  };
+  
+  // Set initial cost type ID from form values
+  useEffect(() => {
+    if (form.getValues().costTypeId) {
+      setSelectedCostTypeId(form.getValues().costTypeId);
+    }
+  }, [form]);
 
   return (
     <Form {...form}>
@@ -261,6 +300,13 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
         />
 
         <input type="hidden" {...form.register("billId", { valueAsNumber: true })} />
+        
+        {/* Cost Type Attributes */}
+        <CostAttributeValueForm
+          costTypeId={selectedCostTypeId}
+          onAttributeValuesChange={setAttributeValues}
+          initialValues={attributeValues}
+        />
 
         <div className="flex justify-end">
           <Button type="submit" disabled={mutation.isPending}>
