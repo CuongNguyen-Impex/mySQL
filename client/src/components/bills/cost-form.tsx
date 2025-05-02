@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { costFormSchema } from "@shared/types";
 import { Cost, CostWithRelations } from "@shared/types";
 import CostAttributeValueForm, { AttributeValueData } from "@/components/cost-types/cost-attribute-value-form";
+import { Badge } from "@/components/ui/badge";
 
 interface CostFormProps {
   cost?: CostWithRelations;
@@ -47,92 +48,102 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   const isEditing = !!cost;
   const [selectedCostTypeId, setSelectedCostTypeId] = useState<number | undefined>(cost?.costTypeId);
   const [attributeValues, setAttributeValues] = useState<AttributeValueData[]>([]);
+  const { toast } = useToast();
   
-  // Convert form default values
-  const defaultValues = cost
-    ? {
-        ...cost,
-        date: cost.date ? new Date(cost.date) : new Date(),
-        amount: parseFloat(cost.amount.toString()),
-      }
-    : {
-        billId,
-        costTypeId: undefined,
-        supplierId: undefined,
-        amount: undefined,
-        date: new Date(),
-        notes: "",
-      };
+  // Thông tin mặc định cho form
+  const defaultValues = {
+    billId: billId,
+    costTypeId: cost?.costTypeId,
+    supplierId: cost?.supplierId,
+    amount: cost ? parseFloat(cost.amount.toString()) : undefined,
+    date: cost?.date ? new Date(cost.date) : new Date(),
+    notes: cost?.notes ?? "",
+  };
 
+  // Khởi tạo form với các giá trị mặc định
   const form = useForm({
     resolver: zodResolver(costFormSchema),
     defaultValues,
   });
 
-  // Fetch cost types
-  const { data: costTypes, isLoading: isLoadingCostTypes } = useQuery({
+  // Lấy danh sách loại chi phí
+  const { data: costTypes = [], isLoading: isLoadingCostTypes } = useQuery({
     queryKey: ["/api/cost-types"],
   });
 
-  // Fetch suppliers
-  const { data: suppliers, isLoading: isLoadingSuppliers } = useQuery({
+  // Lấy danh sách nhà cung cấp
+  const { data: suppliers = [], isLoading: isLoadingSuppliers } = useQuery({
     queryKey: ["/api/suppliers"],
   });
   
-  // Fetch attribute values for editing
-  const { data: existingAttributeValues } = useQuery({
+  // Lấy thuộc tính của chi phí khi chỉnh sửa
+  const { data: existingAttributes = [] } = useQuery({
     queryKey: ["/api/cost-attribute-values", cost?.id],
     enabled: isEditing && !!cost?.id,
   });
   
-  // Set initial attribute values when editing
+  // Cập nhật giá trị của thuộc tính khi chỉnh sửa
   useEffect(() => {
-    if (isEditing && existingAttributeValues && Array.isArray(existingAttributeValues) && existingAttributeValues.length > 0) {
-      const formattedValues = existingAttributeValues.map((av: any) => ({
-        costTypeAttributeId: av.attributeId, // Một field là attributeId và một field là costTypeAttributeId
-        value: av.value,
+    if (isEditing && existingAttributes.length > 0) {
+      // Chuyển đổi dữ liệu từ server về định dạng của form
+      const formattedValues = existingAttributes.map((attr: any) => ({
+        costTypeAttributeId: attr.attributeId,
+        value: attr.value,
       }));
+      
+      console.log("Thuộc tính chi phí hiện tại:", formattedValues);
       setAttributeValues(formattedValues);
-      console.log("Setting attribute values:", formattedValues);
     }
-  }, [isEditing, existingAttributeValues]);
+  }, [isEditing, existingAttributes]);
 
-  const { toast } = useToast();
+  // Xử lý khi thay đổi loại chi phí
+  const handleCostTypeChange = (costTypeId: number) => {
+    setSelectedCostTypeId(costTypeId);
+    form.setValue("costTypeId", costTypeId);
+    
+    // Reset thuộc tính khi thay đổi loại chi phí
+    setAttributeValues([]);
+  };
+  
+  // Đồng bộ hóa costTypeId khi form được khởi tạo
+  useEffect(() => {
+    const currentCostTypeId = form.getValues().costTypeId;
+    if (currentCostTypeId) {
+      setSelectedCostTypeId(currentCostTypeId);
+    }
+  }, [form]);
 
-  // Create or update cost
+  // Mutation để tạo/cập nhật chi phí
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      console.log("Submitting with values:", values);
       if (isEditing && cost?.id) {
-        console.log(`Updating cost ${cost.id}`);
+        console.log(`Đang cập nhật chi phí ${cost.id} với dữ liệu:`, values);
         return apiRequest("PATCH", `/api/costs/${cost.id}`, values);
       } else {
-        console.log("Creating new cost");
+        console.log("Đang tạo chi phí mới với dữ liệu:", values);
         return apiRequest("POST", "/api/costs", values);
       }
     },
     onSuccess: () => {
-      // Invalidate queries to update data
+      // Cập nhật dữ liệu
       queryClient.invalidateQueries({ queryKey: [`/api/bills/${billId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports/by-customer"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports/by-supplier"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports/profit-loss"] });
       
-      // Show success toast
+      // Thông báo thành công
       toast({
         title: isEditing ? "Cập nhật thành công!" : "Đã thêm chi phí!",
-        description: "Dữ liệu đã được lưu vào cơ sở dữ liệu và báo cáo đã được cập nhật.",
+        description: "Dữ liệu đã được lưu vào cơ sở dữ liệu.",
         variant: "success",
       });
       
-      // Execute callback if provided
+      // Gọi callback nếu có
       if (onSuccess) onSuccess();
-      
-      // Reset form
-      form.reset(defaultValues);
     },
     onError: (error: any) => {
+      console.error("Lỗi khi lưu chi phí:", error);
       toast({
         title: "Có lỗi xảy ra",
         description: error?.message || "Không thể lưu chi phí. Vui lòng thử lại sau.",
@@ -141,28 +152,29 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
     },
   });
 
+  // Xử lý khi submit form
   const onSubmit = (values: any) => {
-    // Combine form values with attribute values
+    // Kết hợp giá trị form với thuộc tính
     const dataToSubmit = {
       ...values,
       attributeValues: attributeValues,
     };
-    console.log("Submitting cost with data:", dataToSubmit);
+    
+    console.log("Gửi dữ liệu chi phí:", dataToSubmit);
     mutation.mutate(dataToSubmit);
   };
   
-  // Handle cost type change
-  const handleCostTypeChange = (costTypeId: number) => {
-    setSelectedCostTypeId(costTypeId);
-    form.setValue("costTypeId", costTypeId);
-  };
-  
-  // Set initial cost type ID from form values
-  useEffect(() => {
-    if (form.getValues().costTypeId) {
-      setSelectedCostTypeId(form.getValues().costTypeId);
-    }
-  }, [form]);
+  // Hiển thị danh sách thuộc tính đã chọn
+  const selectedAttributes = attributeValues
+    .filter(attr => attr.value === "true")
+    .map(attr => {
+      // Tìm tên thuộc tính từ costTypeId và id thuộc tính
+      const attribute = costTypes
+        .flatMap((ct: any) => ct.attributes || [])
+        .find((attr2: any) => attr2.id === attr.costTypeAttributeId);
+      
+      return attribute?.name || 'Unknown';
+    });
 
   return (
     <Form {...form}>
@@ -173,20 +185,24 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
             name="costTypeId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cost Type</FormLabel>
+                <FormLabel>Loại chi phí</FormLabel>
                 <Select
                   disabled={isLoadingCostTypes}
-                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  onValueChange={(value) => {
+                    const numValue = parseInt(value);
+                    field.onChange(numValue);
+                    handleCostTypeChange(numValue);
+                  }}
                   value={field.value?.toString()}
                   defaultValue={field.value?.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select cost type" />
+                      <SelectValue placeholder="Chọn loại chi phí" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {costTypes?.map((costType: any) => (
+                    {Array.isArray(costTypes) && costTypes.map((costType: any) => (
                       <SelectItem
                         key={costType.id}
                         value={costType.id.toString()}
@@ -206,7 +222,7 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
             name="supplierId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Supplier</FormLabel>
+                <FormLabel>Nhà cung cấp</FormLabel>
                 <Select
                   disabled={isLoadingSuppliers}
                   onValueChange={(value) => field.onChange(parseInt(value))}
@@ -215,11 +231,11 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select supplier" />
+                      <SelectValue placeholder="Chọn nhà cung cấp" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {suppliers?.map((supplier: any) => (
+                    {Array.isArray(suppliers) && suppliers.map((supplier: any) => (
                       <SelectItem
                         key={supplier.id}
                         value={supplier.id.toString()}
@@ -241,17 +257,17 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
             name="amount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Amount</FormLabel>
+                <FormLabel>Số tiền</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-muted-foreground pointer-events-none">
-                      $
+                      ₫
                     </span>
                     <Input
                       type="number"
-                      placeholder="0.00"
+                      placeholder="0"
                       className="pl-7"
-                      step="0.01"
+                      step="1"
                       min="0"
                       {...field}
                       onChange={(e) => {
@@ -271,7 +287,7 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Date</FormLabel>
+                <FormLabel>Ngày</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -283,9 +299,9 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
                         )}
                       >
                         {field.value ? (
-                          format(field.value, "PPP")
+                          format(field.value, "dd/MM/yyyy")
                         ) : (
-                          <span>Pick a date</span>
+                          <span>Chọn ngày</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
@@ -314,15 +330,24 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel>Ghi chú</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Enter any notes about this cost"
+                  placeholder="Thêm ghi chú về chi phí này"
                   {...field}
+                  value={field.value || ""}
                 />
               </FormControl>
               <FormDescription>
-                Optional details about the cost
+                {selectedAttributes.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedAttributes.map((attrName, index) => (
+                      <Badge key={index} variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">
+                        {attrName}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -331,16 +356,18 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
 
         <input type="hidden" {...form.register("billId", { valueAsNumber: true })} />
         
-        {/* Cost Type Attributes */}
-        <CostAttributeValueForm
-          costTypeId={selectedCostTypeId}
-          onAttributeValuesChange={setAttributeValues}
-          initialValues={attributeValues}
-        />
+        {/* Thuộc tính của loại chi phí */}
+        {selectedCostTypeId && (
+          <CostAttributeValueForm
+            costTypeId={selectedCostTypeId}
+            onAttributeValuesChange={setAttributeValues}
+            initialValues={attributeValues}
+          />
+        )}
 
         <div className="flex justify-end">
           <Button type="submit" disabled={mutation.isPending}>
-            {isEditing ? "Update Cost" : "Add Cost"}
+            {isEditing ? "Cập nhật chi phí" : "Thêm chi phí"}
           </Button>
         </div>
       </form>
