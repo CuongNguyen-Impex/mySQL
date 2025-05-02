@@ -144,8 +144,12 @@ export default function BillDetailReport() {
                               const isHoaDon = costAttribute === 'Hóa đơn';
                               const isTraHo = costAttribute === 'Trả hộ';
                               
-                              // Tính lợi nhuận dựa trên chi phí "Hóa đơn"
-                              const profit = allocatedRevenue - (isHoaDon ? totalCostAmount : 0);
+                              // Lợi nhuận của từng dòng chi phí
+                              // Cách tính từ API: lợi nhuận = tổng doanh thu - tổng chi phí hóa đơn (không tính trả hộ)
+                              // Mỗi dòng chi phí sẽ hiển thị profit phân bổ dựa theo tỷ lệ chi phí
+                              const costProfit = isHoaDon 
+                                ? (totalHoaDonCost > 0 ? (totalCostAmount / totalHoaDonCost) * bill.profit : bill.profit)
+                                : (allocatedRevenue) // Nếu là chi phí trả hộ, lợi nhuận bằng doanh thu phân bổ
                               
                               // Increment the global row number
                               rowNumber++;
@@ -161,8 +165,8 @@ export default function BillDetailReport() {
                                 <TableCell className="text-right">{allocatedRevenue.toLocaleString('vi-VN')}</TableCell>
                                 <TableCell className="text-right">{isHoaDon ? totalCostAmount.toLocaleString('vi-VN') : '0'}</TableCell>
                                 <TableCell className="text-right">{isTraHo ? totalCostAmount.toLocaleString('vi-VN') : '0'}</TableCell>
-                                <TableCell className={cn("text-right", profit >= 0 ? "text-success" : "text-destructive")}>
-                                  {profit.toLocaleString('vi-VN')}
+                                <TableCell className={cn("text-right", costProfit >= 0 ? "text-success" : "text-destructive")}>
+                                  {costProfit.toLocaleString('vi-VN')}
                                 </TableCell>
                               </TableRow>
                             );
@@ -202,8 +206,8 @@ export default function BillDetailReport() {
                               {bill.totalTraHoCost ? bill.totalTraHoCost.toLocaleString('vi-VN') : '0'}
                             </TableCell>
                             <TableCell className={cn("text-right font-medium", 
-                              totalProfit >= 0 ? "text-success" : "text-destructive")}>
-                              {totalProfit.toLocaleString('vi-VN')}
+                              bill.profit >= 0 ? "text-success" : "text-destructive")}>
+                              {bill.profit.toLocaleString('vi-VN')}
                             </TableCell>
                           </TableRow>
                         </React.Fragment>
