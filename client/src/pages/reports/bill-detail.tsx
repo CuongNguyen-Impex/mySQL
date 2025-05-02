@@ -144,12 +144,22 @@ export default function BillDetailReport() {
                               const isHoaDon = costAttribute === 'Hóa đơn';
                               const isTraHo = costAttribute === 'Trả hộ';
                               
-                              // Lợi nhuận của từng dòng chi phí
-                              // Cách tính từ API: lợi nhuận = tổng doanh thu - tổng chi phí hóa đơn (không tính trả hộ)
-                              // Mỗi dòng chi phí sẽ hiển thị profit phân bổ dựa theo tỷ lệ chi phí
-                              const costProfit = isHoaDon 
-                                ? (totalHoaDonCost > 0 ? (totalCostAmount / totalHoaDonCost) * bill.profit : bill.profit)
-                                : (allocatedRevenue) // Nếu là chi phí trả hộ, lợi nhuận bằng doanh thu phân bổ
+                              // Phương pháp tính toán lợi nhuận cho từng dòng chi phí
+                              let costProfit = 0;
+                              
+                              if (isHoaDon) {
+                                // Nếu là chi phí hóa đơn, phân bổ lợi nhuận dựa trên tỷ lệ chi phí hóa đơn
+                                if (totalHoaDonCost > 0) {
+                                  costProfit = (totalCostAmount / totalHoaDonCost) * totalProfit;
+                                } else {
+                                  // Trường hợp không có chi phí hóa đơn, phân bổ lợi nhuận bằng nhau
+                                  costProfit = billCosts.length > 0 ? totalProfit / billCosts.length : totalProfit;
+                                }
+                              } else {
+                                // Nếu là chi phí trả hộ, hiển thị phần doanh thu tương ứng vì chi phí trả hộ 
+                                // không được tính vào lợi nhuận theo nguyên tắc kế toán
+                                costProfit = allocatedRevenue;
+                              }
                               
                               // Increment the global row number
                               rowNumber++;
