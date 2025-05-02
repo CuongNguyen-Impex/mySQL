@@ -4,21 +4,8 @@ import { bills, costs, revenues, customers, services, suppliers, costTypes, cost
 import { eq, and, desc, between, sql, count, sum, avg } from "drizzle-orm";
 import { subDays, subMonths, subYears, parseISO, isValid, startOfDay, endOfDay } from "date-fns";
 
-// Helper function to classify costs by their attributes
-const createCostAttributeMap = async () => {
-  // Get all costs with their tt_hd attribute
-  const allCosts = await db.query.costs.findMany();
-  
-  // Create a map of cost attribute types for quick lookup
-  const costAttributeMap = new Map<number, string>();
-  
-  // Use the tt_hd field directly
-  allCosts.forEach(cost => {
-    costAttributeMap.set(cost.id, cost.tt_hd);
-  });
-  
-  return costAttributeMap;
-};
+// Helper function has been removed since we now use tt_hd field directly
+// No longer need a map to classify costs by attributes
 
 // Get date range based on timeframe string
 const getDateRange = (timeframe?: string, from?: string, to?: string) => {
@@ -65,9 +52,6 @@ const getDateRange = (timeframe?: string, from?: string, to?: string) => {
 
 export const getDashboardData = async (req: Request, res: Response) => {
   try {
-    // Use the helper function to get cost attribute map
-    const costAttributeMap = await createCostAttributeMap();
-    
     // Count total bills
     const billsResult = await db.select({
       count: count()
@@ -86,30 +70,28 @@ export const getDashboardData = async (req: Request, res: Response) => {
     const allCosts = await db.query.costs.findMany({
       columns: {
         id: true,
-        amount: true
+        amount: true,
+        tt_hd: true
       }
     });
     
-    // Separate costs by attribute type
+    // Separate costs by tt_hd value
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
-    let totalKoHoaDonCosts = 0;
     
     allCosts.forEach(cost => {
-      const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+      const costType = cost.tt_hd || "Hóa đơn";
       const amount = parseFloat(cost.amount.toString());
       
       if (costType === "Trả hộ") {
         totalTraHoCosts += amount;
-      } else if (costType === "Ko hóa đơn") {
-        totalKoHoaDonCosts += amount;
-      } else {
+      } else { // "Hóa đơn"
         totalHoaDonCosts += amount;
       }
     });
     
     // Calculate total costs (all types combined)
-    const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
     
     // Calculate profit - only based on 'Hóa đơn' costs as per business rules
     const totalProfit = totalRevenue - totalHoaDonCosts;
@@ -148,16 +130,14 @@ export const getDashboardData = async (req: Request, res: Response) => {
           totalCustomerRevenue += parseFloat(revenue.amount.toString());
         });
         
-        // Sum costs based on attribute type
+        // Sum costs based on tt_hd value
         bill.costs.forEach(cost => {
-          const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+          const costType = cost.tt_hd || "Hóa đơn";
           const amount = parseFloat(cost.amount.toString());
           
           if (costType === "Trả hộ") {
             totalCustomerTraHoCosts += amount;
-          } else if (costType === "Ko hóa đơn") {
-            totalCustomerKoHoaDonCosts += amount;
-          } else {
+          } else { // "Hóa đơn"
             totalCustomerHoaDonCosts += amount;
           }
         });
@@ -209,17 +189,15 @@ export const getDashboardData = async (req: Request, res: Response) => {
         totalServiceRevenue += parseFloat(revenue.amount.toString());
       });
       
-      // Sum costs from all bills with this service based on attribute type
+      // Sum costs from all bills with this service based on tt_hd value
       service.bills.forEach(bill => {
         bill.costs.forEach(cost => {
-          const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+          const costType = cost.tt_hd || "Hóa đơn";
           const amount = parseFloat(cost.amount.toString());
           
           if (costType === "Trả hộ") {
             totalServiceTraHoCosts += amount;
-          } else if (costType === "Ko hóa đơn") {
-            totalServiceKoHoaDonCosts += amount;
-          } else {
+          } else { // "Hóa đơn"
             totalServiceHoaDonCosts += amount;
           }
         });
