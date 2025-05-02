@@ -166,7 +166,19 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
 
   const onSubmit = async (values: z.infer<typeof multiCostFormSchema>) => {
     setSubmitting(true);
-    createCostsMutation.mutate(values);
+    // Make sure each cost has the attribute values from our state
+    const costsWithAttributes = values.costs.map((cost, index) => {
+      if (selectedAttributes[index]) {
+        return {
+          ...cost,
+          attributeValues: selectedAttributes[index]
+        };
+      }
+      return cost;
+    });
+    
+    console.log("Submitting costs with attributes:", costsWithAttributes);
+    createCostsMutation.mutate({ costs: costsWithAttributes });
   };
 
   // Get attributes for the selected cost type
@@ -181,10 +193,12 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
     
     // Get attributes for this cost type
     const attributes = costTypeAttributes.filter((attr: any) => attr.costTypeId === costTypeId);
+    console.log("Available attributes:", attributes);
     
     // Set default attribute (Hóa đơn if exists)
     if (attributes.length > 0) {
       const defaultAttr = attributes.find((attr: any) => attr.name === "Hóa đơn") || attributes[0];
+      console.log("Selected default attribute:", defaultAttr);
       
       // Create attribute value object
       const attributeValue: AttributeValue = {
@@ -197,10 +211,14 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
       form.setValue(`costs.${index}.attributeValues`, attrValues);
       
       // Update the selected attributes state
-      setSelectedAttributes(prev => ({
-        ...prev,
-        [index]: attrValues
-      }));
+      setSelectedAttributes(prev => {
+        const updated = {
+          ...prev,
+          [index]: attrValues
+        };
+        console.log("Updated selected attributes:", updated);
+        return updated;
+      });
     }
   };
 
