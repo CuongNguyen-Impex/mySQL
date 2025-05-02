@@ -197,55 +197,59 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
     form.setValue(`costs.${index}.costTypeId`, costTypeId);
     
     console.log(`Handling cost type change for index ${index}, costTypeId: ${costTypeId}`);
-    console.log(`All available attributes:`, costTypeAttributes);
     
-    // Get attributes for this cost type
-    const attributes = costTypeAttributes.filter((attr: any) => attr.costTypeId === costTypeId);
-    console.log(`Filtered attributes for costTypeId ${costTypeId}:`, attributes);
-    
-    // Set default attribute (Hóa đơn if exists)
-    if (attributes.length > 0) {
-      // Tìm thuộc tính Hóa đơn trước
-      const defaultAttr = attributes.find((attr: any) => attr.name === "Hóa đơn") || attributes[0];
-      console.log("Selected default attribute:", defaultAttr);
-      
-      if (defaultAttr) {
-        // Create attribute value object
-        const attributeValue: AttributeValue = {
-          costTypeAttributeId: defaultAttr.id,
-          value: defaultAttr.name
-        };
+    // Fetch cost type attributes specifically for this cost type
+    const fetchCostTypeAttributes = async () => {
+      try {
+        const response = await fetch(`/api/cost-type-attributes?costTypeId=${costTypeId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch cost type attributes');
+        }
         
-        // Update form and state
-        const attrValues = [attributeValue];
+        const attributes = await response.json();
+        console.log(`Fetched attributes for costTypeId ${costTypeId}:`, attributes);
         
-        // Manually set the form value
-        form.setValue(`costs.${index}.attributeValues`, attrValues, { 
-          shouldValidate: true,
-          shouldDirty: true
-        });
-        
-        // Manually update the selected attributes state
-        setSelectedAttributes(prev => {
-          const updated = {
-            ...prev,
-            [index]: attrValues
-          };
-          console.log(`Updated selectedAttributes for index ${index}:`, updated);
-          return updated;
-        });
-        
-        // Verify with log
-        setTimeout(() => {
-          console.log(`Current form values for costs.${index}:`, form.getValues(`costs.${index}`));
-          console.log(`Current selectedAttributes:`, selectedAttributes);
-        }, 100);
-      } else {
-        console.warn("Could not find Hóa đơn attribute or default attribute");
+        if (attributes.length > 0) {
+          // Find the "Hóa đơn" attribute or use the first one
+          const defaultAttr = attributes.find((attr: any) => attr.name === "Hóa đơn") || attributes[0];
+          console.log("Selected default attribute:", defaultAttr);
+          
+          if (defaultAttr) {
+            // Create attribute value object
+            const attributeValue: AttributeValue = {
+              costTypeAttributeId: defaultAttr.id,
+              value: defaultAttr.name
+            };
+            
+            // Create attribute values array
+            const attrValues = [attributeValue];
+            
+            // Update the form value
+            form.setValue(`costs.${index}.attributeValues`, attrValues, {
+              shouldValidate: true,
+              shouldDirty: true
+            });
+            
+            // Update selected attributes state for UI display
+            setSelectedAttributes(prev => {
+              const updated = {
+                ...prev,
+                [index]: attrValues
+              };
+              console.log(`Updated selectedAttributes for index ${index}:`, updated);
+              return updated;
+            });
+          }
+        } else {
+          console.warn(`No attributes found for cost type ID: ${costTypeId}`);
+        }
+      } catch (error) {
+        console.error('Error fetching cost type attributes:', error);
       }
-    } else {
-      console.warn(`No attributes found for cost type ID: ${costTypeId}`);
-    }
+    };
+    
+    // Execute the fetch function
+    fetchCostTypeAttributes();
   };
 
   const addNewCost = () => {
