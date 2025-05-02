@@ -49,6 +49,10 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
         date: bill.date ? new Date(bill.date) : new Date(),
         customerId: bill.customerId,
         serviceId: bill.serviceId,
+        invoiceNo: bill.invoiceNo || "",
+        importExportType: bill.importExportType || "Nhập",
+        packageCount: bill.packageCount || 0,
+        goodsType: bill.goodsType || "Air",
       }
     : {
         billNo: "",
@@ -57,6 +61,10 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
         serviceId: undefined,
         status: "Pending",
         notes: "",
+        invoiceNo: "",
+        importExportType: "Nhập",
+        packageCount: 0,
+        goodsType: "Air",
       };
 
   const form = useForm({
@@ -65,12 +73,12 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
   });
 
   // Fetch customers
-  const { data: customers, isLoading: isLoadingCustomers } = useQuery({
+  const { data: customers = [], isLoading: isLoadingCustomers } = useQuery({
     queryKey: ["/api/customers"],
   });
 
   // Fetch services
-  const { data: services, isLoading: isLoadingServices } = useQuery({
+  const { data: services = [], isLoading: isLoadingServices } = useQuery({
     queryKey: ["/api/services"],
   });
 
@@ -222,32 +230,125 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="invoiceNo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Invoice Number</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
+                  <Input placeholder="e.g. INV001" {...field} />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="importExportType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Type</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Nhập">Nhập</SelectItem>
+                    <SelectItem value="Xuất">Xuất</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="packageCount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Number of Packages</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    min="0"
+                    placeholder="0" 
+                    {...field} 
+                    onChange={(e) => {
+                      const value = e.target.value === "" ? "0" : e.target.value;
+                      field.onChange(parseInt(value));
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="goodsType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Goods Type</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select goods type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Air">Air</SelectItem>
+                    <SelectItem value="Sea">Sea</SelectItem>
+                    <SelectItem value="LCL">LCL</SelectItem>
+                    <SelectItem value="Dom">Dom</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -258,7 +359,11 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
               <FormControl>
                 <Textarea
                   placeholder="Enter any notes about this bill"
-                  {...field}
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
                 />
               </FormControl>
               <FormDescription>

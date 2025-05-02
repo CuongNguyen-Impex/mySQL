@@ -340,6 +340,10 @@ export default function BillDetails() {
               <p className="text-base font-medium">{bill?.billNo}</p>
             </div>
             <div>
+              <p className="text-sm text-muted-foreground">Số Invoice</p>
+              <p className="text-base font-medium">{bill?.invoiceNo || "—"}</p>
+            </div>
+            <div>
               <p className="text-sm text-muted-foreground">Ngày tạo</p>
               <p className="text-base font-medium">{new Date(bill?.date).toLocaleDateString()}</p>
             </div>
@@ -350,6 +354,18 @@ export default function BillDetails() {
             <div>
               <p className="text-sm text-muted-foreground">Dịch vụ</p>
               <p className="text-base font-medium">{bill?.service?.name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Loại</p>
+              <p className="text-base font-medium">{bill?.importExportType || "Nhập"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Số kiện</p>
+              <p className="text-base font-medium">{bill?.packageCount || "0"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Loại hàng</p>
+              <p className="text-base font-medium">{bill?.goodsType || "Air"}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Trạng thái</p>

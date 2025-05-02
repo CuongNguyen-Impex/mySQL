@@ -40,7 +40,11 @@ export type {
 export const billFormSchema = insertBillSchema.extend({
   date: z.coerce.date(),
   customerId: z.coerce.number(),
-  serviceId: z.coerce.number()
+  serviceId: z.coerce.number(),
+  packageCount: z.coerce.number().optional(),
+  importExportType: z.enum(["Nhập", "Xuất"]),
+  goodsType: z.enum(["Air", "Sea", "LCL", "Dom"]),
+  invoiceNo: z.string().optional()
 });
 
 export const costFormSchema = insertCostSchema.extend({
