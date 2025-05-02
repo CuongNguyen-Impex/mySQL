@@ -140,7 +140,14 @@ export default function BillDetailReport() {
                               const totalCostAmount = parseFloat(cost.amount || 0);
                               const costShare = billCosts.length > 0 ? 1 / billCosts.length : 1;
                               const allocatedRevenue = totalRevenue * costShare;
-                              const profit = allocatedRevenue - totalCostAmount;
+                              
+                              // Xác định loại thuộc tính chi phí
+                              const costAttribute = cost.attribute || 'Hóa đơn';
+                              const isHoaDon = costAttribute === 'Hóa đơn';
+                              const isTraHo = costAttribute === 'Trả hộ';
+                              
+                              // Tính lợi nhuận dựa trên chi phí "Hóa đơn"
+                              const profit = allocatedRevenue - (isHoaDon ? totalCostAmount : 0);
                               
                               // Increment the global row number
                               rowNumber++;
@@ -154,7 +161,8 @@ export default function BillDetailReport() {
                                 <TableCell>{bill.customer?.name || 'N/A'}</TableCell>
                                 <TableCell>{cost.supplier?.name || 'N/A'}</TableCell>
                                 <TableCell className="text-right">{allocatedRevenue.toLocaleString('vi-VN')}</TableCell>
-                                <TableCell className="text-right">{totalCostAmount.toLocaleString('vi-VN')}</TableCell>
+                                <TableCell className="text-right">{isHoaDon ? totalCostAmount.toLocaleString('vi-VN') : '0'}</TableCell>
+                                <TableCell className="text-right">{isTraHo ? totalCostAmount.toLocaleString('vi-VN') : '0'}</TableCell>
                                 <TableCell className={cn("text-right", profit >= 0 ? "text-success" : "text-destructive")}>
                                   {profit.toLocaleString('vi-VN')}
                                 </TableCell>
@@ -173,6 +181,7 @@ export default function BillDetailReport() {
                               <TableCell>N/A</TableCell>
                               <TableCell className="text-right">{totalRevenue.toLocaleString('vi-VN')}</TableCell>
                               <TableCell className="text-right">0</TableCell>
+                              <TableCell className="text-right">0</TableCell>
                               <TableCell className="text-right text-success">{totalRevenue.toLocaleString('vi-VN')}</TableCell>
                             </TableRow>
                           )}
@@ -189,7 +198,10 @@ export default function BillDetailReport() {
                               {totalRevenue.toLocaleString('vi-VN')}
                             </TableCell>
                             <TableCell className="text-right font-medium">
-                              {totalCost.toLocaleString('vi-VN')}
+                              {bill.totalHoaDonCost ? bill.totalHoaDonCost.toLocaleString('vi-VN') : '0'}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {bill.totalTraHoCost ? bill.totalTraHoCost.toLocaleString('vi-VN') : '0'}
                             </TableCell>
                             <TableCell className={cn("text-right font-medium", 
                               totalProfit >= 0 ? "text-success" : "text-destructive")}>
@@ -214,10 +226,12 @@ export default function BillDetailReport() {
                         </TableCell>
                         <TableCell className="text-right">
                           {data.bills.reduce((sum: number, bill: any) => {
-                            const costTotal = (bill.costs || []).reduce(
-                              (s: number, cost: any) => s + parseFloat(cost.amount || 0), 0
-                            );
-                            return sum + costTotal;
+                            return sum + (bill.totalHoaDonCost || 0);
+                          }, 0).toLocaleString('vi-VN')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {data.bills.reduce((sum: number, bill: any) => {
+                            return sum + (bill.totalTraHoCost || 0);
                           }, 0).toLocaleString('vi-VN')}
                         </TableCell>
                         <TableCell className={cn("text-right", 
@@ -225,19 +239,15 @@ export default function BillDetailReport() {
                             const revTotal = (bill.revenues || []).reduce(
                               (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
                             );
-                            const costTotal = (bill.costs || []).reduce(
-                              (s: number, cost: any) => s + parseFloat(cost.amount || 0), 0
-                            );
-                            return sum + (revTotal - costTotal);
+                            // Chỉ tính lợi nhuận dựa trên chi phí "Hóa đơn"
+                            return sum + (revTotal - (bill.totalHoaDonCost || 0));
                           }, 0) >= 0 ? "text-success" : "text-destructive")}>
                           {data.bills.reduce((sum: number, bill: any) => {
                             const revTotal = (bill.revenues || []).reduce(
                               (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
                             );
-                            const costTotal = (bill.costs || []).reduce(
-                              (s: number, cost: any) => s + parseFloat(cost.amount || 0), 0
-                            );
-                            return sum + (revTotal - costTotal);
+                            // Chỉ tính lợi nhuận dựa trên chi phí "Hóa đơn"
+                            return sum + (revTotal - (bill.totalHoaDonCost || 0));
                           }, 0).toLocaleString('vi-VN')}
                         </TableCell>
                       </TableRow>
