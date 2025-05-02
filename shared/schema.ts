@@ -102,6 +102,7 @@ export const costAttributeValues = pgTable("cost_attribute_values", {
   id: serial("id").primaryKey(),
   costId: integer("cost_id").references(() => costs.id, { onDelete: 'cascade' }).notNull(),
   attributeId: integer("attribute_id").references(() => costTypeAttributes.id, { onDelete: 'cascade' }).notNull(),
+  value: text("value").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });

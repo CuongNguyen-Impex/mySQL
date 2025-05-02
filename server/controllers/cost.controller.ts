@@ -20,6 +20,7 @@ export const getCosts = async (req: Request, res: Response) => {
           }
         }
       },
+
       orderBy: desc(costs.date)
     });
     
@@ -35,6 +36,7 @@ export const getCosts = async (req: Request, res: Response) => {
             }
           }
         },
+
         where: eq(costs.billId, Number(billId)),
         orderBy: desc(costs.date)
       });
@@ -73,7 +75,7 @@ export const createCost = async (req: Request, res: Response) => {
           // Create the attribute value
           await tx.insert(costAttributeValues).values({
             costId: newCost.id,
-            costTypeAttributeId: valueData.costTypeAttributeId,
+            attributeId: valueData.costTypeAttributeId,
             value: valueData.value,
           });
         }
@@ -122,7 +124,12 @@ export const getCostById = async (req: Request, res: Response) => {
       with: {
         bill: true,
         costType: true,
-        supplier: true
+        supplier: true,
+        attributeValues: {
+          with: {
+            attribute: true
+          }
+        }
       }
     });
     
@@ -184,7 +191,7 @@ export const updateCost = async (req: Request, res: Response) => {
           // Create the attribute value
           await tx.insert(costAttributeValues).values({
             costId: updatedCost.id,
-            costTypeAttributeId: valueData.costTypeAttributeId,
+            attributeId: valueData.costTypeAttributeId,
             value: valueData.value,
           });
         }
