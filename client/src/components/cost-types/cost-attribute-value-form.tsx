@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { CostTypeAttribute } from "@shared/schema";
 
@@ -34,7 +34,26 @@ export default function CostAttributeValueForm({
   const { data: attributes = [], isLoading: isLoadingAttributes } = useQuery<CostTypeAttribute[]>({
     queryKey: ["/api/cost-type-attributes", costTypeId],
     enabled: !!costTypeId,
-    select: (data) => data.filter((attr) => attr.costTypeId === costTypeId),
+    select: (data) => {
+      // Filter attributes for the selected cost type
+      const filteredAttrs = data.filter((attr) => attr.costTypeId === costTypeId);
+      
+      // Make sure we prioritize important attributes
+      return filteredAttrs.sort((a, b) => {
+        const importantNames = ["Hóa đơn", "Trả hộ", "Ko hóa đơn"];
+        const aIndex = importantNames.indexOf(a.name);
+        const bIndex = importantNames.indexOf(b.name);
+        
+        // If both are important attributes, sort by their order in the array
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        // If only a is an important attribute, it comes first
+        if (aIndex !== -1) return -1;
+        // If only b is an important attribute, it comes first
+        if (bIndex !== -1) return 1;
+        // If neither are important attributes, keep original order
+        return 0;
+      });
+    },
   });
 
   // Initialize attribute values when attributes change
@@ -77,7 +96,7 @@ export default function CostAttributeValueForm({
     return (
       <Card className="mt-4">
         <CardContent className="pt-6 flex justify-center items-center py-8">
-          <Spinner />
+          <Loader2 className="h-6 w-6 animate-spin" />
         </CardContent>
       </Card>
     );
