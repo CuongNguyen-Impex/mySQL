@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom styles for bill detail report */
+.bill-detail-table .header-row th {
+  border: 1px solid var(--border);
+  text-align: center;
+  padding: 8px;
+  background-color: var(--muted);
+}
+
+.bill-detail-table .header-giamua {
+  border-bottom: 2px solid var(--border);
+  font-weight: bold;
+}
+
 @layer base {
   :root {
     --background: 0 0% 98%;

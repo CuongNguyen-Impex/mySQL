@@ -99,9 +99,9 @@ export default function BillDetailReport() {
                   <Skeleton className="h-10 w-full" />
                 </div>
               ) : (
-                <Table>
+                <Table className="bill-detail-table">
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="header-row">
                       <TableHead rowSpan={2}>STT</TableHead>
                       <TableHead rowSpan={2}>Ngày</TableHead>
                       <TableHead rowSpan={2}>Số bill</TableHead>
@@ -109,11 +109,11 @@ export default function BillDetailReport() {
                       <TableHead rowSpan={2}>Khách hàng</TableHead>
                       <TableHead rowSpan={2}>Nhà cung cấp</TableHead>
                       <TableHead className="text-right" rowSpan={2}>Giá bán</TableHead>
-                      <TableHead className="text-center" colSpan={2}>Giá mua</TableHead>
+                      <TableHead className="text-center header-giamua" colSpan={2}>Giá mua</TableHead>
                       <TableHead className="text-right" rowSpan={2}>Lãi/Lỗ</TableHead>
                     </TableRow>
-                    <TableRow>
-                      <TableHead className="text-right border-l">Hóa đơn</TableHead>
+                    <TableRow className="header-row">
+                      <TableHead className="text-right">Hóa đơn</TableHead>
                       <TableHead className="text-right">Trả hộ</TableHead>
                     </TableRow>
                   </TableHeader>
