@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import CostAttributeBadge from "./cost-attribute-badge";
 
 interface CostsTableProps {
   costs: any[];
@@ -9,10 +10,11 @@ interface CostsTableProps {
 export default function CostsTable({ costs, totalCost }: CostsTableProps) {
   return (
     <div>
+      {/* Chú thích màu sắc */}
       <div className="flex items-center justify-end space-x-2 mb-4">
-        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Hóa đơn</Badge>
-        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">Trả hộ</Badge>
-        <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Ko hóa đơn</Badge>
+        <CostAttributeBadge attributeName="Hóa đơn" />
+        <CostAttributeBadge attributeName="Trả hộ" />
+        <CostAttributeBadge attributeName="Ko hóa đơn" />
       </div>
       
       {costs && costs.length > 0 ? (
@@ -30,27 +32,13 @@ export default function CostsTable({ costs, totalCost }: CostsTableProps) {
             </thead>
             <tbody>
               {costs.map((cost: any) => {
-                // Xử lý các thuộc tính
+                // Lọc ra các thuộc tính được chọn (value = "true")
                 const selectedAttributes = cost.attributeValues?.filter((attr: any) => 
                   attr.value === "true" && attr.attribute?.name
                 ) || [];
                 
                 // Tạo danh sách tên thuộc tính
                 const attributeLabels = selectedAttributes.map((attr: any) => attr.attribute.name);
-                
-                // Hàm xác định màu sắc cho badge
-                const getBadgeColor = (attrName: string) => {
-                  switch(attrName) {
-                    case "Hóa đơn": 
-                      return "bg-green-100 text-green-800 border-green-300";
-                    case "Trả hộ": 
-                      return "bg-blue-100 text-blue-800 border-blue-300";
-                    case "Ko hóa đơn": 
-                      return "bg-yellow-100 text-yellow-800 border-yellow-300";
-                    default: 
-                      return "bg-gray-100 text-gray-800 border-gray-300";
-                  }
-                };
                 
                 return (
                   <tr key={cost.id} className="border-b hover:bg-muted/50 transition-colors">
@@ -60,13 +48,10 @@ export default function CostsTable({ costs, totalCost }: CostsTableProps) {
                       <div className="flex flex-wrap gap-1">
                         {attributeLabels.length > 0 ? (
                           attributeLabels.map((attrName: string, index: number) => (
-                            <Badge 
-                              key={index} 
-                              variant="outline" 
-                              className={getBadgeColor(attrName)}
-                            >
-                              {attrName}
-                            </Badge>
+                            <CostAttributeBadge 
+                              key={index}
+                              attributeName={attrName}
+                            />
                           ))
                         ) : (
                           <span className="text-muted-foreground text-xs">Không có</span>
