@@ -228,6 +228,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       let totalServiceRevenue = 0;
       let totalServiceHoaDonCosts = 0;
       let totalServiceTraHoCosts = 0;
+      let totalServiceKoHoaDonCosts = 0;
       
       // Sum revenues
       service.revenues.forEach(revenue => {
@@ -242,14 +243,16 @@ export const getDashboardData = async (req: Request, res: Response) => {
           
           if (costType === "Trả hộ") {
             totalServiceTraHoCosts += amount;
+          } else if (costType === "Ko hóa đơn") {
+            totalServiceKoHoaDonCosts += amount;
           } else {
             totalServiceHoaDonCosts += amount;
           }
         });
       });
       
-      // Calculate total costs
-      const totalServiceCosts = totalServiceHoaDonCosts + totalServiceTraHoCosts;
+      // Calculate total costs (all types combined)
+      const totalServiceCosts = totalServiceHoaDonCosts + totalServiceTraHoCosts + totalServiceKoHoaDonCosts;
       
       // Calculate profit based only on 'Hóa đơn' costs
       const profit = totalServiceRevenue - totalServiceHoaDonCosts;
@@ -260,6 +263,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
         revenue: totalServiceRevenue,
         hoaDonCosts: totalServiceHoaDonCosts,
         traHoCosts: totalServiceTraHoCosts,
+        koHoaDonCosts: totalServiceKoHoaDonCosts,
         costs: totalServiceCosts,
         profit,
         percentage: totalProfit !== 0 ? (profit / totalProfit) * 100 : 0
@@ -271,6 +275,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       totalRevenue,
       hoaDonCosts: totalHoaDonCosts,
       traHoCosts: totalTraHoCosts,
+      koHoaDonCosts: totalKoHoaDonCosts,
       totalCosts,
       totalProfit,
       billsTrend,
