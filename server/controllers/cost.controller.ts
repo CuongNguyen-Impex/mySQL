@@ -13,12 +13,7 @@ export const getCosts = async (req: Request, res: Response) => {
       with: {
         bill: true,
         costType: true,
-        supplier: true,
-        attributeValues: {
-          with: {
-            attribute: true
-          }
-        }
+        supplier: true
       },
 
       orderBy: desc(costs.date)
@@ -29,12 +24,7 @@ export const getCosts = async (req: Request, res: Response) => {
         with: {
           bill: true,
           costType: true,
-          supplier: true,
-          attributeValues: {
-            with: {
-              attribute: true
-            }
-          }
+          supplier: true
         },
 
         where: eq(costs.billId, Number(billId)),
@@ -55,55 +45,22 @@ export const getCosts = async (req: Request, res: Response) => {
 
 export const createCost = async (req: Request, res: Response) => {
   try {
-    const { attributeValues: attributeValuesData, ...costData } = req.body;
+    const costData = req.body;
     
     // Validate cost data
     const validatedCostData = insertCostSchema.parse(costData);
     
-    // Begin a transaction to create cost and attribute values
-    const result = await db.transaction(async (tx) => {
-      // Create the cost
-      const [newCost] = await tx.insert(costs).values(validatedCostData).returning();
+    // Create the cost
+    const [newCost] = await db.insert(costs).values(validatedCostData).returning();
       
-      // If attribute values were provided, create them
-      if (Array.isArray(attributeValuesData) && attributeValuesData.length > 0) {
-        // Process each attribute value
-        for (const valueData of attributeValuesData) {
-          // Skip empty values
-          if (!valueData.value) continue;
-          
-          // Create the attribute value
-          // Use attributeId from valueData.attributeId if available, otherwise use valueData.costTypeAttributeId
-          const attributeId = valueData.attributeId || valueData.costTypeAttributeId;
-          
-          console.log("Creating new attribute value for new cost:", {
-            costId: newCost.id,
-            attributeId: attributeId,
-            value: valueData.value,
-          });
-          
-          await tx.insert(costAttributeValues).values({
-            costId: newCost.id,
-            attributeId: attributeId,
-            value: valueData.value,
-          });
-        }
+    // Get cost with relations
+    const result = await db.query.costs.findFirst({
+      where: eq(costs.id, newCost.id),
+      with: {
+        bill: true,
+        costType: true,
+        supplier: true
       }
-      
-      // Get cost with relations
-      return await db.query.costs.findFirst({
-        where: eq(costs.id, newCost.id),
-        with: {
-          bill: true,
-          costType: true,
-          supplier: true,
-          attributeValues: {
-            with: {
-              attribute: true
-            }
-          }
-        }
-      });
     });
     
     return res.status(201).json(result);
@@ -133,12 +90,7 @@ export const getCostById = async (req: Request, res: Response) => {
       with: {
         bill: true,
         costType: true,
-        supplier: true,
-        attributeValues: {
-          with: {
-            attribute: true
-          }
-        }
+        supplier: true
       }
     });
     
@@ -160,7 +112,7 @@ export const getCostById = async (req: Request, res: Response) => {
 export const updateCost = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { attributeValues: attributeValuesData, ...costData } = req.body;
+    const costData = req.body;
     
     // Validate cost data
     const validatedCostData = insertCostSchema.parse(costData);
@@ -175,60 +127,23 @@ export const updateCost = async (req: Request, res: Response) => {
       });
     }
     
-    // Begin a transaction to update cost and attribute values
-    const result = await db.transaction(async (tx) => {
-      // Update the cost
-      const [updatedCost] = await tx.update(costs)
-        .set({
-          ...validatedCostData,
-          updatedAt: new Date()
-        })
-        .where(eq(costs.id, Number(id)))
-        .returning();
-      
-      // If attribute values were provided, update them
-      if (Array.isArray(attributeValuesData)) {
-        // First, delete existing attribute values
-        await tx.delete(costAttributeValues)
-          .where(eq(costAttributeValues.costId, Number(id)));
-          
-        // Then create new attribute values
-        for (const valueData of attributeValuesData) {
-          // Skip empty values
-          if (!valueData.value) continue;
-          
-          // Create the attribute value
-          // Use attributeId from valueData.attributeId if available, otherwise use valueData.costTypeAttributeId
-          const attributeId = valueData.attributeId || valueData.costTypeAttributeId;
-          
-          console.log("Creating attribute value for updated cost:", {
-            costId: updatedCost.id,
-            attributeId: attributeId,
-            value: valueData.value,
-          });
-          
-          await tx.insert(costAttributeValues).values({
-            costId: updatedCost.id,
-            attributeId: attributeId,
-            value: valueData.value,
-          });
-        }
+    // Update the cost
+    const [updatedCost] = await db.update(costs)
+      .set({
+        ...validatedCostData,
+        updatedAt: new Date()
+      })
+      .where(eq(costs.id, Number(id)))
+      .returning();
+    
+    // Get cost with relations
+    const result = await db.query.costs.findFirst({
+      where: eq(costs.id, updatedCost.id),
+      with: {
+        bill: true,
+        costType: true,
+        supplier: true
       }
-      
-      // Get cost with relations
-      return await db.query.costs.findFirst({
-        where: eq(costs.id, updatedCost.id),
-        with: {
-          bill: true,
-          costType: true,
-          supplier: true,
-          attributeValues: {
-            with: {
-              attribute: true
-            }
-          }
-        }
-      });
     });
     
     return res.status(200).json(result);

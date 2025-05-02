@@ -35,8 +35,6 @@ import { queryClient } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 import { costFormSchema } from "@shared/types";
 import { Cost, CostWithRelations } from "@shared/types";
-import CostAttributeValueForm, { AttributeValueData } from "@/components/cost-types/cost-attribute-value-form";
-import { Badge } from "@/components/ui/badge";
 
 interface CostFormProps {
   cost?: CostWithRelations;
@@ -46,8 +44,6 @@ interface CostFormProps {
 
 export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   const isEditing = !!cost;
-  const [selectedCostTypeId, setSelectedCostTypeId] = useState<number | undefined>(cost?.costTypeId);
-  const [attributeValues, setAttributeValues] = useState<AttributeValueData[]>([]);
   const { toast } = useToast();
   
   // Thông tin mặc định cho form
@@ -75,43 +71,6 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   const { data: suppliers = [], isLoading: isLoadingSuppliers } = useQuery({
     queryKey: ["/api/suppliers"],
   });
-  
-  // Lấy thuộc tính của chi phí khi chỉnh sửa
-  const { data: existingAttributesData } = useQuery({
-    queryKey: ["/api/cost-attribute-values", cost?.id],
-    enabled: isEditing && !!cost?.id,
-  });
-  
-  // Cập nhật giá trị của thuộc tính khi chỉnh sửa
-  useEffect(() => {
-    if (isEditing && existingAttributesData && Array.isArray(existingAttributesData) && existingAttributesData.length > 0) {
-      // Chuyển đổi dữ liệu từ server về định dạng của form
-      const formattedValues = existingAttributesData.map((attr: any) => ({
-        costTypeAttributeId: attr.attributeId,
-        value: attr.value,
-      }));
-      
-      console.log("Thuộc tính chi phí hiện tại:", formattedValues);
-      setAttributeValues(formattedValues);
-    }
-  }, [isEditing, existingAttributesData]);
-
-  // Xử lý khi thay đổi loại chi phí
-  const handleCostTypeChange = (costTypeId: number) => {
-    setSelectedCostTypeId(costTypeId);
-    form.setValue("costTypeId", costTypeId);
-    
-    // Reset thuộc tính khi thay đổi loại chi phí
-    setAttributeValues([]);
-  };
-  
-  // Đồng bộ hóa costTypeId khi form được khởi tạo
-  useEffect(() => {
-    const currentCostTypeId = form.getValues().costTypeId;
-    if (currentCostTypeId) {
-      setSelectedCostTypeId(currentCostTypeId);
-    }
-  }, [form]);
 
   // Mutation để tạo/cập nhật chi phí
   const mutation = useMutation({
@@ -160,47 +119,9 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
       amount: values.amount?.toString() || "0",
     };
     
-    // Kết hợp giá trị form với thuộc tính
-    const dataToSubmit = {
-      ...formattedValues,
-      attributeValues: attributeValues,
-    };
-    
-    console.log("Gửi dữ liệu chi phí:", dataToSubmit);
-    mutation.mutate(dataToSubmit);
+    console.log("Gửi dữ liệu chi phí:", formattedValues);
+    mutation.mutate(formattedValues);
   };
-  
-  // Hiển thị danh sách thuộc tính đã chọn
-  const selectedAttributes = attributeValues
-    .filter(attr => attr.value === "true")
-    .map(attr => {
-      // Tìm tên thuộc tính từ costTypeId và id thuộc tính
-      let attributeName = 'Unknown';
-      let attributeColor = '';
-      if (Array.isArray(costTypes)) {
-        // Truy vấn từ danh sách loại chi phí và thuộc tính
-        for (const ct of costTypes) {
-          if (ct.attributes && Array.isArray(ct.attributes)) {
-            const found = ct.attributes.find((a: any) => a.id === attr.costTypeAttributeId);
-            if (found) {
-              attributeName = found.name;
-              // Xác định màu sắc dựa trên tên thuộc tính
-              if (found.name === "Hóa đơn") {
-                attributeColor = "bg-green-100 text-green-800 border-green-300";
-              } else if (found.name === "Trả hộ") {
-                attributeColor = "bg-blue-100 text-blue-800 border-blue-300";
-              } else if (found.name === "Ko hóa đơn") {
-                attributeColor = "bg-yellow-100 text-yellow-800 border-yellow-300";
-              } else {
-                attributeColor = "bg-gray-100 text-gray-800 border-gray-300";
-              }
-              break;
-            }
-          }
-        }
-      }
-      return {name: attributeName, color: attributeColor};
-    });
 
   return (
     <Form {...form}>
@@ -217,7 +138,6 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
                   onValueChange={(value) => {
                     const numValue = parseInt(value);
                     field.onChange(numValue);
-                    handleCostTypeChange(numValue);
                   }}
                   value={field.value?.toString()}
                   defaultValue={field.value?.toString()}
@@ -364,32 +284,12 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
                   value={field.value || ""}
                 />
               </FormControl>
-              <FormDescription>
-                {selectedAttributes.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedAttributes.map((attr, index) => (
-                      <Badge key={index} variant="outline" className={attr.color}>
-                        {attr.name}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
         <input type="hidden" {...form.register("billId", { valueAsNumber: true })} />
-        
-        {/* Thuộc tính của loại chi phí */}
-        {selectedCostTypeId && (
-          <CostAttributeValueForm
-            costTypeId={selectedCostTypeId}
-            onAttributeValuesChange={setAttributeValues}
-            initialValues={attributeValues}
-          />
-        )}
 
         <div className="flex justify-end">
           <Button type="submit" disabled={mutation.isPending}>
