@@ -135,12 +135,28 @@ export default function CostAttributeValueForm({
                     const currentValue = attributeValues.find(
                       (av) => av.costTypeAttributeId === attributeId
                     )?.value || "";
+                    // Set default for uninitialized attributes
+                    if (attributeValues.length > 0 && !attributeValues.some(av => av.value === "true")) {
+                      const defaultAttr = importantAttributes.find(attr => attr.name === "Hóa đơn");
+                      if (defaultAttr && defaultAttr.id === attributeId) {
+                        setTimeout(() => {
+                          const updatedValues = attributeValues.map(item => 
+                            item.costTypeAttributeId === attributeId 
+                              ? { ...item, value: "true" } 
+                              : item
+                          );
+                          setAttributeValues(updatedValues);
+                          onAttributeValuesChange(updatedValues);
+                        }, 100);
+                      }
+                    }
+                    
                     const isSelected = currentValue === "true";
                     
                     return (
                       <div 
                         key={attributeId}
-                        className={`border rounded-md p-3 cursor-pointer transition-colors ${isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                        className={`border rounded-md p-3 cursor-pointer transition-all ${isSelected ? 'bg-primary text-primary-foreground font-bold shadow-md scale-105' : 'hover:bg-muted'}`}
                         onClick={() => {
                           // Set all attributes to false first
                           const newValues = importantAttributes.map(attr => ({
@@ -160,7 +176,7 @@ export default function CostAttributeValueForm({
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="font-medium">{attribute.name}</div>
+                          <div className={`${isSelected ? 'font-bold' : 'font-medium'}`}>{attribute.name}</div>
                           {isSelected && (
                             <div className="ml-2">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
