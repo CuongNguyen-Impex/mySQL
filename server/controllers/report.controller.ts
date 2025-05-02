@@ -49,6 +49,37 @@ const getDateRange = (timeframe?: string, from?: string, to?: string) => {
 
 export const getDashboardData = async (req: Request, res: Response) => {
   try {
+    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
+    const costsWithAttributes = await db.query.costs.findMany({
+      with: {
+        attributeValues: {
+          with: {
+            attribute: true
+          }
+        }
+      }
+    });
+    
+    // Create a map of cost attribute types for quick lookup
+    const costAttributeMap = new Map<number, string>();
+    
+    // Default is to consider as 'Hóa đơn' if not specified
+    costsWithAttributes.forEach(cost => {
+      // Default to 'Hóa đơn' if no attribute values
+      costAttributeMap.set(cost.id, "Hóa đơn");
+      
+      // If has attribute values, determine type
+      if (cost.attributeValues && cost.attributeValues.length > 0) {
+        // Find attribute with name 'Trả hộ'
+        const traHoAttribute = cost.attributeValues.find(av => 
+          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
+        
+        if (traHoAttribute) {
+          costAttributeMap.set(cost.id, "Trả hộ");
+        }
+      }
+    });
+    
     // Count total bills
     const billsResult = await db.select({
       count: count()
@@ -63,15 +94,34 @@ export const getDashboardData = async (req: Request, res: Response) => {
     
     const totalRevenue = revenueResult[0]?.total || 0;
     
-    // Calculate total costs
-    const costsResult = await db.select({
-      total: sql<number>`COALESCE(SUM(${costs.amount}::numeric), 0)`
-    }).from(costs);
+    // Get all costs to categorize
+    const allCosts = await db.query.costs.findMany({
+      columns: {
+        id: true,
+        amount: true
+      }
+    });
     
-    const totalCosts = costsResult[0]?.total || 0;
+    // Separate costs by attribute type
+    let totalHoaDonCosts = 0;
+    let totalTraHoCosts = 0;
     
-    // Calculate profit
-    const totalProfit = totalRevenue - totalCosts;
+    allCosts.forEach(cost => {
+      const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+      const amount = parseFloat(cost.amount.toString());
+      
+      if (costType === "Trả hộ") {
+        totalTraHoCosts += amount;
+      } else {
+        totalHoaDonCosts += amount;
+      }
+    });
+    
+    // Calculate total costs (both types combined)
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
+    
+    // Calculate profit - only based on 'Hóa đơn' costs as per business rules
+    const totalProfit = totalRevenue - totalHoaDonCosts;
     
     // Calculate trends (placeholder - in a real app you'd compare with previous periods)
     const billsTrend = 12; // example: 12% increase
@@ -97,7 +147,8 @@ export const getDashboardData = async (req: Request, res: Response) => {
     
     const customerPerformanceData = customerPerformance.map(customer => {
       let totalCustomerRevenue = 0;
-      let totalCustomerCosts = 0;
+      let totalCustomerHoaDonCosts = 0;
+      let totalCustomerTraHoCosts = 0;
       
       customer.bills.forEach(bill => {
         // Sum revenues
@@ -105,18 +156,31 @@ export const getDashboardData = async (req: Request, res: Response) => {
           totalCustomerRevenue += parseFloat(revenue.amount.toString());
         });
         
-        // Sum costs
+        // Sum costs based on attribute type
         bill.costs.forEach(cost => {
-          totalCustomerCosts += parseFloat(cost.amount.toString());
+          const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+          const amount = parseFloat(cost.amount.toString());
+          
+          if (costType === "Trả hộ") {
+            totalCustomerTraHoCosts += amount;
+          } else {
+            totalCustomerHoaDonCosts += amount;
+          }
         });
       });
       
-      const profit = totalCustomerRevenue - totalCustomerCosts;
+      // Calculate total costs
+      const totalCustomerCosts = totalCustomerHoaDonCosts + totalCustomerTraHoCosts;
+      
+      // Calculate profit based only on 'Hóa đơn' costs
+      const profit = totalCustomerRevenue - totalCustomerHoaDonCosts;
       
       return {
         id: customer.id,
         name: customer.name,
         revenue: totalCustomerRevenue,
+        hoaDonCosts: totalCustomerHoaDonCosts,
+        traHoCosts: totalCustomerTraHoCosts,
         costs: totalCustomerCosts,
         profit,
         percentage: totalProfit !== 0 ? (profit / totalProfit) * 100 : 0
@@ -141,26 +205,40 @@ export const getDashboardData = async (req: Request, res: Response) => {
     
     const servicePerformanceData = servicePerformance.map(service => {
       let totalServiceRevenue = 0;
-      let totalServiceCosts = 0;
+      let totalServiceHoaDonCosts = 0;
+      let totalServiceTraHoCosts = 0;
       
       // Sum revenues
       service.revenues.forEach(revenue => {
         totalServiceRevenue += parseFloat(revenue.amount.toString());
       });
       
-      // Sum costs from all bills with this service
+      // Sum costs from all bills with this service based on attribute type
       service.bills.forEach(bill => {
         bill.costs.forEach(cost => {
-          totalServiceCosts += parseFloat(cost.amount.toString());
+          const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+          const amount = parseFloat(cost.amount.toString());
+          
+          if (costType === "Trả hộ") {
+            totalServiceTraHoCosts += amount;
+          } else {
+            totalServiceHoaDonCosts += amount;
+          }
         });
       });
       
-      const profit = totalServiceRevenue - totalServiceCosts;
+      // Calculate total costs
+      const totalServiceCosts = totalServiceHoaDonCosts + totalServiceTraHoCosts;
+      
+      // Calculate profit based only on 'Hóa đơn' costs
+      const profit = totalServiceRevenue - totalServiceHoaDonCosts;
       
       return {
         id: service.id,
         name: service.name,
         revenue: totalServiceRevenue,
+        hoaDonCosts: totalServiceHoaDonCosts,
+        traHoCosts: totalServiceTraHoCosts,
         costs: totalServiceCosts,
         profit,
         percentage: totalProfit !== 0 ? (profit / totalProfit) * 100 : 0
@@ -170,6 +248,8 @@ export const getDashboardData = async (req: Request, res: Response) => {
     return res.status(200).json({
       totalBills,
       totalRevenue,
+      hoaDonCosts: totalHoaDonCosts,
+      traHoCosts: totalTraHoCosts,
       totalCosts,
       totalProfit,
       billsTrend,
@@ -303,6 +383,37 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
     const { timeframe, from, to, costTypeId } = req.query;
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
+    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
+    const costsWithAttributes = await db.query.costs.findMany({
+      with: {
+        attributeValues: {
+          with: {
+            attribute: true
+          }
+        }
+      }
+    });
+    
+    // Create a map of cost attribute types for quick lookup
+    const costAttributeMap = new Map<number, string>();
+    
+    // Default is to consider as 'Hóa đơn' if not specified
+    costsWithAttributes.forEach(cost => {
+      // Default to 'Hóa đơn' if no attribute values
+      costAttributeMap.set(cost.id, "Hóa đơn");
+      
+      // If has attribute values, determine type
+      if (cost.attributeValues && cost.attributeValues.length > 0) {
+        // Find attribute with name 'Trả hộ'
+        const traHoAttribute = cost.attributeValues.find(av => 
+          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
+        
+        if (traHoAttribute) {
+          costAttributeMap.set(cost.id, "Trả hộ");
+        }
+      }
+    });
+    
     // Get all suppliers with their costs
     let suppliersQuery = db.query.suppliers.findMany({
       columns: {
@@ -311,7 +422,7 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
       },
       with: {
         costs: {
-          where: between(costs.date, dateRange.from, dateRange.to),
+          where: between(costs.date, dateRange.from.toISOString(), dateRange.to.toISOString()),
           with: {
             costType: true
           }
@@ -321,16 +432,28 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
     
     const suppliers = await suppliersQuery;
     
-    // Calculate total costs for percentage calculation
-    let totalCosts = 0;
+    // Calculate totals by attribute type
+    let totalHoaDonCosts = 0;
+    let totalTraHoCosts = 0;
+    
     suppliers.forEach(supplier => {
       supplier.costs.forEach(cost => {
         // Apply cost type filter if provided
         if (!costTypeId || cost.costTypeId === Number(costTypeId)) {
-          totalCosts += parseFloat(cost.amount.toString());
+          // Determine if cost is 'Trả hộ' or 'Hóa đơn'
+          const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+          
+          if (costType === "Trả hộ") {
+            totalTraHoCosts += parseFloat(cost.amount.toString());
+          } else {
+            totalHoaDonCosts += parseFloat(cost.amount.toString());
+          }
         }
       });
     });
+    
+    // Total cost is sum of both types
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
     
     // Calculate metrics for each supplier
     const supplierReports = suppliers.map(supplier => {
@@ -339,7 +462,21 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
         ? supplier.costs.filter(cost => cost.costTypeId === Number(costTypeId))
         : supplier.costs;
       
-      const totalAmount = filteredCosts.reduce((sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
+      // Split costs by attribute type
+      let totalHoaDonAmount = 0;
+      let totalTraHoAmount = 0;
+      
+      filteredCosts.forEach(cost => {
+        const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+        
+        if (costType === "Trả hộ") {
+          totalTraHoAmount += parseFloat(cost.amount.toString());
+        } else {
+          totalHoaDonAmount += parseFloat(cost.amount.toString());
+        }
+      });
+      
+      const totalAmount = totalHoaDonAmount + totalTraHoAmount;
       const averageCost = filteredCosts.length > 0 ? totalAmount / filteredCosts.length : 0;
       
       // Get unique cost types
@@ -354,6 +491,8 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
         id: supplier.id,
         name: supplier.name,
         transactionCount: filteredCosts.length,
+        hoaDonAmount: totalHoaDonAmount,
+        traHoAmount: totalTraHoAmount,
         totalAmount,
         averageCost,
         percentage: totalCosts > 0 ? (totalAmount / totalCosts) * 100 : 0,
@@ -365,6 +504,9 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
     
     return res.status(200).json({
       suppliers: supplierReports,
+      totalHoaDonCosts,
+      totalTraHoCosts,
+      totalCosts,
       timeframe,
       dateRange
     });
