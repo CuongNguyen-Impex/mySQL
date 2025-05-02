@@ -204,11 +204,14 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
             name="tt_hd"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Trạng thái hóa đơn</FormLabel>
+                <FormLabel className="flex items-center">
+                  Trạng thái hóa đơn <span className="text-destructive ml-1">*</span>
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value}
                   defaultValue="Hóa đơn"
+                  required
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -231,7 +234,7 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Chọn "Hóa đơn" nếu chi phí có hóa đơn, "Trả hộ" nếu chi phí không có hóa đơn
+                  Trường bắt buộc. Chọn "Hóa đơn" nếu chi phí có hóa đơn, "Trả hộ" nếu chi phí không có hóa đơn.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
