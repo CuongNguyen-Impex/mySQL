@@ -313,7 +313,8 @@ export default function ProfitLossReport() {
                       <Tooltip formatter={(value) => `${parseFloat(value).toLocaleString('vi-VN')}`} />
                       <Legend />
                       <Bar dataKey="revenue" name="Doanh thu" fill="hsl(var(--success))" />
-                      <Bar dataKey="costs" name="Chi phí" fill="hsl(var(--destructive))" />
+                      <Bar dataKey="hoaDonCosts" name="Chi phí (Hóa đơn)" fill="hsl(var(--destructive))" />
+                      <Bar dataKey="traHoCosts" name="Chi phí (Trả hộ)" fill="hsl(var(--warning))" />
                       <Bar dataKey="profit" name="Lợi nhuận" fill="hsl(var(--primary))" />
                     </BarChart>
                   </ResponsiveContainer>

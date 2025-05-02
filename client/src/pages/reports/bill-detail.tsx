@@ -284,6 +284,7 @@ export default function BillDetailReport() {
                   </TableHeader>
                   <TableBody>
                     {/* Tính toán summary từ dữ liệu trả về */}
+                    {/* Đầu tiên hiển thị các dòng chi phí */}
                     {(() => {
                       // Tạo bảng thống kê theo loại chi phí
                       const costTypeSummary: Array<{costTypeId: number, costTypeName: string, billCount: number, totalAmount: number, percentage: number}> = [];
@@ -331,7 +332,7 @@ export default function BillDetailReport() {
                           {item.percentage.toFixed(1)}%
                         </TableCell>
                       </TableRow>
-                    ))
+                    ))}
                     
                     {/* Tổng cộng */}
                     {data?.bills?.length > 0 && (
