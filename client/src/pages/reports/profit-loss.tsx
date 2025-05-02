@@ -24,7 +24,9 @@ import type { DateRange } from "react-day-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, TooltipProps, XAxis, YAxis } from "recharts";
+import { ProfitLossReport as ProfitLossReportType } from "@shared/types";
+import { ValueType } from "recharts/types/component/DefaultTooltipContent";
 
 export default function ProfitLossReport() {
   const [timeframe, setTimeframe] = useState("quarter");
@@ -40,7 +42,7 @@ export default function ProfitLossReport() {
   });
 
   // Fetch profit/loss report data
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<ProfitLossReportType>({
     queryKey: [
       "/api/reports/profit-loss", 
       timeframe, 
