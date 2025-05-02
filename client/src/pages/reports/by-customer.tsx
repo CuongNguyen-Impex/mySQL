@@ -24,6 +24,29 @@ import type { DateRange } from "react-day-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+// Định nghĩa kiểu cho dữ liệu khách hàng từ API
+interface CustomerReportData {
+  id: number;
+  name: string;
+  billCount: number;
+  revenue: string;
+  hoaDonCosts: string;
+  traHoCosts: string;
+  totalCosts: string;
+  profit: string;
+  margin: number;
+  [key: string]: string | number; // Cho phép dữ liệu linh hoạt
+}
+
+interface CustomerReportResponse {
+  customers: CustomerReportData[];
+  timeframe: string;
+  dateRange: {
+    from: string;
+    to: string;
+  };
+}
+
 export default function ReportsByCustomer() {
   const [timeframe, setTimeframe] = useState("quarter");
   
@@ -32,13 +55,20 @@ export default function ReportsByCustomer() {
   const sixMonthsAgo = new Date(today);
   sixMonthsAgo.setMonth(today.getMonth() - 6);
   
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined, to: Date | undefined }>({ 
+  const [dateRange, setDateRange] = useState<DateRange>({ 
     from: sixMonthsAgo, 
     to: today 
   });
+  
+  // Xử lý cập nhật date range từ DatePickerWithRange
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    if (range) {
+      setDateRange(range);
+    }
+  };
 
   // Fetch customer report data
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<CustomerReportResponse>({
     queryKey: [
       "/api/reports/by-customer",
       timeframe,
@@ -70,16 +100,18 @@ export default function ReportsByCustomer() {
     }
   };
 
-  const getProfitClass = (profit: number) => {
-    if (profit > 0) return "text-success";
-    if (profit < 0) return "text-destructive";
+  const getProfitClass = (profit: string | number) => {
+    const profitNum = typeof profit === 'string' ? parseFloat(profit) : profit;
+    if (profitNum > 0) return "text-success";
+    if (profitNum < 0) return "text-destructive";
     return "";
   };
 
-  const getMarginClass = (margin: number) => {
-    if (margin >= 30) return "text-success";
-    if (margin >= 15) return "text-success/80";
-    if (margin >= 0) return "text-warning";
+  const getMarginClass = (margin: string | number) => {
+    const marginNum = typeof margin === 'string' ? parseFloat(margin) : margin;
+    if (marginNum >= 30) return "text-success";
+    if (marginNum >= 15) return "text-success/80";
+    if (marginNum >= 0) return "text-warning";
     return "text-destructive";
   };
 
@@ -134,7 +166,7 @@ export default function ReportsByCustomer() {
                 <label className="text-sm font-medium mb-1 block">Khoảng ngày</label>
                 <DatePickerWithRange 
                   date={dateRange} 
-                  setDate={setDateRange} 
+                  setDate={handleDateRangeChange} 
                 />
               </div>
             )}
@@ -165,20 +197,24 @@ export default function ReportsByCustomer() {
                   <TableHead>Khách hàng</TableHead>
                   <TableHead className="text-right">Hóa đơn</TableHead>
                   <TableHead className="text-right">Doanh thu</TableHead>
-                  <TableHead className="text-right">Chi phí</TableHead>
+                  <TableHead className="text-right">Chi phí (HĐ)</TableHead>
+                  <TableHead className="text-right">Chi phí (TH)</TableHead>
+                  <TableHead className="text-right">Tổng chi phí</TableHead>
                   <TableHead className="text-right">Lợi nhuận</TableHead>
-                  <TableHead className="text-right">Biên lợi nhuận %</TableHead>
+                  <TableHead className="text-right">Biên LN %</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data?.customers?.map((customer: any) => (
+                {data?.customers?.map((customer: CustomerReportData) => (
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
                     <TableCell className="text-right">{customer.billCount}</TableCell>
                     <TableCell className="text-right">{parseFloat(customer.revenue).toLocaleString('vi-VN')}</TableCell>
-                    <TableCell className="text-right">{parseFloat(customer.costs).toLocaleString('vi-VN')}</TableCell>
+                    <TableCell className="text-right">{parseFloat(customer.hoaDonCosts || '0').toLocaleString('vi-VN')}</TableCell>
+                    <TableCell className="text-right">{parseFloat(customer.traHoCosts || '0').toLocaleString('vi-VN')}</TableCell>
+                    <TableCell className="text-right">{parseFloat(customer.totalCosts || '0').toLocaleString('vi-VN')}</TableCell>
                     <TableCell className={cn("text-right font-medium", getProfitClass(customer.profit))}>
-                      {parseFloat(customer.profit).toLocaleString('vi-VN')}
+                      {parseFloat(customer.profit || '0').toLocaleString('vi-VN')}
                     </TableCell>
                     <TableCell className={cn("text-right", getMarginClass(customer.margin))}>
                       {customer.margin.toFixed(1)}%
@@ -187,7 +223,7 @@ export default function ReportsByCustomer() {
                 ))}
                 {(data?.customers?.length === 0 || !data?.customers) && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                       Không tìm thấy dữ liệu khách hàng trong khoảng thời gian đã chọn
                     </TableCell>
                   </TableRow>
