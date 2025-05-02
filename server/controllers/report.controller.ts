@@ -414,7 +414,7 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
         }
       });
       
-      const totalAmount = totalHoaDonAmount + totalTraHoAmount + totalKoHoaDonAmount;
+      const totalAmount = totalHoaDonAmount + totalTraHoAmount;
       const averageCost = filteredCosts.length > 0 ? totalAmount / filteredCosts.length : 0;
       
       // Get unique cost types
@@ -431,7 +431,6 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
         transactionCount: filteredCosts.length,
         hoaDonAmount: totalHoaDonAmount,
         traHoAmount: totalTraHoAmount,
-        koHoaDonAmount: totalKoHoaDonAmount,
         totalAmount,
         averageCost,
         percentage: totalCosts > 0 ? (totalAmount / totalCosts) * 100 : 0,
@@ -445,7 +444,6 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
       suppliers: supplierReports,
       totalHoaDonCosts,
       totalTraHoCosts,
-      totalKoHoaDonCosts,
       totalCosts,
       timeframe,
       dateRange
@@ -462,9 +460,6 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
   try {
     const { timeframe, from, to } = req.query;
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
-    
-    // Use the helper function to get cost attribute map
-    const costAttributeMap = await createCostAttributeMap();
     
     // Get all bills in the date range
     const billsInRange = await db.query.bills.findMany({
@@ -724,9 +719,6 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
     // Reuse the getReportBySupplier logic
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // Use the helper function to get cost attribute map
-    const costAttributeMap = await createCostAttributeMap();
-    
     let suppliersQuery = db.query.suppliers.findMany({
       columns: {
         id: true,
@@ -744,54 +736,48 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
     
     const suppliers = await suppliersQuery;
     
-    // Split totals by attribute type
+    // Split totals by tt_hd value
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
-    let totalKoHoaDonCosts = 0;
     
     suppliers.forEach(supplier => {
       supplier.costs.forEach(cost => {
         if (!costTypeId || cost.costTypeId === Number(costTypeId)) {
-          // Determine cost attribute type
-          const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+          // Get cost attribute directly from tt_hd field
+          const costType = cost.tt_hd || "Hóa đơn";
           
           if (costType === "Trả hộ") {
             totalTraHoCosts += parseFloat(cost.amount.toString());
-          } else if (costType === "Ko hóa đơn") {
-            totalKoHoaDonCosts += parseFloat(cost.amount.toString());
-          } else {
+          } else { // "Hóa đơn"
             totalHoaDonCosts += parseFloat(cost.amount.toString());
           }
         }
       });
     });
     
-    // Total of all costs regardless of attribute
-    const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
+    // Total of all costs
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
     
     const supplierReports = suppliers.map(supplier => {
       const filteredCosts = costTypeId 
         ? supplier.costs.filter(cost => cost.costTypeId === Number(costTypeId))
         : supplier.costs;
       
-      // Split costs by attribute type
+      // Split costs by tt_hd value
       let totalHoaDonAmount = 0;
       let totalTraHoAmount = 0;
-      let totalKoHoaDonAmount = 0;
       
       filteredCosts.forEach(cost => {
-        const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+        const costType = cost.tt_hd || "Hóa đơn";
         
         if (costType === "Trả hộ") {
           totalTraHoAmount += parseFloat(cost.amount.toString());
-        } else if (costType === "Ko hóa đơn") {
-          totalKoHoaDonAmount += parseFloat(cost.amount.toString());
-        } else {
+        } else { // "Hóa đơn"
           totalHoaDonAmount += parseFloat(cost.amount.toString());
         }
       });
       
-      const totalAmount = totalHoaDonAmount + totalTraHoAmount + totalKoHoaDonAmount;
+      const totalAmount = totalHoaDonAmount + totalTraHoAmount;
       const averageCost = filteredCosts.length > 0 ? totalAmount / filteredCosts.length : 0;
       
       // Generate cost type names for display
@@ -809,7 +795,6 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
         transactionCount: filteredCosts.length,
         hoaDonAmount: totalHoaDonAmount.toFixed(2),
         traHoAmount: totalTraHoAmount.toFixed(2),
-        koHoaDonAmount: totalKoHoaDonAmount.toFixed(2),
         totalAmount: totalAmount.toFixed(2),
         averageCost: averageCost.toFixed(2),
         percentage: (totalCosts > 0 ? (totalAmount / totalCosts) * 100 : 0).toFixed(2)
@@ -825,7 +810,6 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
       'Số giao dịch', 
       'Chi phí Hóa đơn', 
       'Chi phí Trả hộ', 
-      'Chi phí Ko hóa đơn', 
       'Tổng chi phí', 
       'Chi phí trung bình', 
       'Phần trăm (%)'
@@ -838,7 +822,6 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
       report.transactionCount,
       report.hoaDonAmount,
       report.traHoAmount,
-      report.koHoaDonAmount,
       report.totalAmount,
       report.averageCost,
       report.percentage
@@ -852,7 +835,6 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
       supplierReports.reduce((sum, supplier) => sum + supplier.transactionCount, 0),
       totalHoaDonCosts.toFixed(2),
       totalTraHoCosts.toFixed(2),
-      totalKoHoaDonCosts.toFixed(2),
       totalCosts.toFixed(2),
       (totalCosts / supplierReports.reduce((sum, supplier) => sum + supplier.transactionCount, 0) || 0).toFixed(2),
       '100.00'
