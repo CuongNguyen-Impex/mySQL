@@ -181,8 +181,8 @@ export default function BillDetailReport() {
                                 
                                 {/* Subtotal for this bill */}
                                 <tr key={`${bill.id}-subtotal`} className="bg-gray-100 font-medium">
-                                  <td className="border p-2" colSpan={2}></td>
-                                  <td className="border p-2 font-medium">Tổng cộng {bill.billNo}</td>
+                                  <td className="border p-2" colSpan={3}></td>
+                                  <td className="border p-2 font-medium" colSpan={4}>Tổng cộng {bill.billNo}</td>
                                   <td className="border p-2" colSpan={3}></td>
                                   <td className="border p-2 text-right font-medium">
                                     {totalRevenue.toLocaleString('vi-VN')}
