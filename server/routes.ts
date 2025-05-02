@@ -12,6 +12,8 @@ import * as customerController from "./controllers/customer.controller";
 import * as supplierController from "./controllers/supplier.controller";
 import * as serviceController from "./controllers/service.controller";
 import * as costTypeController from "./controllers/cost-type.controller";
+import * as costTypeAttributeController from "./controllers/cost-type-attribute.controller";
+import * as costAttributeValueController from "./controllers/cost-attribute-value.controller";
 import * as priceController from "./controllers/price.controller";
 import * as reportController from "./controllers/report.controller";
 import * as googleSheetsController from "./controllers/google-sheets.controller";
@@ -74,6 +76,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/cost-types/:id`, optionalAuthMiddleware, costTypeController.getCostTypeById);
   app.patch(`${apiPrefix}/cost-types/:id`, authMiddleware, costTypeController.updateCostType);
   app.delete(`${apiPrefix}/cost-types/:id`, authMiddleware, costTypeController.deleteCostType);
+
+  // COST TYPE ATTRIBUTE ROUTES
+  app.get(`${apiPrefix}/cost-type-attributes`, optionalAuthMiddleware, costTypeAttributeController.getCostTypeAttributes);
+  app.post(`${apiPrefix}/cost-type-attributes`, authMiddleware, costTypeAttributeController.createCostTypeAttribute);
+  app.get(`${apiPrefix}/cost-type-attributes/:id`, optionalAuthMiddleware, costTypeAttributeController.getCostTypeAttributeById);
+  app.patch(`${apiPrefix}/cost-type-attributes/:id`, authMiddleware, costTypeAttributeController.updateCostTypeAttribute);
+  app.delete(`${apiPrefix}/cost-type-attributes/:id`, authMiddleware, costTypeAttributeController.deleteCostTypeAttribute);
+
+  // COST ATTRIBUTE VALUE ROUTES
+  app.get(`${apiPrefix}/cost-attribute-values`, optionalAuthMiddleware, costAttributeValueController.getCostAttributeValues);
+  app.post(`${apiPrefix}/cost-attribute-values`, authMiddleware, costAttributeValueController.createCostAttributeValue);
+  app.get(`${apiPrefix}/cost-attribute-values/:id`, optionalAuthMiddleware, costAttributeValueController.getCostAttributeValueById);
+  app.delete(`${apiPrefix}/cost-attribute-values/:id`, authMiddleware, costAttributeValueController.deleteCostAttributeValue);
 
   // PRICE ROUTES
   app.get(`${apiPrefix}/prices`, optionalAuthMiddleware, priceController.getPrices);
