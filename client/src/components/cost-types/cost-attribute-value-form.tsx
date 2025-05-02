@@ -119,12 +119,7 @@ export default function CostAttributeValueForm({
                       <SelectValue placeholder={`Select ${attribute.name}`} />
                     </SelectTrigger>
                     <SelectContent>
-                      {attribute.name === "Trả hộ" ? (
-                        <>
-                          <SelectItem value="true">Có</SelectItem>
-                          <SelectItem value="false">Không</SelectItem>
-                        </>
-                      ) : attribute.name === "Hóa đơn" ? (
+                      {attribute.name === "Trả hộ" || attribute.name === "Hóa đơn" || attribute.name === "Ko hóa đơn" ? (
                         <>
                           <SelectItem value="true">Có</SelectItem>
                           <SelectItem value="false">Không</SelectItem>

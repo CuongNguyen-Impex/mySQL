@@ -19,8 +19,8 @@ async function addKoHoaDonAttributes() {
         // Check if this cost type already has a 'Ko hóa đơn' attribute
         const existingAttribute = await db.select()
           .from(costTypeAttributes)
-          .where(schema.eq(costTypeAttributes.costTypeId, costType.id))
-          .where(schema.eq(costTypeAttributes.name, "Ko hóa đơn"))
+          .where(eq(costTypeAttributes.costTypeId, costType.id))
+          .where(eq(costTypeAttributes.name, "Ko hóa đơn"))
           .execute();
         
         // Only add if it doesn't exist
