@@ -119,17 +119,19 @@ export default function CostAttributeValueForm({
                       <SelectValue placeholder={`Select ${attribute.name}`} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">-- Not specified --</SelectItem>
-                      <SelectItem value="1">1</SelectItem>
-                      <SelectItem value="2">2</SelectItem>
-                      <SelectItem value="3">3</SelectItem>
-                      <SelectItem value="4">4</SelectItem>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="6">6</SelectItem>
-                      <SelectItem value="7">7</SelectItem>
-                      <SelectItem value="8">8</SelectItem>
-                      <SelectItem value="9">9</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
+                      {attribute.name === "Trả hộ" ? (
+                        <>
+                          <SelectItem value="true">Có</SelectItem>
+                          <SelectItem value="false">Không</SelectItem>
+                        </>
+                      ) : attribute.name === "Hóa đơn" ? (
+                        <>
+                          <SelectItem value="true">Có</SelectItem>
+                          <SelectItem value="false">Không</SelectItem>
+                        </>
+                      ) : (
+                        <SelectItem value="">-- Không xác định --</SelectItem>
+                      )}                     
                     </SelectContent>
                   </Select>
                 </div>

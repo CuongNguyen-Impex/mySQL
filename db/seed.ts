@@ -43,7 +43,7 @@ async function seed() {
       const existingCostTypes = await db.select().from(costTypes).execute();
       
       if (existingCostTypes.length > 0) {
-        // Add 'Trả hộ' and 'Hóa đơn' attributes to each existing cost type
+        // Add 'Trả hộ', 'Hóa đơn', and 'Ko hóa đơn' attributes to each existing cost type
         const costTypeAttributesData = [];
         
         for (const costType of existingCostTypes) {
@@ -55,6 +55,10 @@ async function seed() {
             {
               costTypeId: costType.id,
               name: "Hóa đơn"
+            },
+            {
+              costTypeId: costType.id,
+              name: "Ko hóa đơn"
             }
           );
         }
@@ -170,11 +174,11 @@ async function seed() {
     const insertedCostTypes = await db.insert(costTypes).values(costTypesData).returning();
     console.log(`Inserted ${insertedCostTypes.length} cost types`);
 
-    // 4.1 Seed Cost Type Attributes (Trả hộ and Hóa đơn)
+    // 4.1 Seed Cost Type Attributes (Trả hộ, Hóa đơn, and Ko hóa đơn)
     console.log("Seeding cost type attributes...");
     const costTypeAttributesData = [];
     
-    // Add 'Trả hộ' and 'Hóa đơn' attributes to each cost type
+    // Add 'Trả hộ', 'Hóa đơn', and 'Ko hóa đơn' attributes to each cost type
     for (const costType of insertedCostTypes) {
       costTypeAttributesData.push(
         {
@@ -184,6 +188,10 @@ async function seed() {
         {
           costTypeId: costType.id,
           name: "Hóa đơn"
+        },
+        {
+          costTypeId: costType.id,
+          name: "Ko hóa đơn"
         }
       );
     }
