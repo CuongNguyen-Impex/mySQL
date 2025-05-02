@@ -87,12 +87,13 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   
   // Set initial attribute values when editing
   useEffect(() => {
-    if (isEditing && existingAttributeValues?.length > 0) {
+    if (isEditing && existingAttributeValues && Array.isArray(existingAttributeValues) && existingAttributeValues.length > 0) {
       const formattedValues = existingAttributeValues.map((av: any) => ({
         costTypeAttributeId: av.costTypeAttributeId,
         value: av.value,
       }));
       setAttributeValues(formattedValues);
+      console.log("Setting attribute values:", formattedValues);
     }
   }, [isEditing, existingAttributeValues]);
 

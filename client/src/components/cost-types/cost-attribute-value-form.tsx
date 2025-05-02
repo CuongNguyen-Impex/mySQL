@@ -29,6 +29,12 @@ export default function CostAttributeValueForm({
   initialValues = [],
 }: CostAttributeValueFormProps) {
   const [attributeValues, setAttributeValues] = useState<AttributeValueData[]>(initialValues);
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("CostAttributeValueForm props:", { costTypeId, initialValues });
+    console.log("Current attributeValues:", attributeValues);
+  }, [costTypeId, initialValues, attributeValues]);
 
   // Fetch attributes for the selected cost type
   const { data: attributes = [], isLoading: isLoadingAttributes } = useQuery<CostTypeAttribute[]>({

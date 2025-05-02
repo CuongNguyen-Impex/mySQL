@@ -79,8 +79,9 @@ export default function CostList({ costs, billId, onCostChange }: CostListProps)
     setIsEditDialogOpen(false);
     if (onCostChange) onCostChange();
     toast({
-      title: "Success",
-      description: "Cost updated successfully",
+      title: "Cập nhật thành công!",
+      description: "Dữ liệu đã được lưu vào cơ sở dữ liệu và báo cáo đã được cập nhật.",
+      variant: "success",
     });
   };
 
