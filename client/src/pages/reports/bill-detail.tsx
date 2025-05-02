@@ -102,16 +102,19 @@ export default function BillDetailReport() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>STT</TableHead>
-                      <TableHead>Ngày</TableHead>
-                      <TableHead>Số bill</TableHead>
-                      <TableHead>Loại chi phí</TableHead>
-                      <TableHead>Khách hàng</TableHead>
-                      <TableHead>Nhà cung cấp</TableHead>
-                      <TableHead className="text-right">Giá bán</TableHead>
-                      <TableHead className="text-right">Hóa đơn</TableHead>
+                      <TableHead rowSpan={2}>STT</TableHead>
+                      <TableHead rowSpan={2}>Ngày</TableHead>
+                      <TableHead rowSpan={2}>Số bill</TableHead>
+                      <TableHead rowSpan={2}>Loại chi phí</TableHead>
+                      <TableHead rowSpan={2}>Khách hàng</TableHead>
+                      <TableHead rowSpan={2}>Nhà cung cấp</TableHead>
+                      <TableHead className="text-right" rowSpan={2}>Giá bán</TableHead>
+                      <TableHead className="text-center" colSpan={2}>Giá mua</TableHead>
+                      <TableHead className="text-right" rowSpan={2}>Lãi/Lỗ</TableHead>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead className="text-right border-l">Hóa đơn</TableHead>
                       <TableHead className="text-right">Trả hộ</TableHead>
-                      <TableHead className="text-right">Lãi/Lỗ</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
