@@ -71,9 +71,47 @@ export const getBills = async (req: Request, res: Response) => {
       });
     }
     
-    const result = await query;
+    const results = await query;
     
-    return res.status(200).json({ bills: result });
+    // Calculate totals and profit for each bill
+    const billsWithTotals = results.map(bill => {
+      let totalCost = 0;
+      let totalHoaDonCost = 0; // Chỉ bao gồm chi phí có hóa đơn
+      let totalRevenue = 0;
+      
+      // Sum costs
+      if (bill.costs && bill.costs.length > 0) {
+        bill.costs.forEach(cost => {
+          const amount = parseFloat(cost.amount.toString());
+          totalCost += amount;
+          
+          // Chỉ tính vào lợi nhuận các chi phí "Hóa đơn"
+          if (cost.tt_hd === "Hóa đơn") {
+            totalHoaDonCost += amount;
+          }
+        });
+      }
+      
+      // Sum revenues
+      if (bill.revenues && bill.revenues.length > 0) {
+        bill.revenues.forEach(revenue => {
+          totalRevenue += parseFloat(revenue.amount.toString());
+        });
+      }
+      
+      // Calculate profit based only on 'Hóa đơn' costs
+      const profit = totalRevenue - totalHoaDonCost;
+      
+      return {
+        ...bill,
+        totalCost,
+        totalHoaDonCost,
+        totalRevenue,
+        profit
+      };
+    });
+    
+    return res.status(200).json({ bills: billsWithTotals });
   } catch (error) {
     console.error("Error getting bills:", error);
     return res.status(500).json({
@@ -127,12 +165,7 @@ export const getBillById = async (req: Request, res: Response) => {
         costs: {
           with: {
             costType: true,
-            supplier: true,
-            attributeValues: {
-              with: {
-                attribute: true
-              }
-            }
+            supplier: true
           }
         },
         revenues: {
@@ -149,7 +182,43 @@ export const getBillById = async (req: Request, res: Response) => {
       });
     }
     
-    return res.status(200).json(bill);
+    // Tính toán tổng chi phí (totalCost)
+    let totalCost = 0;
+    let totalHoaDonCost = 0; // Chỉ bao gồm chi phí có hóa đơn
+    
+    if (bill.costs && bill.costs.length > 0) {
+      bill.costs.forEach(cost => {
+        const amount = parseFloat(cost.amount.toString());
+        totalCost += amount;
+        
+        // Chỉ tính vào lợi nhuận các chi phí "Hóa đơn"
+        if (cost.tt_hd === "Hóa đơn") {
+          totalHoaDonCost += amount;
+        }
+      });
+    }
+    
+    // Tính toán tổng doanh thu (totalRevenue)
+    let totalRevenue = 0;
+    
+    if (bill.revenues && bill.revenues.length > 0) {
+      bill.revenues.forEach(revenue => {
+        totalRevenue += parseFloat(revenue.amount.toString());
+      });
+    }
+    
+    // Tính lợi nhuận (profit) - chỉ dựa trên chi phí có hóa đơn
+    const profit = totalRevenue - totalHoaDonCost;
+    
+    const billWithData = {
+      ...bill,
+      totalCost,
+      totalHoaDonCost,
+      totalRevenue,
+      profit
+    };
+    
+    return res.status(200).json(billWithData);
   } catch (error) {
     console.error("Error getting bill:", error);
     return res.status(500).json({
