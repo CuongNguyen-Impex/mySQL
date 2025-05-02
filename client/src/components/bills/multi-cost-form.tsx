@@ -187,7 +187,7 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
   };
 
   // Get attributes for the selected cost type
-  const { data: costTypeAttributes = [] } = useQuery<any[]>({
+  const { data: costTypeAttributes = [], isLoading: isLoadingAttributes } = useQuery<any[]>({
     queryKey: ["/api/cost-type-attributes"],
   });
 
@@ -196,34 +196,55 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
     const costTypeId = parseInt(value);
     form.setValue(`costs.${index}.costTypeId`, costTypeId);
     
+    console.log(`Handling cost type change for index ${index}, costTypeId: ${costTypeId}`);
+    console.log(`All available attributes:`, costTypeAttributes);
+    
     // Get attributes for this cost type
     const attributes = costTypeAttributes.filter((attr: any) => attr.costTypeId === costTypeId);
-    console.log("Available attributes:", attributes);
+    console.log(`Filtered attributes for costTypeId ${costTypeId}:`, attributes);
     
     // Set default attribute (Hóa đơn if exists)
     if (attributes.length > 0) {
+      // Tìm thuộc tính Hóa đơn trước
       const defaultAttr = attributes.find((attr: any) => attr.name === "Hóa đơn") || attributes[0];
       console.log("Selected default attribute:", defaultAttr);
       
-      // Create attribute value object
-      const attributeValue: AttributeValue = {
-        costTypeAttributeId: defaultAttr.id,
-        value: defaultAttr.name
-      };
-      
-      // Update form and state
-      const attrValues = [attributeValue];
-      form.setValue(`costs.${index}.attributeValues`, attrValues);
-      
-      // Update the selected attributes state
-      setSelectedAttributes(prev => {
-        const updated = {
-          ...prev,
-          [index]: attrValues
+      if (defaultAttr) {
+        // Create attribute value object
+        const attributeValue: AttributeValue = {
+          costTypeAttributeId: defaultAttr.id,
+          value: defaultAttr.name
         };
-        console.log("Updated selected attributes:", updated);
-        return updated;
-      });
+        
+        // Update form and state
+        const attrValues = [attributeValue];
+        
+        // Manually set the form value
+        form.setValue(`costs.${index}.attributeValues`, attrValues, { 
+          shouldValidate: true,
+          shouldDirty: true
+        });
+        
+        // Manually update the selected attributes state
+        setSelectedAttributes(prev => {
+          const updated = {
+            ...prev,
+            [index]: attrValues
+          };
+          console.log(`Updated selectedAttributes for index ${index}:`, updated);
+          return updated;
+        });
+        
+        // Verify with log
+        setTimeout(() => {
+          console.log(`Current form values for costs.${index}:`, form.getValues(`costs.${index}`));
+          console.log(`Current selectedAttributes:`, selectedAttributes);
+        }, 100);
+      } else {
+        console.warn("Could not find Hóa đơn attribute or default attribute");
+      }
+    } else {
+      console.warn(`No attributes found for cost type ID: ${costTypeId}`);
     }
   };
 
