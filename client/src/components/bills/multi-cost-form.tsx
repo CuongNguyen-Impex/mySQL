@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -28,6 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
@@ -48,6 +49,12 @@ const multiCostFormSchema = z.object({
       amount: z.number().positive("Amount must be greater than 0"),
       date: z.date(),
       notes: z.string().optional(),
+      attributeValues: z.array(
+        z.object({
+          costTypeAttributeId: z.number(),
+          value: z.string()
+        })
+      ).optional()
     })
   ),
 });
@@ -62,6 +69,9 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   
+  // State for cost type attributes
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<number, number>>({});
+
   // Form setup with useFieldArray for handling multiple entries
   const form = useForm({
     resolver: zodResolver(multiCostFormSchema),
@@ -74,6 +84,7 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
           amount: undefined as unknown as number,
           date: new Date(),
           notes: "",
+          attributeValues: [],
         },
       ],
     },
@@ -143,6 +154,33 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
     createCostsMutation.mutate(values);
   };
 
+  // Get attributes for the selected cost type
+  const { data: costTypeAttributes = [] } = useQuery({
+    queryKey: ["/api/cost-type-attributes"],
+  });
+
+  // Process cost type selection to fetch attributes
+  const handleCostTypeChange = (value: string, index: number) => {
+    const costTypeId = parseInt(value);
+    form.setValue(`costs.${index}.costTypeId`, costTypeId);
+    
+    // Get attributes for this cost type
+    const attributes = costTypeAttributes.filter((attr: any) => attr.costTypeId === costTypeId);
+    
+    // Set default attribute (Hóa đơn if exists)
+    if (attributes.length > 0) {
+      const defaultAttr = attributes.find((attr: any) => attr.name === "Hóa đơn") || attributes[0];
+      
+      // Set attribute values
+      form.setValue(`costs.${index}.attributeValues`, [
+        {
+          costTypeAttributeId: defaultAttr.id,
+          value: defaultAttr.name
+        }
+      ]);
+    }
+  };
+
   const addNewCost = () => {
     append({
       billId,
@@ -151,6 +189,7 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
       amount: undefined as unknown as number,
       date: new Date(),
       notes: "",
+      attributeValues: [],
     });
   };
 
@@ -182,7 +221,7 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
                         <FormItem className="mb-0">
                           <Select
                             disabled={isLoadingCostTypes}
-                            onValueChange={(value) => field.onChange(parseInt(value))}
+                            onValueChange={(value) => handleCostTypeChange(value, index)}
                             value={field.value?.toString()}
                             defaultValue={field.value?.toString()}
                           >
