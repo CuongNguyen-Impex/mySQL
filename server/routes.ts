@@ -17,6 +17,7 @@ import * as costAttributeValueController from "./controllers/cost-attribute-valu
 import * as priceController from "./controllers/price.controller";
 import * as reportController from "./controllers/report.controller";
 import * as googleSheetsController from "./controllers/google-sheets.controller";
+import * as userController from "./controllers/user.controller";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API prefix
@@ -123,6 +124,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${apiPrefix}/settings/google-sheets`, authMiddleware, googleSheetsController.saveSettings);
   app.post(`${apiPrefix}/settings/google-sheets/test`, authMiddleware, googleSheetsController.testConnection);
   app.post(`${apiPrefix}/settings/google-sheets/sync`, authMiddleware, googleSheetsController.syncData);
+
+  // USER MANAGEMENT ROUTES
+  app.get(`${apiPrefix}/users`, authMiddleware, userController.getUsers);
+  app.get(`${apiPrefix}/users/:id`, authMiddleware, userController.getUserById);
+  app.post(`${apiPrefix}/users`, authMiddleware, userController.createUser);
+  app.patch(`${apiPrefix}/users/:id/permissions`, authMiddleware, userController.updateUserPermissions);
+  app.patch(`${apiPrefix}/users/:id/password`, authMiddleware, userController.updateUserPassword);
+  app.delete(`${apiPrefix}/users/:id`, authMiddleware, userController.deleteUser);
 
   const httpServer = createServer(app);
 
