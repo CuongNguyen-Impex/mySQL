@@ -118,17 +118,17 @@ export default function BillDetailReport() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(() => {
+                    {data?.bills?.map((bill: any, billIndex: number) => {
                       // Counter for maintaining a single continuous sequence number
                       let rowNumber = 0;
-                      
-                      return data?.bills?.map((bill: any, billIndex: number) => {
-                        // Pre-calculate bill totals
+                        // Sử dụng dữ liệu đã tính toán từ API
                         const billCosts = bill.costs || [];
                         const billRevenues = bill.revenues || [];
-                        const totalCost = billCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount || 0), 0);
-                        const totalRevenue = billRevenues.reduce((sum: number, rev: any) => sum + parseFloat(rev.amount || 0), 0);
-                        const totalProfit = totalRevenue - totalCost;
+                        const totalRevenue = bill.totalRevenue || 0;
+                        const totalHoaDonCost = bill.totalHoaDonCost || 0;
+                        const totalTraHoCost = bill.totalTraHoCost || 0;
+                        const totalCost = bill.totalCost || 0;
+                        const totalProfit = bill.profit || 0;
                               
                         return (
                           <React.Fragment key={`bill-${bill.id}`}>
@@ -234,18 +234,10 @@ export default function BillDetailReport() {
                         </TableCell>
                         <TableCell className={cn("text-right", 
                           data.bills.reduce((sum: number, bill: any) => {
-                            const revTotal = (bill.revenues || []).reduce(
-                              (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
-                            );
-                            // Chỉ tính lợi nhuận dựa trên chi phí "Hóa đơn"
-                            return sum + (revTotal - (bill.totalHoaDonCost || 0));
+                            return sum + (bill.profit || 0);
                           }, 0) >= 0 ? "text-success" : "text-destructive")}>
                           {data.bills.reduce((sum: number, bill: any) => {
-                            const revTotal = (bill.revenues || []).reduce(
-                              (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
-                            );
-                            // Chỉ tính lợi nhuận dựa trên chi phí "Hóa đơn"
-                            return sum + (revTotal - (bill.totalHoaDonCost || 0));
+                            return sum + (bill.profit || 0);
                           }, 0).toLocaleString('vi-VN')}
                         </TableCell>
                       </TableRow>
@@ -329,17 +321,17 @@ export default function BillDetailReport() {
                         costTypeSummary.push(summary);
                       });
                       
-                      return costTypeSummary.map((item) => (
-                        <TableRow key={item.costTypeId}>
-                          <TableCell className="font-medium">{item.costTypeName}</TableCell>
-                          <TableCell className="text-right">{item.billCount}</TableCell>
-                          <TableCell className="text-right">{item.totalAmount.toLocaleString('vi-VN')}</TableCell>
-                          <TableCell className="text-right">
-                            {item.percentage.toFixed(1)}%
-                          </TableCell>
-                        </TableRow>
-                      ));
-                    })()}
+                      return costTypeSummary;
+                    })().map((item: any) => (
+                      <TableRow key={item.costTypeId}>
+                        <TableCell className="font-medium">{item.costTypeName}</TableCell>
+                        <TableCell className="text-right">{item.billCount}</TableCell>
+                        <TableCell className="text-right">{item.totalAmount.toLocaleString('vi-VN')}</TableCell>
+                        <TableCell className="text-right">
+                          {item.percentage.toFixed(1)}%
+                        </TableCell>
+                      </TableRow>
+                    ))
                     
                     {/* Tổng cộng */}
                     {data?.bills?.length > 0 && (
