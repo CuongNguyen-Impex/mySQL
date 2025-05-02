@@ -82,6 +82,34 @@ export const costTypes = pgTable("cost_types", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Cost Type Attributes table
+export const costTypeAttributes = pgTable("cost_type_attributes", {
+  id: serial("id").primaryKey(),
+  costTypeId: integer("cost_type_id").references(() => costTypes.id, { onDelete: 'cascade' }).notNull(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertCostTypeAttributeSchema = createInsertSchema(costTypeAttributes, {
+  name: (schema) => schema.min(1, "Attribute name is required")
+});
+export type InsertCostTypeAttribute = z.infer<typeof insertCostTypeAttributeSchema>;
+export type CostTypeAttribute = typeof costTypeAttributes.$inferSelect;
+
+// Cost Attributes Values table - stores the selected attribute for each cost
+export const costAttributeValues = pgTable("cost_attribute_values", {
+  id: serial("id").primaryKey(),
+  costId: integer("cost_id").references(() => costs.id, { onDelete: 'cascade' }).notNull(),
+  attributeId: integer("attribute_id").references(() => costTypeAttributes.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertCostAttributeValueSchema = createInsertSchema(costAttributeValues);
+export type InsertCostAttributeValue = z.infer<typeof insertCostAttributeValueSchema>;
+export type CostAttributeValue = typeof costAttributeValues.$inferSelect;
+
 export const insertCostTypeSchema = createInsertSchema(costTypes, {
   name: (schema) => schema.min(2, "Name must be at least 2 characters")
 });
@@ -96,6 +124,10 @@ export const bills = pgTable("bills", {
   customerId: integer("customer_id").references(() => customers.id, { onDelete: 'cascade' }).notNull(),
   serviceId: integer("service_id").references(() => services.id, { onDelete: 'cascade' }).notNull(),
   status: text("status").notNull().default("Pending"),
+  invoiceNo: text("invoice_no"),
+  importExportType: text("import_export_type").notNull().default("Nhập"),
+  packageCount: integer("package_count"),
+  goodsType: text("goods_type").notNull().default("Air"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
@@ -106,6 +138,14 @@ export const insertBillSchema = createInsertSchema(bills, {
   status: (schema) => schema.refine(
     val => ["Pending", "In Progress", "Completed", "Cancelled"].includes(val),
     "Status must be one of: Pending, In Progress, Completed, Cancelled"
+  ),
+  importExportType: (schema) => schema.refine(
+    val => ["Nhập", "Xuất"].includes(val),
+    "Type must be either Nhập or Xuất"
+  ),
+  goodsType: (schema) => schema.refine(
+    val => ["Air", "Sea", "LCL", "Dom"].includes(val),
+    "Goods type must be one of: Air, Sea, LCL, Dom"
   )
 });
 export type InsertBill = z.infer<typeof insertBillSchema>;
@@ -191,7 +231,7 @@ export const billsRelations = relations(bills, ({ one, many }) => ({
   revenues: many(revenues)
 }));
 
-export const costsRelations = relations(costs, ({ one }) => ({
+export const costsRelations = relations(costs, ({ one, many }) => ({
   bill: one(bills, {
     fields: [costs.billId],
     references: [bills.id]
@@ -203,7 +243,8 @@ export const costsRelations = relations(costs, ({ one }) => ({
   supplier: one(suppliers, {
     fields: [costs.supplierId],
     references: [suppliers.id]
-  })
+  }),
+  attributeValues: many(costAttributeValues)
 }));
 
 export const revenuesRelations = relations(revenues, ({ one }) => ({
@@ -244,5 +285,25 @@ export const suppliersRelations = relations(suppliers, ({ many }) => ({
 }));
 
 export const costTypesRelations = relations(costTypes, ({ many }) => ({
-  costs: many(costs)
+  costs: many(costs),
+  attributes: many(costTypeAttributes)
+}));
+
+export const costTypeAttributesRelations = relations(costTypeAttributes, ({ one, many }) => ({
+  costType: one(costTypes, {
+    fields: [costTypeAttributes.costTypeId],
+    references: [costTypes.id]
+  }),
+  attributeValues: many(costAttributeValues)
+}));
+
+export const costAttributeValuesRelations = relations(costAttributeValues, ({ one }) => ({
+  cost: one(costs, {
+    fields: [costAttributeValues.costId],
+    references: [costs.id]
+  }),
+  attribute: one(costTypeAttributes, {
+    fields: [costAttributeValues.attributeId],
+    references: [costTypeAttributes.id]
+  })
 }));
