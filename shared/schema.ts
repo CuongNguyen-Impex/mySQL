@@ -161,12 +161,17 @@ export const costs = pgTable("costs", {
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   date: date("date").notNull(),
   notes: text("notes"),
+  tt_hd: text("tt_hd").default("Hóa đơn").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
 export const insertCostSchema = createInsertSchema(costs, {
-  amount: (schema) => schema.refine(val => parseFloat(val) > 0, "Amount must be greater than 0")
+  amount: (schema) => schema.refine(val => parseFloat(val) > 0, "Amount must be greater than 0"),
+  tt_hd: (schema) => schema.refine(
+    val => val === "Hóa đơn" || val === "Trả hộ", 
+    "TT_HD must be either 'Hóa đơn' or 'Trả hộ'"
+  )
 });
 export type InsertCost = z.infer<typeof insertCostSchema>;
 export type Cost = typeof costs.$inferSelect;

@@ -58,7 +58,8 @@ export const costFormSchema = insertCostSchema.extend({
   billId: z.coerce.number(),
   costTypeId: z.coerce.number(),
   supplierId: z.coerce.number(),
-  amount: z.coerce.number().positive("Amount must be greater than 0")
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  tt_hd: z.enum(["Hóa đơn", "Trả hộ"])
 });
 
 export const revenueFormSchema = insertRevenueSchema.extend({
