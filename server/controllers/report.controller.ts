@@ -471,22 +471,19 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
       orderBy: bills.date
     });
     
-    // Calculate summary with cost attribute type differentiation
+    // Calculate summary with tt_hd value differentiation
     let totalRevenue = 0;
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
-    let totalKoHoaDonCosts = 0;
     
     billsInRange.forEach(bill => {
-      // Sum costs based on their attribute type
+      // Sum costs based on tt_hd value
       bill.costs.forEach(cost => {
-        // Check cost attribute type from our map
-        const costType = costAttributeMap.get(cost.id) || "Hóa đơn"; // Default to 'Hóa đơn' if not found
+        // Get cost attribute directly from tt_hd field
+        const costType = cost.tt_hd || "Hóa đơn"; // Default to 'Hóa đơn' if not set
         
         if (costType === "Trả hộ") {
           totalTraHoCosts += parseFloat(cost.amount.toString());
-        } else if (costType === "Ko hóa đơn") {
-          totalKoHoaDonCosts += parseFloat(cost.amount.toString());
         } else { // "Hóa đơn"
           totalHoaDonCosts += parseFloat(cost.amount.toString());
         }
@@ -499,7 +496,7 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
     });
     
     // Calculate total costs (all types combined)
-    const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
     
     // Only use 'Hóa đơn' costs for net profit calculation
     const netProfit = totalRevenue - totalHoaDonCosts;
@@ -519,22 +516,19 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
           bills: [],
           revenues: [],
           hoaDonCosts: [],
-          traHoCosts: [],
-          koHoaDonCosts: []
+          traHoCosts: []
         };
       }
       
       billsByMonth[period].bills.push(bill);
       
-      // Split costs by attribute type
+      // Split costs by tt_hd value
       bill.costs.forEach(cost => {
-        const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+        const costType = cost.tt_hd || "Hóa đơn";
         
         if (costType === "Trả hộ") {
           billsByMonth[period].traHoCosts.push(cost);
-        } else if (costType === "Ko hóa đơn") {
-          billsByMonth[period].koHoaDonCosts.push(cost);
-        } else {
+        } else { // "Hóa đơn"
           billsByMonth[period].hoaDonCosts.push(cost);
         }
       });
@@ -549,8 +543,7 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
       // Split costs by type for reporting
       const periodHoaDonCosts = periodData.hoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
       const periodTraHoCosts = periodData.traHoCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
-      const periodKoHoaDonCosts = periodData.koHoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
-      const periodTotalCosts = periodHoaDonCosts + periodTraHoCosts + periodKoHoaDonCosts;
+      const periodTotalCosts = periodHoaDonCosts + periodTraHoCosts;
       
       // Only use 'Hóa đơn' costs for profit calculation
       const periodProfit = periodRevenue - periodHoaDonCosts;
@@ -565,7 +558,6 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
         revenue: periodRevenue,
         hoaDonCosts: periodHoaDonCosts,
         traHoCosts: periodTraHoCosts,
-        koHoaDonCosts: periodKoHoaDonCosts,
         totalCosts: periodTotalCosts,
         profit: periodProfit,
         margin: periodMargin
@@ -585,7 +577,6 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
         totalRevenue,
         hoaDonCosts: totalHoaDonCosts,  // "Hóa đơn" costs
         traHoCosts: totalTraHoCosts,    // "Trả hộ" costs
-        koHoaDonCosts: totalKoHoaDonCosts, // "Ko hóa đơn" costs
         totalCosts,                    // Combined costs
         netProfit,                     // Revenue - Hóa đơn costs only
         profitMargin,
@@ -886,8 +877,8 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
     billsInRange.forEach(bill => {
       // Sum costs based on their attribute type
       bill.costs.forEach(cost => {
-        // Check cost attribute type from our map
-        const costType = costAttributeMap.get(cost.id) || "Hóa đơn"; // Default to 'Hóa đơn' if not found
+        // Get cost attribute directly from tt_hd field
+        const costType = cost.tt_hd || "Hóa đơn"; // Default to 'Hóa đơn' if not set
         
         if (costType === "Trả hộ") {
           totalTraHoCosts += parseFloat(cost.amount.toString());
@@ -929,14 +920,12 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       
       billsByMonth[period].bills.push(bill);
       
-      // Split costs by attribute type
+      // Split costs by tt_hd value
       bill.costs.forEach(cost => {
-        const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+        const costType = cost.tt_hd || "Hóa đơn";
         
         if (costType === "Trả hộ") {
           billsByMonth[period].traHoCosts.push(cost);
-        } else if (costType === "Ko hóa đơn") {
-          billsByMonth[period].koHoaDonCosts.push(cost);
         } else {
           billsByMonth[period].hoaDonCosts.push(cost);
         }
@@ -952,8 +941,7 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       // Split costs by type for reporting
       const periodHoaDonCosts = periodData.hoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
       const periodTraHoCosts = periodData.traHoCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
-      const periodKoHoaDonCosts = periodData.koHoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
-      const periodTotalCosts = periodHoaDonCosts + periodTraHoCosts + periodKoHoaDonCosts;
+      const periodTotalCosts = periodHoaDonCosts + periodTraHoCosts;
       
       // Only use 'Hóa đơn' costs for profit calculation
       const periodProfit = periodRevenue - periodHoaDonCosts;
@@ -968,7 +956,7 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
         revenue: periodRevenue.toFixed(2),
         hoaDonCosts: periodHoaDonCosts.toFixed(2),
         traHoCosts: periodTraHoCosts.toFixed(2),
-        koHoaDonCosts: periodKoHoaDonCosts.toFixed(2),
+
         totalCosts: periodTotalCosts.toFixed(2),
         profit: periodProfit.toFixed(2),
         margin: periodMargin.toFixed(2)
