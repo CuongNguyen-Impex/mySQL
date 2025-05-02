@@ -1126,20 +1126,14 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
     
     // Enhance bill details with cost attribute information and profit calculations
     const enhancedBills = billsWithDetails.map(bill => {
-      // Split costs by attribute type
-      const hoaDonCosts = bill.costs.filter(cost => 
-        costAttributeMap.get(cost.id) === "Hóa đơn");
-      const traHoCosts = bill.costs.filter(cost => 
-        costAttributeMap.get(cost.id) === "Trả hộ");
-      const koHoaDonCosts = bill.costs.filter(cost => 
-        costAttributeMap.get(cost.id) === "Ko hóa đơn");
+      // Split costs by tt_hd value
+      const hoaDonCosts = bill.costs.filter(cost => cost.tt_hd === "Hóa đơn");
+      const traHoCosts = bill.costs.filter(cost => cost.tt_hd === "Trả hộ");
       
       // Calculate totals by attribute type
       const totalHoaDonCost = hoaDonCosts.reduce(
         (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
       const totalTraHoCost = traHoCosts.reduce(
-        (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
-      const totalKoHoaDonCost = koHoaDonCosts.reduce(
         (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
         
       // Calculate total revenue
@@ -1149,22 +1143,11 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
       // For profit calculation, only use 'Hóa đơn' costs
       const profit = totalRevenue - totalHoaDonCost;
       
-      // Enhanced costs with attribute information
-      const enhancedCosts = bill.costs.map(cost => {
-        const costAttribute = costAttributeMap.get(cost.id) || "Hóa đơn";
-        return {
-          ...cost,
-          attribute: costAttribute
-        };
-      });
-      
       return {
         ...bill,
-        costs: enhancedCosts,
         totalHoaDonCost,
         totalTraHoCost,
-        totalKoHoaDonCost,
-        totalCost: totalHoaDonCost + totalTraHoCost + totalKoHoaDonCost,
+        totalCost: totalHoaDonCost + totalTraHoCost,
         totalRevenue,
         profit
       };
@@ -1257,20 +1240,14 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       // Calculate total revenue for this bill
       const totalRevenue = bill.revenues.reduce((sum, revenue) => sum + parseFloat(revenue.amount.toString()), 0);
       
-      // Split costs by attribute type
-      const hoaDonCosts = bill.costs.filter(cost => 
-        costAttributeMap.get(cost.id) === "Hóa đơn");
-      const traHoCosts = bill.costs.filter(cost => 
-        costAttributeMap.get(cost.id) === "Trả hộ");
-      const koHoaDonCosts = bill.costs.filter(cost => 
-        costAttributeMap.get(cost.id) === "Ko hóa đơn");
+      // Split costs by tt_hd value
+      const hoaDonCosts = bill.costs.filter(cost => cost.tt_hd === "Hóa đơn");
+      const traHoCosts = bill.costs.filter(cost => cost.tt_hd === "Trả hộ");
       
       // Calculate totals by attribute type
       const totalHoaDonCost = hoaDonCosts.reduce(
         (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
       const totalTraHoCost = traHoCosts.reduce(
-        (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
-      const totalKoHoaDonCost = koHoaDonCosts.reduce(
         (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
       
       // For profit calculation, only use 'Hóa đơn' costs
@@ -1279,13 +1256,13 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       // For bills with costs, add one row per cost
       if (bill.costs.length > 0) {
         bill.costs.forEach(cost => {
-          // Determine cost attribute type
-          const costAttribute = costAttributeMap.get(cost.id) || "Hóa đơn";
+          // Get attribute from tt_hd
+          const costAttribute = cost.tt_hd || "Hóa đơn";
           
           // Calculate profit share for this cost
           const costAmount = parseFloat(cost.amount.toString());
           
-          // For 'Trả hộ' and 'Ko hóa đơn' costs, profit is not calculated (pass-through)
+          // For 'Trả hộ' costs, profit is not calculated (pass-through)
           let profitShare = 0;
           let revenueShare = 0;
           
