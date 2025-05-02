@@ -166,6 +166,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       let totalCustomerRevenue = 0;
       let totalCustomerHoaDonCosts = 0;
       let totalCustomerTraHoCosts = 0;
+      let totalCustomerKoHoaDonCosts = 0;
       
       customer.bills.forEach(bill => {
         // Sum revenues
@@ -180,14 +181,16 @@ export const getDashboardData = async (req: Request, res: Response) => {
           
           if (costType === "Trả hộ") {
             totalCustomerTraHoCosts += amount;
+          } else if (costType === "Ko hóa đơn") {
+            totalCustomerKoHoaDonCosts += amount;
           } else {
             totalCustomerHoaDonCosts += amount;
           }
         });
       });
       
-      // Calculate total costs
-      const totalCustomerCosts = totalCustomerHoaDonCosts + totalCustomerTraHoCosts;
+      // Calculate total costs (all types combined)
+      const totalCustomerCosts = totalCustomerHoaDonCosts + totalCustomerTraHoCosts + totalCustomerKoHoaDonCosts;
       
       // Calculate profit based only on 'Hóa đơn' costs
       const profit = totalCustomerRevenue - totalCustomerHoaDonCosts;
@@ -198,6 +201,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
         revenue: totalCustomerRevenue,
         hoaDonCosts: totalCustomerHoaDonCosts,
         traHoCosts: totalCustomerTraHoCosts,
+        koHoaDonCosts: totalCustomerKoHoaDonCosts,
         costs: totalCustomerCosts,
         profit,
         percentage: totalProfit !== 0 ? (profit / totalProfit) * 100 : 0
