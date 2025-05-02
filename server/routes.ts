@@ -20,6 +20,9 @@ import * as googleSheetsController from "./controllers/google-sheets.controller"
 import * as userController from "./controllers/user.controller";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Áp dụng session middleware
+  app.use(storage);
+  
   // API prefix
   const apiPrefix = "/api";
 
