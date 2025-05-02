@@ -2,7 +2,7 @@ import { db } from "./index";
 import * as schema from "../shared/schema.js";
 import bcrypt from "bcryptjs";
 
-const { customers, services, suppliers, costTypes, bills, costs, revenues, prices, users } = schema;
+const { customers, services, suppliers, costTypes, costTypeAttributes, bills, costs, revenues, prices, users } = schema;
 
 async function seed() {
   try {
@@ -32,6 +32,41 @@ async function seed() {
     const serviceCount = await db.select().from(services).execute();
     const supplierCount = await db.select().from(suppliers).execute();
 
+    // Check if cost type attributes exist
+    const costTypeAttributeCount = await db.select().from(costTypeAttributes).execute();
+    
+    // If only missing cost type attributes but other data exists, only seed the attributes
+    if (costTypeAttributeCount.length === 0 && (customerCount.length > 0 || serviceCount.length > 0 || supplierCount.length > 0)) {
+      console.log("Seeding only cost type attributes...");
+      
+      // Get existing cost types
+      const existingCostTypes = await db.select().from(costTypes).execute();
+      
+      if (existingCostTypes.length > 0) {
+        // Add 'Trả hộ' and 'Hóa đơn' attributes to each existing cost type
+        const costTypeAttributesData = [];
+        
+        for (const costType of existingCostTypes) {
+          costTypeAttributesData.push(
+            {
+              costTypeId: costType.id,
+              name: "Trả hộ"
+            },
+            {
+              costTypeId: costType.id,
+              name: "Hóa đơn"
+            }
+          );
+        }
+        
+        const insertedCostTypeAttributes = await db.insert(costTypeAttributes).values(costTypeAttributesData).returning();
+        console.log(`Inserted ${insertedCostTypeAttributes.length} cost type attributes`);
+      }
+      
+      console.log("Completed seeding cost type attributes.");
+      return;
+    }
+    
     if (customerCount.length > 0 || serviceCount.length > 0 || supplierCount.length > 0) {
       console.log("Data already exists. Skipping seed process.");
       return;
@@ -134,6 +169,27 @@ async function seed() {
     
     const insertedCostTypes = await db.insert(costTypes).values(costTypesData).returning();
     console.log(`Inserted ${insertedCostTypes.length} cost types`);
+
+    // 4.1 Seed Cost Type Attributes (Trả hộ and Hóa đơn)
+    console.log("Seeding cost type attributes...");
+    const costTypeAttributesData = [];
+    
+    // Add 'Trả hộ' and 'Hóa đơn' attributes to each cost type
+    for (const costType of insertedCostTypes) {
+      costTypeAttributesData.push(
+        {
+          costTypeId: costType.id,
+          name: "Trả hộ"
+        },
+        {
+          costTypeId: costType.id,
+          name: "Hóa đơn"
+        }
+      );
+    }
+    
+    const insertedCostTypeAttributes = await db.insert(costTypeAttributes).values(costTypeAttributesData).returning();
+    console.log(`Inserted ${insertedCostTypeAttributes.length} cost type attributes`);
 
     // 5. Seed Prices
     console.log("Seeding prices...");
