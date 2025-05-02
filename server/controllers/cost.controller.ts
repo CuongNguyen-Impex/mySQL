@@ -73,15 +73,18 @@ export const createCost = async (req: Request, res: Response) => {
           if (!valueData.value) continue;
           
           // Create the attribute value
+          // Use attributeId from valueData.attributeId if available, otherwise use valueData.costTypeAttributeId
+          const attributeId = valueData.attributeId || valueData.costTypeAttributeId;
+          
           console.log("Creating new attribute value for new cost:", {
             costId: newCost.id,
-            attributeId: valueData.costTypeAttributeId,
+            attributeId: attributeId,
             value: valueData.value,
           });
           
           await tx.insert(costAttributeValues).values({
             costId: newCost.id,
-            attributeId: valueData.costTypeAttributeId,
+            attributeId: attributeId,
             value: valueData.value,
           });
         }
@@ -195,15 +198,18 @@ export const updateCost = async (req: Request, res: Response) => {
           if (!valueData.value) continue;
           
           // Create the attribute value
-          console.log("Creating attribute value:", {
+          // Use attributeId from valueData.attributeId if available, otherwise use valueData.costTypeAttributeId
+          const attributeId = valueData.attributeId || valueData.costTypeAttributeId;
+          
+          console.log("Creating attribute value for updated cost:", {
             costId: updatedCost.id,
-            attributeId: valueData.costTypeAttributeId,
+            attributeId: attributeId,
             value: valueData.value,
           });
           
           await tx.insert(costAttributeValues).values({
             costId: updatedCost.id,
-            attributeId: valueData.costTypeAttributeId,
+            attributeId: attributeId,
             value: valueData.value,
           });
         }

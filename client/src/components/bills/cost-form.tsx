@@ -89,7 +89,7 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   useEffect(() => {
     if (isEditing && existingAttributeValues && Array.isArray(existingAttributeValues) && existingAttributeValues.length > 0) {
       const formattedValues = existingAttributeValues.map((av: any) => ({
-        costTypeAttributeId: av.costTypeAttributeId,
+        costTypeAttributeId: av.attributeId, // Một field là attributeId và một field là costTypeAttributeId
         value: av.value,
       }));
       setAttributeValues(formattedValues);
