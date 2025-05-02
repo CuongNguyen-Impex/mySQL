@@ -197,8 +197,8 @@ export default function ReportsByCustomer() {
                   <TableHead>Khách hàng</TableHead>
                   <TableHead className="text-right">Hóa đơn</TableHead>
                   <TableHead className="text-right">Doanh thu</TableHead>
-                  <TableHead className="text-right">Chi phí (HĐ)</TableHead>
-                  <TableHead className="text-right">Chi phí (TH)</TableHead>
+                  <TableHead className="text-right">Chi phí (Hóa đơn)</TableHead>
+                  <TableHead className="text-right">Chi phí (Trả hộ)</TableHead>
                   <TableHead className="text-right">Tổng chi phí</TableHead>
                   <TableHead className="text-right">Lợi nhuận</TableHead>
                   <TableHead className="text-right">Biên LN %</TableHead>
