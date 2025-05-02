@@ -146,11 +146,12 @@ export default function BillDetailReport() {
                               
                               // Phương pháp tính toán lợi nhuận cho từng dòng chi phí
                               let costProfit = 0;
+                              const costAmount = Number(cost.amount) || 0;
                               
                               if (isHoaDon) {
                                 // Nếu là chi phí hóa đơn, phân bổ lợi nhuận dựa trên tỷ lệ chi phí hóa đơn
                                 if (totalHoaDonCost > 0) {
-                                  costProfit = (totalCostAmount / totalHoaDonCost) * totalProfit;
+                                  costProfit = (costAmount / totalHoaDonCost) * totalProfit;
                                 } else {
                                   // Trường hợp không có chi phí hóa đơn, phân bổ lợi nhuận bằng nhau
                                   costProfit = billCosts.length > 0 ? totalProfit / billCosts.length : totalProfit;
@@ -173,8 +174,8 @@ export default function BillDetailReport() {
                                 <TableCell>{bill.customer?.name || 'N/A'}</TableCell>
                                 <TableCell>{cost.supplier?.name || 'N/A'}</TableCell>
                                 <TableCell className="text-right">{allocatedRevenue.toLocaleString('vi-VN')}</TableCell>
-                                <TableCell className="text-right">{isHoaDon ? totalCostAmount.toLocaleString('vi-VN') : '0'}</TableCell>
-                                <TableCell className="text-right">{isTraHo ? totalCostAmount.toLocaleString('vi-VN') : '0'}</TableCell>
+                                <TableCell className="text-right">{isHoaDon ? Number(cost.amount).toLocaleString('vi-VN') : '0'}</TableCell>
+                                <TableCell className="text-right">{isTraHo ? Number(cost.amount).toLocaleString('vi-VN') : '0'}</TableCell>
                                 <TableCell className={cn("text-right", costProfit >= 0 ? "text-success" : "text-destructive")}>
                                   {costProfit.toLocaleString('vi-VN')}
                                 </TableCell>
