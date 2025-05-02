@@ -19,8 +19,8 @@ interface CostAttributeValueFormProps {
 }
 
 export interface AttributeValueData {
-  costTypeAttributeId: number;
-  value: string;
+  costTypeAttributeId: number; // ID của thuộc tính
+  value: string; // Giá trị của thuộc tính
 }
 
 export default function CostAttributeValueForm({
