@@ -84,8 +84,13 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   
-  // State to track selected attributes for each row
+  // Hiển thị các thuộc tính đã chọn với badge màu xanh
   const [selectedAttributes, setSelectedAttributes] = useState<Record<number, AttributeValue[]>>({});
+  
+  // Theo dõi quá trình debug bằng console
+  useEffect(() => {
+    console.log("Current selectedAttributes state:", selectedAttributes);
+  }, [selectedAttributes]);
 
   // Form setup with useFieldArray for handling multiple entries
   const form = useForm({
