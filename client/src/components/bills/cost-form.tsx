@@ -176,6 +176,7 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
     .map(attr => {
       // Tìm tên thuộc tính từ costTypeId và id thuộc tính
       let attributeName = 'Unknown';
+      let attributeColor = '';
       if (Array.isArray(costTypes)) {
         // Truy vấn từ danh sách loại chi phí và thuộc tính
         for (const ct of costTypes) {
@@ -183,12 +184,22 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
             const found = ct.attributes.find((a: any) => a.id === attr.costTypeAttributeId);
             if (found) {
               attributeName = found.name;
+              // Xác định màu sắc dựa trên tên thuộc tính
+              if (found.name === "Hóa đơn") {
+                attributeColor = "bg-green-100 text-green-800 border-green-300";
+              } else if (found.name === "Trả hộ") {
+                attributeColor = "bg-blue-100 text-blue-800 border-blue-300";
+              } else if (found.name === "Ko hóa đơn") {
+                attributeColor = "bg-yellow-100 text-yellow-800 border-yellow-300";
+              } else {
+                attributeColor = "bg-gray-100 text-gray-800 border-gray-300";
+              }
               break;
             }
           }
         }
       }
-      return attributeName;
+      return {name: attributeName, color: attributeColor};
     });
 
   return (
@@ -356,9 +367,9 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
               <FormDescription>
                 {selectedAttributes.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedAttributes.map((attrName, index) => (
-                      <Badge key={index} variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">
-                        {attrName}
+                    {selectedAttributes.map((attr, index) => (
+                      <Badge key={index} variant="outline" className={attr.color}>
+                        {attr.name}
                       </Badge>
                     ))}
                   </div>
