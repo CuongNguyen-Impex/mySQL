@@ -3,6 +3,8 @@ import {
   Bill,
   Cost,
   CostType,
+  CostTypeAttribute,
+  CostAttributeValue,
   Customer,
   Revenue,
   Service,
@@ -13,6 +15,8 @@ import {
   insertBillSchema,
   insertCostSchema,
   insertCostTypeSchema,
+  insertCostTypeAttributeSchema,
+  insertCostAttributeValueSchema,
   insertCustomerSchema,
   insertRevenueSchema,
   insertServiceSchema,
@@ -27,6 +31,8 @@ export type {
   Bill,
   Cost,
   CostType,
+  CostTypeAttribute,
+  CostAttributeValue,
   Customer,
   Revenue,
   Service,
@@ -71,6 +77,13 @@ export const priceFormSchema = insertPriceSchema.extend({
 export const customerFormSchema = insertCustomerSchema;
 export const serviceFormSchema = insertServiceSchema;
 export const costTypeFormSchema = insertCostTypeSchema;
+export const costTypeAttributeFormSchema = insertCostTypeAttributeSchema.extend({
+  costTypeId: z.coerce.number()
+});
+export const costAttributeValueFormSchema = insertCostAttributeValueSchema.extend({
+  costId: z.coerce.number(),
+  costTypeAttributeId: z.coerce.number()
+});
 export const supplierFormSchema = insertSupplierSchema;
 export const userFormSchema = insertUserSchema;
 export const settingFormSchema = insertSettingSchema;
@@ -90,6 +103,16 @@ export interface CostWithRelations extends Cost {
   bill?: Bill;
   costType?: CostType;
   supplier?: Supplier;
+  attributeValues?: CostAttributeValueWithRelations[];
+}
+
+export interface CostTypeAttributeWithRelations extends CostTypeAttribute {
+  costType?: CostType;
+}
+
+export interface CostAttributeValueWithRelations extends CostAttributeValue {
+  attribute?: CostTypeAttribute;
+  cost?: Cost;
 }
 
 export interface RevenueWithRelations extends Revenue {

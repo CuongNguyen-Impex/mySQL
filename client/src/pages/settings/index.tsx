@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowRight, Boxes, FileSpreadsheet, Users } from "lucide-react";
+import { ArrowRight, Boxes, FileSpreadsheet, Users, ListTodo } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +10,12 @@ export default function Settings() {
       description: "Manage customers, services, cost types, and suppliers",
       icon: <Boxes className="h-6 w-6" />,
       href: "/settings/categories",
+    },
+    {
+      title: "Cost Type Attributes",
+      description: "Manage attributes for each cost type",
+      icon: <ListTodo className="h-6 w-6" />,
+      href: "/settings/cost-type-attributes",
     },
     {
       title: "Google Sheets Integration",

@@ -16,6 +16,7 @@ import BillDetailReport from "./pages/reports/bill-detail-fixed";
 import Settings from "./pages/settings";
 import SettingsCategories from "./pages/settings/categories";
 import SettingsGoogleSheets from "./pages/settings/google-sheets";
+import CostTypeAttributes from "./pages/settings/cost-type-attributes";
 import Customers from "./pages/customers";
 import Suppliers from "./pages/suppliers";
 import Pricing from "./pages/pricing";
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/settings/categories" component={SettingsCategories} />
       <Route path="/settings/google-sheets" component={SettingsGoogleSheets} />
+      <Route path="/settings/cost-type-attributes" component={CostTypeAttributes} />
       <Route path="/customers" component={Customers} />
       <Route path="/suppliers" component={Suppliers} />
       <Route path="/pricing" component={Pricing} />
