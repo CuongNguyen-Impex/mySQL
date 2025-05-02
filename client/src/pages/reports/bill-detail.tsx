@@ -109,14 +109,9 @@ export default function BillDetailReport() {
                       <TableHead>Khách hàng</TableHead>
                       <TableHead>Nhà cung cấp</TableHead>
                       <TableHead className="text-right">Giá bán</TableHead>
-                      <TableHead colSpan={2} className="text-center border-b">Giá mua</TableHead>
-                      <TableHead className="text-right">Lãi/Lỗ</TableHead>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead colSpan={7}></TableHead>
                       <TableHead className="text-right">Hóa đơn</TableHead>
                       <TableHead className="text-right">Trả hộ</TableHead>
-                      <TableHead></TableHead>
+                      <TableHead className="text-right">Lãi/Lỗ</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -255,7 +250,7 @@ export default function BillDetailReport() {
                     
                     {(data?.bills?.length === 0 || !data?.bills) && (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
+                        <TableCell colSpan={10} className="text-center py-6 text-muted-foreground">
                           Không có dữ liệu cho khoảng thời gian đã chọn
                         </TableCell>
                       </TableRow>
