@@ -64,6 +64,7 @@ const multiCostFormSchema = z.object({
       amount: z.number().positive("Amount must be greater than 0"),
       date: z.date(),
       notes: z.string().optional(),
+      tt_hd: z.enum(["Hóa đơn", "Trả hộ"]),
       attributeValues: z.array(
         z.object({
           costTypeAttributeId: z.number(),
@@ -104,6 +105,7 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
           amount: undefined as unknown as number,
           date: new Date(),
           notes: "",
+          tt_hd: "Hóa đơn",
           attributeValues: [],
         },
       ],
@@ -152,6 +154,8 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
             amount: undefined as unknown as number,
             date: new Date(),
             notes: "",
+            tt_hd: "Hóa đơn",
+            attributeValues: [],
           },
         ],
       });
@@ -260,6 +264,7 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
       amount: undefined as unknown as number,
       date: new Date(),
       notes: "",
+      tt_hd: "Hóa đơn",
       attributeValues: [],
     });
   };
