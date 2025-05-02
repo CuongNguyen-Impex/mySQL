@@ -127,7 +127,12 @@ export const getBillById = async (req: Request, res: Response) => {
         costs: {
           with: {
             costType: true,
-            supplier: true
+            supplier: true,
+            attributeValues: {
+              with: {
+                attribute: true
+              }
+            }
           }
         },
         revenues: {
