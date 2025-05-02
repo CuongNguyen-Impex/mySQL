@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { db } from "@db";
-import { bills, costs, revenues, customers, services, suppliers, costTypes } from "@shared/schema";
+import { bills, costs, revenues, customers, services, suppliers, costTypes, costAttributeValues, costTypeAttributes } from "@shared/schema";
 import { eq, and, desc, between, sql, count, sum, avg } from "drizzle-orm";
 import { subDays, subMonths, subYears, parseISO, isValid, startOfDay, endOfDay } from "date-fns";
 
@@ -192,6 +192,37 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
     const { timeframe, from, to } = req.query;
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
+    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
+    const costsWithAttributes = await db.query.costs.findMany({
+      with: {
+        attributeValues: {
+          with: {
+            attribute: true
+          }
+        }
+      }
+    });
+    
+    // Create a map of cost attribute types for quick lookup
+    const costAttributeMap = new Map<number, string>();
+    
+    // Default is to consider as 'Hóa đơn' if not specified
+    costsWithAttributes.forEach(cost => {
+      // Default to 'Hóa đơn' if no attribute values
+      costAttributeMap.set(cost.id, "Hóa đơn");
+      
+      // If has attribute values, determine type
+      if (cost.attributeValues && cost.attributeValues.length > 0) {
+        // Find attribute with name 'Trả hộ'
+        const traHoAttribute = cost.attributeValues.find(av => 
+          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
+        
+        if (traHoAttribute) {
+          costAttributeMap.set(cost.id, "Trả hộ");
+        }
+      }
+    });
+    
     // Get all customers with their bills
     const customersWithBills = await db.query.customers.findMany({
       columns: {
@@ -212,12 +243,20 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
     // Calculate metrics for each customer
     const customerReports = customersWithBills.map(customer => {
       let totalRevenue = 0;
-      let totalCosts = 0;
+      let totalHoaDonCosts = 0;
+      let totalTraHoCosts = 0;
       
       customer.bills.forEach(bill => {
-        // Sum costs
+        // Sum costs based on their attribute type
         bill.costs.forEach(cost => {
-          totalCosts += parseFloat(cost.amount.toString());
+          // Check if cost is 'Trả hộ' or 'Hóa đơn' from our map
+          const costType = costAttributeMap.get(cost.id) || "Hóa đơn"; // Default to 'Hóa đơn' if not found
+          
+          if (costType === "Trả hộ") {
+            totalTraHoCosts += parseFloat(cost.amount.toString());
+          } else { // "Hóa đơn"
+            totalHoaDonCosts += parseFloat(cost.amount.toString());
+          }
         });
         
         // Sum revenues
@@ -226,7 +265,11 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
         });
       });
       
-      const profit = totalRevenue - totalCosts;
+      // Calculate total costs
+      const totalCosts = totalHoaDonCosts + totalTraHoCosts;
+      
+      // Only use 'Hóa đơn' costs for profit calculation
+      const profit = totalRevenue - totalHoaDonCosts;
       const margin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
       
       return {
@@ -234,7 +277,9 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
         name: customer.name,
         billCount: customer.bills.length,
         revenue: totalRevenue,
-        costs: totalCosts,
+        hoaDonCosts: totalHoaDonCosts,
+        traHoCosts: totalTraHoCosts,
+        totalCosts,
         profit,
         margin
       };
@@ -336,9 +381,40 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
     const { timeframe, from, to } = req.query;
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
+    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
+    const costsWithAttributes = await db.query.costs.findMany({
+      with: {
+        attributeValues: {
+          with: {
+            attribute: true
+          }
+        }
+      }
+    });
+    
+    // Create a map of cost attribute types for quick lookup
+    const costAttributeMap = new Map<number, string>();
+    
+    // Default is to consider as 'Hóa đơn' if not specified
+    costsWithAttributes.forEach(cost => {
+      // Default to 'Hóa đơn' if no attribute values
+      costAttributeMap.set(cost.id, "Hóa đơn");
+      
+      // If has attribute values, determine type
+      if (cost.attributeValues && cost.attributeValues.length > 0) {
+        // Find attribute with name 'Trả hộ'
+        const traHoAttribute = cost.attributeValues.find(av => 
+          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
+        
+        if (traHoAttribute) {
+          costAttributeMap.set(cost.id, "Trả hộ");
+        }
+      }
+    });
+    
     // Get all bills in the date range
     const billsInRange = await db.query.bills.findMany({
-      where: between(bills.date, dateRange.from, dateRange.to),
+      where: between(bills.date, dateRange.from.toISOString(), dateRange.to.toISOString()),
       with: {
         costs: true,
         revenues: true
@@ -346,21 +422,35 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
       orderBy: bills.date
     });
     
-    // Calculate summary
+    // Calculate summary with cost attribute type differentiation
     let totalRevenue = 0;
-    let totalCosts = 0;
+    let totalHoaDonCosts = 0;
+    let totalTraHoCosts = 0;
     
     billsInRange.forEach(bill => {
+      // Sum costs based on their attribute type
       bill.costs.forEach(cost => {
-        totalCosts += parseFloat(cost.amount.toString());
+        // Check if cost is 'Trả hộ' or 'Hóa đơn' from our map
+        const costType = costAttributeMap.get(cost.id) || "Hóa đơn"; // Default to 'Hóa đơn' if not found
+        
+        if (costType === "Trả hộ") {
+          totalTraHoCosts += parseFloat(cost.amount.toString());
+        } else { // "Hóa đơn"
+          totalHoaDonCosts += parseFloat(cost.amount.toString());
+        }
       });
       
+      // Sum revenues
       bill.revenues.forEach(revenue => {
         totalRevenue += parseFloat(revenue.amount.toString());
       });
     });
     
-    const netProfit = totalRevenue - totalCosts;
+    // Calculate total costs (both types combined)
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
+    
+    // Only use 'Hóa đơn' costs for net profit calculation
+    const netProfit = totalRevenue - totalHoaDonCosts;
     const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
     
     // Generate period breakdown
@@ -376,20 +466,38 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
         billsByMonth[period] = {
           bills: [],
           revenues: [],
-          costs: []
+          hoaDonCosts: [],
+          traHoCosts: []
         };
       }
       
       billsByMonth[period].bills.push(bill);
-      billsByMonth[period].costs.push(...bill.costs);
+      
+      // Split costs by attribute type
+      bill.costs.forEach(cost => {
+        const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+        
+        if (costType === "Trả hộ") {
+          billsByMonth[period].traHoCosts.push(cost);
+        } else {
+          billsByMonth[period].hoaDonCosts.push(cost);
+        }
+      });
+      
       billsByMonth[period].revenues.push(...bill.revenues);
     });
     
     const periods = Object.keys(billsByMonth).map(period => {
       const periodData = billsByMonth[period];
       const periodRevenue = periodData.revenues.reduce((sum: number, revenue: any) => sum + parseFloat(revenue.amount.toString()), 0);
-      const periodCosts = periodData.costs.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
-      const periodProfit = periodRevenue - periodCosts;
+      
+      // Split costs by type for reporting
+      const periodHoaDonCosts = periodData.hoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
+      const periodTraHoCosts = periodData.traHoCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
+      const periodTotalCosts = periodHoaDonCosts + periodTraHoCosts;
+      
+      // Only use 'Hóa đơn' costs for profit calculation
+      const periodProfit = periodRevenue - periodHoaDonCosts;
       const periodMargin = periodRevenue > 0 ? (periodProfit / periodRevenue) * 100 : 0;
       
       const [year, month] = period.split('-');
@@ -399,7 +507,9 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
         label: `${monthName} ${year}`,
         billCount: periodData.bills.length,
         revenue: periodRevenue,
-        costs: periodCosts,
+        hoaDonCosts: periodHoaDonCosts,
+        traHoCosts: periodTraHoCosts,
+        totalCosts: periodTotalCosts,
         profit: periodProfit,
         margin: periodMargin
       };
@@ -416,8 +526,10 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
     return res.status(200).json({
       summary: {
         totalRevenue,
-        totalCosts,
-        netProfit,
+        hoaDonCosts: totalHoaDonCosts,  // "Hóa đơn" costs
+        traHoCosts: totalTraHoCosts,    // "Trả hộ" costs
+        totalCosts,                    // Combined costs
+        netProfit,                     // Revenue - Hóa đơn costs only
         profitMargin,
         billCount: billsInRange.length
       },
@@ -447,7 +559,7 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
       },
       with: {
         bills: {
-          where: between(bills.date, dateRange.from, dateRange.to),
+          where: between(bills.date, dateRange.from.toISOString(), dateRange.to.toISOString()),
           with: {
             costs: true,
             revenues: true
