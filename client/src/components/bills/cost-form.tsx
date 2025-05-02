@@ -77,16 +77,16 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   });
   
   // Lấy thuộc tính của chi phí khi chỉnh sửa
-  const { data: existingAttributes = [] } = useQuery({
+  const { data: existingAttributesData } = useQuery({
     queryKey: ["/api/cost-attribute-values", cost?.id],
     enabled: isEditing && !!cost?.id,
   });
   
   // Cập nhật giá trị của thuộc tính khi chỉnh sửa
   useEffect(() => {
-    if (isEditing && existingAttributes.length > 0) {
+    if (isEditing && existingAttributesData && Array.isArray(existingAttributesData) && existingAttributesData.length > 0) {
       // Chuyển đổi dữ liệu từ server về định dạng của form
-      const formattedValues = existingAttributes.map((attr: any) => ({
+      const formattedValues = existingAttributesData.map((attr: any) => ({
         costTypeAttributeId: attr.attributeId,
         value: attr.value,
       }));
@@ -94,7 +94,7 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
       console.log("Thuộc tính chi phí hiện tại:", formattedValues);
       setAttributeValues(formattedValues);
     }
-  }, [isEditing, existingAttributes]);
+  }, [isEditing, existingAttributesData]);
 
   // Xử lý khi thay đổi loại chi phí
   const handleCostTypeChange = (costTypeId: number) => {
@@ -154,9 +154,15 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
 
   // Xử lý khi submit form
   const onSubmit = (values: any) => {
+    // Chuyển đổi amount thành chuỗi vì backend mong đợi kiểu string
+    const formattedValues = {
+      ...values,
+      amount: values.amount?.toString() || "0",
+    };
+    
     // Kết hợp giá trị form với thuộc tính
     const dataToSubmit = {
-      ...values,
+      ...formattedValues,
       attributeValues: attributeValues,
     };
     
@@ -169,11 +175,20 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
     .filter(attr => attr.value === "true")
     .map(attr => {
       // Tìm tên thuộc tính từ costTypeId và id thuộc tính
-      const attribute = costTypes
-        .flatMap((ct: any) => ct.attributes || [])
-        .find((attr2: any) => attr2.id === attr.costTypeAttributeId);
-      
-      return attribute?.name || 'Unknown';
+      let attributeName = 'Unknown';
+      if (Array.isArray(costTypes)) {
+        // Truy vấn từ danh sách loại chi phí và thuộc tính
+        for (const ct of costTypes) {
+          if (ct.attributes && Array.isArray(ct.attributes)) {
+            const found = ct.attributes.find((a: any) => a.id === attr.costTypeAttributeId);
+            if (found) {
+              attributeName = found.name;
+              break;
+            }
+          }
+        }
+      }
+      return attributeName;
     });
 
   return (
