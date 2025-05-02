@@ -139,8 +139,8 @@ export default function BillDetailReport() {
                               const costShare = billCosts.length > 0 ? 1 / billCosts.length : 1;
                               const allocatedRevenue = totalRevenue * costShare;
                               
-                              // Xác định loại thuộc tính chi phí
-                              const costAttribute = cost.attribute || 'Hóa đơn';
+                              // Xác định loại thuộc tính chi phí dựa trên trường tt_hd
+                              const costAttribute = cost.tt_hd || 'Hóa đơn';
                               const isHoaDon = costAttribute === 'Hóa đơn';
                               const isTraHo = costAttribute === 'Trả hộ';
                               
