@@ -272,9 +272,6 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
     const { timeframe, from, to } = req.query;
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // Use the helper function to get cost attribute map
-    const costAttributeMap = await createCostAttributeMap();
-    
     // Get all customers with their bills
     const customersWithBills = await db.query.customers.findMany({
       columns: {
@@ -297,18 +294,15 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
       let totalRevenue = 0;
       let totalHoaDonCosts = 0;
       let totalTraHoCosts = 0;
-      let totalKoHoaDonCosts = 0;
       
       customer.bills.forEach(bill => {
-        // Sum costs based on their attribute type
+        // Sum costs based on tt_hd value
         bill.costs.forEach(cost => {
-          // Check cost attribute type from our map
-          const costType = costAttributeMap.get(cost.id) || "Hóa đơn"; // Default to 'Hóa đơn' if not found
+          // Get cost attribute directly from tt_hd field
+          const costType = cost.tt_hd || "Hóa đơn"; // Default to 'Hóa đơn' if not set
           
           if (costType === "Trả hộ") {
             totalTraHoCosts += parseFloat(cost.amount.toString());
-          } else if (costType === "Ko hóa đơn") {
-            totalKoHoaDonCosts += parseFloat(cost.amount.toString());
           } else { // "Hóa đơn"
             totalHoaDonCosts += parseFloat(cost.amount.toString());
           }
@@ -321,7 +315,7 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
       });
       
       // Calculate total costs (all types combined)
-      const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
+      const totalCosts = totalHoaDonCosts + totalTraHoCosts;
       
       // Only use 'Hóa đơn' costs for profit calculation
       const profit = totalRevenue - totalHoaDonCosts;
@@ -334,7 +328,6 @@ export const getReportByCustomer = async (req: Request, res: Response) => {
         revenue: totalRevenue,
         hoaDonCosts: totalHoaDonCosts,
         traHoCosts: totalTraHoCosts,
-        koHoaDonCosts: totalKoHoaDonCosts,
         totalCosts,
         profit,
         margin
@@ -359,9 +352,6 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
     const { timeframe, from, to, costTypeId } = req.query;
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // Use the helper function to get cost attribute map
-    const costAttributeMap = await createCostAttributeMap();
-    
     // Get all suppliers with their costs
     let suppliersQuery = db.query.suppliers.findMany({
       columns: {
@@ -380,23 +370,20 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
     
     const suppliers = await suppliersQuery;
     
-    // Calculate totals by attribute type
+    // Calculate totals by tt_hd value
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
-    let totalKoHoaDonCosts = 0;
     
     suppliers.forEach(supplier => {
       supplier.costs.forEach(cost => {
         // Apply cost type filter if provided
         if (!costTypeId || cost.costTypeId === Number(costTypeId)) {
-          // Determine cost attribute type
-          const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+          // Get cost attribute directly from tt_hd field
+          const costType = cost.tt_hd || "Hóa đơn";
           
           if (costType === "Trả hộ") {
             totalTraHoCosts += parseFloat(cost.amount.toString());
-          } else if (costType === "Ko hóa đơn") {
-            totalKoHoaDonCosts += parseFloat(cost.amount.toString());
-          } else {
+          } else { // "Hóa đơn"
             totalHoaDonCosts += parseFloat(cost.amount.toString());
           }
         }
@@ -404,7 +391,7 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
     });
     
     // Total cost is sum of all types
-    const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
     
     // Calculate metrics for each supplier
     const supplierReports = suppliers.map(supplier => {
@@ -413,19 +400,16 @@ export const getReportBySupplier = async (req: Request, res: Response) => {
         ? supplier.costs.filter(cost => cost.costTypeId === Number(costTypeId))
         : supplier.costs;
       
-      // Split costs by attribute type
+      // Split costs by tt_hd value
       let totalHoaDonAmount = 0;
       let totalTraHoAmount = 0;
-      let totalKoHoaDonAmount = 0;
       
       filteredCosts.forEach(cost => {
-        const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
+        const costType = cost.tt_hd || "Hóa đơn";
         
         if (costType === "Trả hộ") {
           totalTraHoAmount += parseFloat(cost.amount.toString());
-        } else if (costType === "Ko hóa đơn") {
-          totalKoHoaDonAmount += parseFloat(cost.amount.toString());
-        } else {
+        } else { // "Hóa đơn"
           totalHoaDonAmount += parseFloat(cost.amount.toString());
         }
       });
@@ -631,9 +615,6 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
     // Reuse the getReportByCustomer logic
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // Use the helper function to get cost attribute map
-    const costAttributeMap = await createCostAttributeMap();
-    
     const customersWithBills = await db.query.customers.findMany({
       columns: {
         id: true,
@@ -654,18 +635,15 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
       let totalRevenue = 0;
       let totalHoaDonCosts = 0;
       let totalTraHoCosts = 0;
-      let totalKoHoaDonCosts = 0;
       
       customer.bills.forEach(bill => {
-        // Sum costs based on their attribute type
+        // Sum costs based on tt_hd value
         bill.costs.forEach(cost => {
-          // Check cost attribute type from our map
-          const costType = costAttributeMap.get(cost.id) || "Hóa đơn"; // Default to 'Hóa đơn' if not found
+          // Get cost attribute directly from tt_hd field
+          const costType = cost.tt_hd || "Hóa đơn"; // Default to 'Hóa đơn' if not set
           
           if (costType === "Trả hộ") {
             totalTraHoCosts += parseFloat(cost.amount.toString());
-          } else if (costType === "Ko hóa đơn") {
-            totalKoHoaDonCosts += parseFloat(cost.amount.toString());
           } else { // "Hóa đơn"
             totalHoaDonCosts += parseFloat(cost.amount.toString());
           }
@@ -678,7 +656,7 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
       });
       
       // Calculate total costs (all types combined)
-      const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
+      const totalCosts = totalHoaDonCosts + totalTraHoCosts;
       
       // Only use 'Hóa đơn' costs for profit calculation
       const profit = totalRevenue - totalHoaDonCosts;
@@ -691,7 +669,6 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
         revenue: totalRevenue.toFixed(2),
         hoaDonCosts: totalHoaDonCosts.toFixed(2),
         traHoCosts: totalTraHoCosts.toFixed(2),
-        koHoaDonCosts: totalKoHoaDonCosts.toFixed(2),
         totalCosts: totalCosts.toFixed(2),
         profit: profit.toFixed(2),
         margin: margin.toFixed(2)
@@ -706,7 +683,6 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
       'Doanh thu', 
       'Chi phí Hóa đơn', 
       'Chi phí Trả hộ', 
-      'Chi phí Ko hóa đơn', 
       'Tổng chi phí', 
       'Lợi nhuận', 
       'Tỷ suất lợi nhuận (%)'
@@ -718,7 +694,6 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
       report.revenue,
       report.hoaDonCosts,
       report.traHoCosts,
-      report.koHoaDonCosts,
       report.totalCosts,
       report.profit,
       report.margin
