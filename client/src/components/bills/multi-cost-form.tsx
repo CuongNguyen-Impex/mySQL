@@ -281,7 +281,8 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
                 <th className="p-3 font-medium w-[150px]">Nhà cung cấp</th>
                 <th className="p-3 font-medium w-[100px]">Số tiền</th>
                 <th className="p-3 font-medium w-[120px]">Ngày tháng</th>
-                <th className="p-3 font-medium w-[450px]">Ghi chú</th>
+                <th className="p-3 font-medium w-[100px]">TT HĐ</th>
+                <th className="p-3 font-medium w-[350px]">Ghi chú</th>
                 <th className="p-3 font-medium w-[50px]">Xóa</th>
               </tr>
             </thead>
@@ -423,6 +424,32 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
                   <td className="p-3 align-top">
                     <FormField
                       control={form.control}
+                      name={`costs.${index}.tt_hd`}
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-[100px]">
+                                <SelectValue placeholder="Chọn" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Hóa đơn">Hóa đơn</SelectItem>
+                              <SelectItem value="Trả hộ">Trả hộ</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </td>
+                  <td className="p-3 align-top">
+                    <FormField
+                      control={form.control}
                       name={`costs.${index}.notes`}
                       render={({ field }) => (
                         <FormItem className="mb-0">
@@ -468,7 +495,7 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={7} className="p-3">
+                <td colSpan={8} className="p-3">
                   <Button
                     type="button"
                     variant="ghost"
