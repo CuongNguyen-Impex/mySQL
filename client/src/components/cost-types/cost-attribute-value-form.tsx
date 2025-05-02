@@ -216,7 +216,7 @@ export default function CostAttributeValueForm({
                             <SelectValue placeholder={`Select ${attribute.name}`} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">-- Không xác định --</SelectItem>
+                            <SelectItem value="undefined">-- Không xác định --</SelectItem>
                             <SelectItem value="true">Có</SelectItem>
                             <SelectItem value="false">Không</SelectItem>
                           </SelectContent>
