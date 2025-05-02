@@ -161,6 +161,34 @@ export default function ProfitLossReport() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Chi phí (Hóa đơn)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-32" />
+            ) : (
+              <div className="text-2xl font-bold text-destructive">
+                {parseFloat(data?.summary?.hoaDonCosts || 0).toLocaleString('vi-VN')}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Chi phí (Trả hộ)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-32" />
+            ) : (
+              <div className="text-2xl font-bold text-warning">
+                {parseFloat(data?.summary?.traHoCosts || 0).toLocaleString('vi-VN')}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Tổng chi phí</CardTitle>
           </CardHeader>
           <CardContent>
@@ -221,7 +249,9 @@ export default function ProfitLossReport() {
                       <TableHead>Kỳ</TableHead>
                       <TableHead className="text-right">Hóa đơn</TableHead>
                       <TableHead className="text-right">Doanh thu</TableHead>
-                      <TableHead className="text-right">Chi phí</TableHead>
+                      <TableHead className="text-right">Chi phí (Hóa đơn)</TableHead>
+                      <TableHead className="text-right">Chi phí (Trả hộ)</TableHead>
+                      <TableHead className="text-right">Tổng chi phí</TableHead>
                       <TableHead className="text-right">Lợi nhuận</TableHead>
                       <TableHead className="text-right">Tỉ suất %</TableHead>
                     </TableRow>
@@ -232,7 +262,9 @@ export default function ProfitLossReport() {
                         <TableCell className="font-medium">{period.label}</TableCell>
                         <TableCell className="text-right">{period.billCount}</TableCell>
                         <TableCell className="text-right">{parseFloat(period.revenue).toLocaleString('vi-VN')}</TableCell>
-                        <TableCell className="text-right">{parseFloat(period.costs).toLocaleString('vi-VN')}</TableCell>
+                        <TableCell className="text-right">{parseFloat(period.hoaDonCosts).toLocaleString('vi-VN')}</TableCell>
+                        <TableCell className="text-right">{parseFloat(period.traHoCosts).toLocaleString('vi-VN')}</TableCell>
+                        <TableCell className="text-right">{parseFloat(period.totalCosts).toLocaleString('vi-VN')}</TableCell>
                         <TableCell className={cn("text-right font-medium", getProfitClass(period.profit))}>
                           {parseFloat(period.profit).toLocaleString('vi-VN')}
                         </TableCell>
