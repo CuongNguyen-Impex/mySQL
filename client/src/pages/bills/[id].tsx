@@ -267,23 +267,55 @@ export default function BillDetail() {
                       <tr className="border-b">
                         <th className="text-left py-3 font-medium">Loại chi phí</th>
                         <th className="text-left py-3 font-medium">Nhà cung cấp</th>
+                        <th className="text-left py-3 font-medium">Thuộc tính</th>
                         <th className="text-left py-3 font-medium">Ngày</th>
                         <th className="text-right py-3 font-medium">Số tiền</th>
                         <th className="text-left py-3 font-medium">Ghi chú</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {bill.costs.map((cost: any) => (
-                        <tr key={cost.id} className="border-b">
-                          <td className="py-3">{cost.costType?.name || 'N/A'}</td>
-                          <td className="py-3">{cost.supplier?.name || 'N/A'}</td>
-                          <td className="py-3">{formatDate(cost.date)}</td>
-                          <td className="py-3 text-right">{formatCurrency(cost.amount)}</td>
-                          <td className="py-3">{cost.notes || '-'}</td>
-                        </tr>
-                      ))}
+                      {bill.costs.map((cost: any) => {
+                        // Tìm các thuộc tính được chọn (value = "true")
+                        const selectedAttributes = cost.attributeValues?.filter((attr: any) => attr.value === "true") || [];
+                        const attributeLabels = selectedAttributes.map((attr: any) => attr.attribute?.name).filter(Boolean);
+                        
+                        // Xác định màu sắc cho badge
+                        const getBadgeColor = (attrName: string) => {
+                          if (attrName === "Hóa đơn") return "bg-green-100 text-green-800 hover:bg-green-200";
+                          if (attrName === "Trả hộ") return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+                          if (attrName === "Ko hóa đơn") return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200";
+                          return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+                        };
+                        
+                        return (
+                          <tr key={cost.id} className="border-b">
+                            <td className="py-3">{cost.costType?.name || 'N/A'}</td>
+                            <td className="py-3">{cost.supplier?.name || 'N/A'}</td>
+                            <td className="py-3">
+                              <div className="flex flex-wrap gap-1">
+                                {attributeLabels.length > 0 ? (
+                                  attributeLabels.map((attrName: string, index: number) => (
+                                    <Badge 
+                                      key={index} 
+                                      variant="secondary" 
+                                      className={getBadgeColor(attrName)}
+                                    >
+                                      {attrName}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">Không có</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3">{formatDate(cost.date)}</td>
+                            <td className="py-3 text-right">{formatCurrency(cost.amount)}</td>
+                            <td className="py-3">{cost.notes || '-'}</td>
+                          </tr>
+                        );
+                      })}
                       <tr className="bg-muted/50">
-                        <td colSpan={3} className="py-3 font-medium">Tổng cộng</td>
+                        <td colSpan={4} className="py-3 font-medium">Tổng cộng</td>
                         <td className="py-3 text-right font-medium">{formatCurrency(totalCost)}</td>
                         <td></td>
                       </tr>
