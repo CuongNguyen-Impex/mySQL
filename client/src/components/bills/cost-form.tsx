@@ -102,9 +102,12 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
   // Create or update cost
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      if (isEditing) {
+      console.log("Submitting with values:", values);
+      if (isEditing && cost?.id) {
+        console.log(`Updating cost ${cost.id}`);
         return apiRequest("PATCH", `/api/costs/${cost.id}`, values);
       } else {
+        console.log("Creating new cost");
         return apiRequest("POST", "/api/costs", values);
       }
     },
