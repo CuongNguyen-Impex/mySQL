@@ -1019,7 +1019,7 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
     }
     
     // Use the helper function to get cost attribute map
-    const costAttributeMap = await createCostAttributeMap();
+    // No longer need to use costAttributeMap as we now use tt_hd field directly
     
     // Get all bills with costs, revenues, customer, and service relationships
     const billsWithDetails = await db.query.bills.findMany({
@@ -1108,7 +1108,7 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
     }
     
     // Use the helper function to get cost attribute map
-    const costAttributeMap = await createCostAttributeMap();
+    // No longer need to use costAttributeMap as we now use tt_hd field directly
     
     // Get all bills with costs, revenues, customer, and service relationships
     const billsWithDetails = await db.query.bills.findMany({
