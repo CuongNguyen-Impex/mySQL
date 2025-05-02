@@ -122,7 +122,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       let totalCustomerRevenue = 0;
       let totalCustomerHoaDonCosts = 0;
       let totalCustomerTraHoCosts = 0;
-      let totalCustomerKoHoaDonCosts = 0;
+      // No longer tracking Ko hóa đơn costs
       
       customer.bills.forEach(bill => {
         // Sum revenues
@@ -144,7 +144,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       });
       
       // Calculate total costs (all types combined)
-      const totalCustomerCosts = totalCustomerHoaDonCosts + totalCustomerTraHoCosts + totalCustomerKoHoaDonCosts;
+      const totalCustomerCosts = totalCustomerHoaDonCosts + totalCustomerTraHoCosts;
       
       // Calculate profit based only on 'Hóa đơn' costs
       const profit = totalCustomerRevenue - totalCustomerHoaDonCosts;
@@ -155,7 +155,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
         revenue: totalCustomerRevenue,
         hoaDonCosts: totalCustomerHoaDonCosts,
         traHoCosts: totalCustomerTraHoCosts,
-        koHoaDonCosts: totalCustomerKoHoaDonCosts,
+        // No longer including Ko hóa đơn costs
         costs: totalCustomerCosts,
         profit,
         percentage: totalProfit !== 0 ? (profit / totalProfit) * 100 : 0
@@ -182,7 +182,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       let totalServiceRevenue = 0;
       let totalServiceHoaDonCosts = 0;
       let totalServiceTraHoCosts = 0;
-      let totalServiceKoHoaDonCosts = 0;
+      // No longer tracking Ko hóa đơn costs
       
       // Sum revenues
       service.revenues.forEach(revenue => {
@@ -204,7 +204,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       });
       
       // Calculate total costs (all types combined)
-      const totalServiceCosts = totalServiceHoaDonCosts + totalServiceTraHoCosts + totalServiceKoHoaDonCosts;
+      const totalServiceCosts = totalServiceHoaDonCosts + totalServiceTraHoCosts;
       
       // Calculate profit based only on 'Hóa đơn' costs
       const profit = totalServiceRevenue - totalServiceHoaDonCosts;
@@ -215,7 +215,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
         revenue: totalServiceRevenue,
         hoaDonCosts: totalServiceHoaDonCosts,
         traHoCosts: totalServiceTraHoCosts,
-        koHoaDonCosts: totalServiceKoHoaDonCosts,
+        // No longer including Ko hóa đơn costs
         costs: totalServiceCosts,
         profit,
         percentage: totalProfit !== 0 ? (profit / totalProfit) * 100 : 0
@@ -227,7 +227,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       totalRevenue,
       hoaDonCosts: totalHoaDonCosts,
       traHoCosts: totalTraHoCosts,
-      koHoaDonCosts: totalKoHoaDonCosts,
+      // No longer including koHoaDonCosts
       totalCosts,
       totalProfit,
       billsTrend,
@@ -834,8 +834,7 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
     // Reuse the getProfitLossReport logic
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // Use the helper function to get cost attribute map
-    const costAttributeMap = await createCostAttributeMap();
+    // No longer need to use costAttributeMap as we now use tt_hd field directly
     
     const billsInRange = await db.query.bills.findMany({
       where: between(bills.date, dateRange.from.toISOString(), dateRange.to.toISOString()),
