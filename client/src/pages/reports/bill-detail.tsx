@@ -109,8 +109,14 @@ export default function BillDetailReport() {
                       <TableHead>Khách hàng</TableHead>
                       <TableHead>Nhà cung cấp</TableHead>
                       <TableHead className="text-right">Giá bán</TableHead>
-                      <TableHead className="text-right">Giá mua</TableHead>
+                      <TableHead colSpan={2} className="text-center border-b">Giá mua</TableHead>
                       <TableHead className="text-right">Lãi/Lỗ</TableHead>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead colSpan={7}></TableHead>
+                      <TableHead className="text-right">Hóa đơn</TableHead>
+                      <TableHead className="text-right">Trả hộ</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
