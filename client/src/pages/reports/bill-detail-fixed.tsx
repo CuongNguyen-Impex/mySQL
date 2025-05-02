@@ -88,6 +88,10 @@ export default function BillDetailReport() {
                           <th rowSpan={2} className="border p-2 text-center">STT</th>
                           <th rowSpan={2} className="border p-2 text-center">Ngày</th>
                           <th rowSpan={2} className="border p-2 text-center">Số bill</th>
+                          <th rowSpan={2} className="border p-2 text-center">Số invoice</th>
+                          <th rowSpan={2} className="border p-2 text-center">Trọng lượng</th>
+                          <th rowSpan={2} className="border p-2 text-center">Số kiện</th>
+                          <th rowSpan={2} className="border p-2 text-center">Loại</th>
                           <th rowSpan={2} className="border p-2 text-center">Loại chi phí</th>
                           <th rowSpan={2} className="border p-2 text-center">Khách hàng</th>
                           <th rowSpan={2} className="border p-2 text-center">Nhà cung cấp</th>
@@ -138,6 +142,10 @@ export default function BillDetailReport() {
                                       <td className="border p-2 text-center">{rowNumber}</td>
                                       <td className="border p-2">{format(new Date(bill.date), 'dd/MM/yyyy')}</td>
                                       <td className="border p-2">{bill.billNo}</td>
+                                      <td className="border p-2">{bill.invoiceNo || '-'}</td>
+                                      <td className="border p-2 text-center">-</td>
+                                      <td className="border p-2 text-center">{bill.packageCount || '-'}</td>
+                                      <td className="border p-2 text-center">{bill.goodsType || '-'}</td>
                                       <td className="border p-2">{cost.costType?.name || 'N/A'}</td>
                                       <td className="border p-2">{bill.customer?.name || 'N/A'}</td>
                                       <td className="border p-2">{cost.supplier?.name || 'N/A'}</td>
@@ -157,6 +165,10 @@ export default function BillDetailReport() {
                                     <td className="border p-2 text-center">1</td>
                                     <td className="border p-2">{format(new Date(bill.date), 'dd/MM/yyyy')}</td>
                                     <td className="border p-2">{bill.billNo}</td>
+                                    <td className="border p-2">{bill.invoiceNo || '-'}</td>
+                                    <td className="border p-2 text-center">-</td>
+                                    <td className="border p-2 text-center">{bill.packageCount || '-'}</td>
+                                    <td className="border p-2 text-center">{bill.goodsType || '-'}</td>
                                     <td className="border p-2">N/A</td>
                                     <td className="border p-2">{bill.customer?.name || 'N/A'}</td>
                                     <td className="border p-2">N/A</td>
@@ -193,7 +205,7 @@ export default function BillDetailReport() {
                         /* Grand total */}
                         {data?.bills?.length > 0 && (
                           <tr className="bg-blue-50 font-bold">
-                            <td colSpan={6} className="border p-2">TỔNG CỘNG</td>
+                            <td colSpan={10} className="border p-2">TỔNG CỘNG</td>
                             <td className="border p-2 text-right">
                               {data.bills.reduce((sum: number, bill: any) => {
                                 const revTotal = (bill.revenues || []).reduce(
