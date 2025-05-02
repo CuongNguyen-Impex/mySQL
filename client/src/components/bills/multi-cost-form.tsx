@@ -39,6 +39,21 @@ import { Cost } from "@shared/types";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 
+interface AttributeValue {
+  costTypeAttributeId: number;
+  value: string;
+}
+
+interface CostFormData {
+  billId: number;
+  costTypeId: number;
+  supplierId: number;
+  amount: number;
+  date: Date;
+  notes: string;
+  attributeValues?: AttributeValue[];
+}
+
 // Define a schema for multiple costs
 const multiCostFormSchema = z.object({
   costs: z.array(
@@ -69,8 +84,8 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   
-  // State for cost type attributes
-  const [selectedAttributes, setSelectedAttributes] = useState<Record<number, number>>({});
+  // State to track selected attributes for each row
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<number, AttributeValue[]>>({});
 
   // Form setup with useFieldArray for handling multiple entries
   const form = useForm({
@@ -155,7 +170,7 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
   };
 
   // Get attributes for the selected cost type
-  const { data: costTypeAttributes = [] } = useQuery({
+  const { data: costTypeAttributes = [] } = useQuery<any[]>({
     queryKey: ["/api/cost-type-attributes"],
   });
 
@@ -171,13 +186,21 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
     if (attributes.length > 0) {
       const defaultAttr = attributes.find((attr: any) => attr.name === "Hóa đơn") || attributes[0];
       
-      // Set attribute values
-      form.setValue(`costs.${index}.attributeValues`, [
-        {
-          costTypeAttributeId: defaultAttr.id,
-          value: defaultAttr.name
-        }
-      ]);
+      // Create attribute value object
+      const attributeValue: AttributeValue = {
+        costTypeAttributeId: defaultAttr.id,
+        value: defaultAttr.name
+      };
+      
+      // Update form and state
+      const attrValues = [attributeValue];
+      form.setValue(`costs.${index}.attributeValues`, attrValues);
+      
+      // Update the selected attributes state
+      setSelectedAttributes(prev => ({
+        ...prev,
+        [index]: attrValues
+      }));
     }
   };
 
@@ -366,6 +389,13 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
                       {...form.register(`costs.${index}.billId`, { valueAsNumber: true })} 
                       value={billId}
                     />
+                    <div className="mt-2">
+                      {selectedAttributes[index]?.map((attr, attrIndex) => (
+                        <Badge key={attrIndex} variant="outline" className="mr-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 font-medium border-green-300 dark:border-green-700">
+                          {attr.value}
+                        </Badge>
+                      ))}
+                    </div>
                   </td>
                   <td className="p-3 align-top text-center">
                     {fields.length > 1 && (
