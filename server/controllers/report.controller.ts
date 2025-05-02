@@ -496,36 +496,8 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
     const { timeframe, from, to } = req.query;
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
-    const costsWithAttributes = await db.query.costs.findMany({
-      with: {
-        attributeValues: {
-          with: {
-            attribute: true
-          }
-        }
-      }
-    });
-    
-    // Create a map of cost attribute types for quick lookup
-    const costAttributeMap = new Map<number, string>();
-    
-    // Default is to consider as 'Hóa đơn' if not specified
-    costsWithAttributes.forEach(cost => {
-      // Default to 'Hóa đơn' if no attribute values
-      costAttributeMap.set(cost.id, "Hóa đơn");
-      
-      // If has attribute values, determine type
-      if (cost.attributeValues && cost.attributeValues.length > 0) {
-        // Find attribute with name 'Trả hộ'
-        const traHoAttribute = cost.attributeValues.find(av => 
-          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
-        
-        if (traHoAttribute) {
-          costAttributeMap.set(cost.id, "Trả hộ");
-        }
-      }
-    });
+    // Use the helper function to get cost attribute map
+    const costAttributeMap = await createCostAttributeMap();
     
     // Get all bills in the date range
     const billsInRange = await db.query.bills.findMany({
@@ -541,15 +513,18 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
     let totalRevenue = 0;
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
+    let totalKoHoaDonCosts = 0;
     
     billsInRange.forEach(bill => {
       // Sum costs based on their attribute type
       bill.costs.forEach(cost => {
-        // Check if cost is 'Trả hộ' or 'Hóa đơn' from our map
+        // Check cost attribute type from our map
         const costType = costAttributeMap.get(cost.id) || "Hóa đơn"; // Default to 'Hóa đơn' if not found
         
         if (costType === "Trả hộ") {
           totalTraHoCosts += parseFloat(cost.amount.toString());
+        } else if (costType === "Ko hóa đơn") {
+          totalKoHoaDonCosts += parseFloat(cost.amount.toString());
         } else { // "Hóa đơn"
           totalHoaDonCosts += parseFloat(cost.amount.toString());
         }
@@ -561,8 +536,8 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
       });
     });
     
-    // Calculate total costs (both types combined)
-    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
+    // Calculate total costs (all types combined)
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
     
     // Only use 'Hóa đơn' costs for net profit calculation
     const netProfit = totalRevenue - totalHoaDonCosts;
@@ -582,7 +557,8 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
           bills: [],
           revenues: [],
           hoaDonCosts: [],
-          traHoCosts: []
+          traHoCosts: [],
+          koHoaDonCosts: []
         };
       }
       
@@ -594,6 +570,8 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
         
         if (costType === "Trả hộ") {
           billsByMonth[period].traHoCosts.push(cost);
+        } else if (costType === "Ko hóa đơn") {
+          billsByMonth[period].koHoaDonCosts.push(cost);
         } else {
           billsByMonth[period].hoaDonCosts.push(cost);
         }
@@ -609,7 +587,8 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
       // Split costs by type for reporting
       const periodHoaDonCosts = periodData.hoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
       const periodTraHoCosts = periodData.traHoCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
-      const periodTotalCosts = periodHoaDonCosts + periodTraHoCosts;
+      const periodKoHoaDonCosts = periodData.koHoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
+      const periodTotalCosts = periodHoaDonCosts + periodTraHoCosts + periodKoHoaDonCosts;
       
       // Only use 'Hóa đơn' costs for profit calculation
       const periodProfit = periodRevenue - periodHoaDonCosts;
@@ -624,6 +603,7 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
         revenue: periodRevenue,
         hoaDonCosts: periodHoaDonCosts,
         traHoCosts: periodTraHoCosts,
+        koHoaDonCosts: periodKoHoaDonCosts,
         totalCosts: periodTotalCosts,
         profit: periodProfit,
         margin: periodMargin
@@ -643,6 +623,7 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
         totalRevenue,
         hoaDonCosts: totalHoaDonCosts,  // "Hóa đơn" costs
         traHoCosts: totalTraHoCosts,    // "Trả hộ" costs
+        koHoaDonCosts: totalKoHoaDonCosts, // "Ko hóa đơn" costs
         totalCosts,                    // Combined costs
         netProfit,                     // Revenue - Hóa đơn costs only
         profitMargin,
@@ -667,36 +648,8 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
     // Reuse the getReportByCustomer logic
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
-    const costsWithAttributes = await db.query.costs.findMany({
-      with: {
-        attributeValues: {
-          with: {
-            attribute: true
-          }
-        }
-      }
-    });
-    
-    // Create a map of cost attribute types for quick lookup
-    const costAttributeMap = new Map<number, string>();
-    
-    // Default is to consider as 'Hóa đơn' if not specified
-    costsWithAttributes.forEach(cost => {
-      // Default to 'Hóa đơn' if no attribute values
-      costAttributeMap.set(cost.id, "Hóa đơn");
-      
-      // If has attribute values, determine type
-      if (cost.attributeValues && cost.attributeValues.length > 0) {
-        // Find attribute with name 'Trả hộ'
-        const traHoAttribute = cost.attributeValues.find(av => 
-          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
-        
-        if (traHoAttribute) {
-          costAttributeMap.set(cost.id, "Trả hộ");
-        }
-      }
-    });
+    // Use the helper function to get cost attribute map
+    const costAttributeMap = await createCostAttributeMap();
     
     const customersWithBills = await db.query.customers.findMany({
       columns: {
@@ -718,15 +671,18 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
       let totalRevenue = 0;
       let totalHoaDonCosts = 0;
       let totalTraHoCosts = 0;
+      let totalKoHoaDonCosts = 0;
       
       customer.bills.forEach(bill => {
         // Sum costs based on their attribute type
         bill.costs.forEach(cost => {
-          // Check if cost is 'Trả hộ' or 'Hóa đơn' from our map
+          // Check cost attribute type from our map
           const costType = costAttributeMap.get(cost.id) || "Hóa đơn"; // Default to 'Hóa đơn' if not found
           
           if (costType === "Trả hộ") {
             totalTraHoCosts += parseFloat(cost.amount.toString());
+          } else if (costType === "Ko hóa đơn") {
+            totalKoHoaDonCosts += parseFloat(cost.amount.toString());
           } else { // "Hóa đơn"
             totalHoaDonCosts += parseFloat(cost.amount.toString());
           }
@@ -738,8 +694,8 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
         });
       });
       
-      // Calculate total costs
-      const totalCosts = totalHoaDonCosts + totalTraHoCosts;
+      // Calculate total costs (all types combined)
+      const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
       
       // Only use 'Hóa đơn' costs for profit calculation
       const profit = totalRevenue - totalHoaDonCosts;
@@ -752,6 +708,7 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
         revenue: totalRevenue.toFixed(2),
         hoaDonCosts: totalHoaDonCosts.toFixed(2),
         traHoCosts: totalTraHoCosts.toFixed(2),
+        koHoaDonCosts: totalKoHoaDonCosts.toFixed(2),
         totalCosts: totalCosts.toFixed(2),
         profit: profit.toFixed(2),
         margin: margin.toFixed(2)
@@ -766,6 +723,7 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
       'Doanh thu', 
       'Chi phí Hóa đơn', 
       'Chi phí Trả hộ', 
+      'Chi phí Ko hóa đơn', 
       'Tổng chi phí', 
       'Lợi nhuận', 
       'Tỷ suất lợi nhuận (%)'
@@ -777,6 +735,7 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
       report.revenue,
       report.hoaDonCosts,
       report.traHoCosts,
+      report.koHoaDonCosts,
       report.totalCosts,
       report.profit,
       report.margin
@@ -807,36 +766,8 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
     // Reuse the getReportBySupplier logic
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
-    const costsWithAttributes = await db.query.costs.findMany({
-      with: {
-        attributeValues: {
-          with: {
-            attribute: true
-          }
-        }
-      }
-    });
-    
-    // Create a map of cost attribute types for quick lookup
-    const costAttributeMap = new Map<number, string>();
-    
-    // Default is to consider as 'Hóa đơn' if not specified
-    costsWithAttributes.forEach(cost => {
-      // Default to 'Hóa đơn' if no attribute values
-      costAttributeMap.set(cost.id, "Hóa đơn");
-      
-      // If has attribute values, determine type
-      if (cost.attributeValues && cost.attributeValues.length > 0) {
-        // Find attribute with name 'Trả hộ'
-        const traHoAttribute = cost.attributeValues.find(av => 
-          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
-        
-        if (traHoAttribute) {
-          costAttributeMap.set(cost.id, "Trả hộ");
-        }
-      }
-    });
+    // Use the helper function to get cost attribute map
+    const costAttributeMap = await createCostAttributeMap();
     
     let suppliersQuery = db.query.suppliers.findMany({
       columns: {
@@ -858,15 +789,18 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
     // Split totals by attribute type
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
+    let totalKoHoaDonCosts = 0;
     
     suppliers.forEach(supplier => {
       supplier.costs.forEach(cost => {
         if (!costTypeId || cost.costTypeId === Number(costTypeId)) {
-          // Determine if cost is 'Trả hộ' or 'Hóa đơn'
+          // Determine cost attribute type
           const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
           
           if (costType === "Trả hộ") {
             totalTraHoCosts += parseFloat(cost.amount.toString());
+          } else if (costType === "Ko hóa đơn") {
+            totalKoHoaDonCosts += parseFloat(cost.amount.toString());
           } else {
             totalHoaDonCosts += parseFloat(cost.amount.toString());
           }
@@ -875,7 +809,7 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
     });
     
     // Total of all costs regardless of attribute
-    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
     
     const supplierReports = suppliers.map(supplier => {
       const filteredCosts = costTypeId 
@@ -885,18 +819,21 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
       // Split costs by attribute type
       let totalHoaDonAmount = 0;
       let totalTraHoAmount = 0;
+      let totalKoHoaDonAmount = 0;
       
       filteredCosts.forEach(cost => {
         const costType = costAttributeMap.get(cost.id) || "Hóa đơn";
         
         if (costType === "Trả hộ") {
           totalTraHoAmount += parseFloat(cost.amount.toString());
+        } else if (costType === "Ko hóa đơn") {
+          totalKoHoaDonAmount += parseFloat(cost.amount.toString());
         } else {
           totalHoaDonAmount += parseFloat(cost.amount.toString());
         }
       });
       
-      const totalAmount = totalHoaDonAmount + totalTraHoAmount;
+      const totalAmount = totalHoaDonAmount + totalTraHoAmount + totalKoHoaDonAmount;
       const averageCost = filteredCosts.length > 0 ? totalAmount / filteredCosts.length : 0;
       
       // Generate cost type names for display
@@ -914,6 +851,7 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
         transactionCount: filteredCosts.length,
         hoaDonAmount: totalHoaDonAmount.toFixed(2),
         traHoAmount: totalTraHoAmount.toFixed(2),
+        koHoaDonAmount: totalKoHoaDonAmount.toFixed(2),
         totalAmount: totalAmount.toFixed(2),
         averageCost: averageCost.toFixed(2),
         percentage: (totalCosts > 0 ? (totalAmount / totalCosts) * 100 : 0).toFixed(2)
@@ -929,6 +867,7 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
       'Số giao dịch', 
       'Chi phí Hóa đơn', 
       'Chi phí Trả hộ', 
+      'Chi phí Ko hóa đơn', 
       'Tổng chi phí', 
       'Chi phí trung bình', 
       'Phần trăm (%)'
@@ -941,6 +880,7 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
       report.transactionCount,
       report.hoaDonAmount,
       report.traHoAmount,
+      report.koHoaDonAmount,
       report.totalAmount,
       report.averageCost,
       report.percentage
@@ -954,6 +894,7 @@ export const exportReportBySupplier = async (req: Request, res: Response) => {
       supplierReports.reduce((sum, supplier) => sum + supplier.transactionCount, 0),
       totalHoaDonCosts.toFixed(2),
       totalTraHoCosts.toFixed(2),
+      totalKoHoaDonCosts.toFixed(2),
       totalCosts.toFixed(2),
       (totalCosts / supplierReports.reduce((sum, supplier) => sum + supplier.transactionCount, 0) || 0).toFixed(2),
       '100.00'
@@ -984,36 +925,8 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
     // Reuse the getProfitLossReport logic
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
-    const costsWithAttributes = await db.query.costs.findMany({
-      with: {
-        attributeValues: {
-          with: {
-            attribute: true
-          }
-        }
-      }
-    });
-    
-    // Create a map of cost attribute types for quick lookup
-    const costAttributeMap = new Map<number, string>();
-    
-    // Default is to consider as 'Hóa đơn' if not specified
-    costsWithAttributes.forEach(cost => {
-      // Default to 'Hóa đơn' if no attribute values
-      costAttributeMap.set(cost.id, "Hóa đơn");
-      
-      // If has attribute values, determine type
-      if (cost.attributeValues && cost.attributeValues.length > 0) {
-        // Find attribute with name 'Trả hộ'
-        const traHoAttribute = cost.attributeValues.find(av => 
-          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
-        
-        if (traHoAttribute) {
-          costAttributeMap.set(cost.id, "Trả hộ");
-        }
-      }
-    });
+    // Use the helper function to get cost attribute map
+    const costAttributeMap = await createCostAttributeMap();
     
     const billsInRange = await db.query.bills.findMany({
       where: between(bills.date, dateRange.from.toISOString(), dateRange.to.toISOString()),
@@ -1028,15 +941,18 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
     let totalRevenue = 0;
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
+    let totalKoHoaDonCosts = 0;
     
     billsInRange.forEach(bill => {
       // Sum costs based on their attribute type
       bill.costs.forEach(cost => {
-        // Check if cost is 'Trả hộ' or 'Hóa đơn' from our map
+        // Check cost attribute type from our map
         const costType = costAttributeMap.get(cost.id) || "Hóa đơn"; // Default to 'Hóa đơn' if not found
         
         if (costType === "Trả hộ") {
           totalTraHoCosts += parseFloat(cost.amount.toString());
+        } else if (costType === "Ko hóa đơn") {
+          totalKoHoaDonCosts += parseFloat(cost.amount.toString());
         } else { // "Hóa đơn"
           totalHoaDonCosts += parseFloat(cost.amount.toString());
         }
@@ -1048,8 +964,8 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       });
     });
     
-    // Calculate total costs (both types combined)
-    const totalCosts = totalHoaDonCosts + totalTraHoCosts;
+    // Calculate total costs (all types combined)
+    const totalCosts = totalHoaDonCosts + totalTraHoCosts + totalKoHoaDonCosts;
     
     // Only use 'Hóa đơn' costs for net profit calculation
     const netProfit = totalRevenue - totalHoaDonCosts;
@@ -1066,7 +982,8 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
           bills: [],
           revenues: [],
           hoaDonCosts: [],
-          traHoCosts: []
+          traHoCosts: [],
+          koHoaDonCosts: []
         };
       }
       
@@ -1078,6 +995,8 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
         
         if (costType === "Trả hộ") {
           billsByMonth[period].traHoCosts.push(cost);
+        } else if (costType === "Ko hóa đơn") {
+          billsByMonth[period].koHoaDonCosts.push(cost);
         } else {
           billsByMonth[period].hoaDonCosts.push(cost);
         }
@@ -1093,7 +1012,8 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       // Split costs by type for reporting
       const periodHoaDonCosts = periodData.hoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
       const periodTraHoCosts = periodData.traHoCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
-      const periodTotalCosts = periodHoaDonCosts + periodTraHoCosts;
+      const periodKoHoaDonCosts = periodData.koHoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
+      const periodTotalCosts = periodHoaDonCosts + periodTraHoCosts + periodKoHoaDonCosts;
       
       // Only use 'Hóa đơn' costs for profit calculation
       const periodProfit = periodRevenue - periodHoaDonCosts;
@@ -1108,6 +1028,7 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
         revenue: periodRevenue.toFixed(2),
         hoaDonCosts: periodHoaDonCosts.toFixed(2),
         traHoCosts: periodTraHoCosts.toFixed(2),
+        koHoaDonCosts: periodKoHoaDonCosts.toFixed(2),
         totalCosts: periodTotalCosts.toFixed(2),
         profit: periodProfit.toFixed(2),
         margin: periodMargin.toFixed(2)
@@ -1129,6 +1050,7 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       'Doanh thu', 
       'Chi phí Hóa đơn', 
       'Chi phí Trả hộ', 
+      'Chi phí Ko hóa đơn', 
       'Tổng chi phí', 
       'Lợi nhuận', 
       'Tỷ suất Lợi nhuận (%)'
@@ -1140,6 +1062,7 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       period.revenue,
       period.hoaDonCosts,
       period.traHoCosts,
+      period.koHoaDonCosts,
       period.totalCosts,
       period.profit,
       period.margin
@@ -1152,6 +1075,7 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
       totalRevenue.toFixed(2),
       totalHoaDonCosts.toFixed(2),
       totalTraHoCosts.toFixed(2),
+      totalKoHoaDonCosts.toFixed(2),
       totalCosts.toFixed(2),
       netProfit.toFixed(2),
       profitMargin.toFixed(2)
@@ -1197,36 +1121,8 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
       dateFrom = subDays(dateTo, 90);
     }
     
-    // First, get all the costs with their attribute values to determine which are 'Hóa đơn' vs 'Trả hộ'
-    const costsWithAttributes = await db.query.costs.findMany({
-      with: {
-        attributeValues: {
-          with: {
-            attribute: true
-          }
-        }
-      }
-    });
-    
-    // Create a map of cost attribute types for quick lookup
-    const costAttributeMap = new Map<number, string>();
-    
-    // Default is to consider as 'Hóa đơn' if not specified
-    costsWithAttributes.forEach(cost => {
-      // Default to 'Hóa đơn' if no attribute values
-      costAttributeMap.set(cost.id, "Hóa đơn");
-      
-      // If has attribute values, determine type
-      if (cost.attributeValues && cost.attributeValues.length > 0) {
-        // Find attribute with name 'Trả hộ'
-        const traHoAttribute = cost.attributeValues.find(av => 
-          av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
-        
-        if (traHoAttribute) {
-          costAttributeMap.set(cost.id, "Trả hộ");
-        }
-      }
-    });
+    // Use the helper function to get cost attribute map
+    const costAttributeMap = await createCostAttributeMap();
     
     // Get all bills with costs, revenues, customer, and service relationships
     const billsWithDetails = await db.query.bills.findMany({
@@ -1247,16 +1143,20 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
     
     // Enhance bill details with cost attribute information and profit calculations
     const enhancedBills = billsWithDetails.map(bill => {
-      // Split costs by attribute type ('Hóa đơn' vs 'Trả hộ')
+      // Split costs by attribute type
       const hoaDonCosts = bill.costs.filter(cost => 
         costAttributeMap.get(cost.id) === "Hóa đơn");
       const traHoCosts = bill.costs.filter(cost => 
         costAttributeMap.get(cost.id) === "Trả hộ");
+      const koHoaDonCosts = bill.costs.filter(cost => 
+        costAttributeMap.get(cost.id) === "Ko hóa đơn");
       
       // Calculate totals by attribute type
       const totalHoaDonCost = hoaDonCosts.reduce(
         (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
       const totalTraHoCost = traHoCosts.reduce(
+        (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
+      const totalKoHoaDonCost = koHoaDonCosts.reduce(
         (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
         
       // Calculate total revenue
@@ -1280,7 +1180,8 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
         costs: enhancedCosts,
         totalHoaDonCost,
         totalTraHoCost,
-        totalCost: totalHoaDonCost + totalTraHoCost,
+        totalKoHoaDonCost,
+        totalCost: totalHoaDonCost + totalTraHoCost + totalKoHoaDonCost,
         totalRevenue,
         profit
       };
