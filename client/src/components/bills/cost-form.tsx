@@ -117,9 +117,9 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
       
       // Show success toast
       toast({
-        title: isEditing ? "Chi phí đã được cập nhật" : "Chi phí đã được thêm",
+        title: isEditing ? "Cập nhật thành công!" : "Đã thêm chi phí!",
         description: "Dữ liệu đã được lưu vào cơ sở dữ liệu và báo cáo đã được cập nhật.",
-        variant: "default",
+        variant: "success",
       });
       
       // Execute callback if provided
