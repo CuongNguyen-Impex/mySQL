@@ -6,41 +6,15 @@ import { subDays, subMonths, subYears, parseISO, isValid, startOfDay, endOfDay }
 
 // Helper function to classify costs by their attributes
 const createCostAttributeMap = async () => {
-  // Get all costs with their attribute values
-  const costsWithAttributes = await db.query.costs.findMany({
-    with: {
-      attributeValues: {
-        with: {
-          attribute: true
-        }
-      }
-    }
-  });
+  // Get all costs with their tt_hd attribute
+  const allCosts = await db.query.costs.findMany();
   
   // Create a map of cost attribute types for quick lookup
   const costAttributeMap = new Map<number, string>();
   
-  // Default is to consider as 'Hóa đơn' if not specified
-  costsWithAttributes.forEach(cost => {
-    // Default to 'Hóa đơn' if no attribute values
-    costAttributeMap.set(cost.id, "Hóa đơn");
-    
-    // If has attribute values, determine type
-    if (cost.attributeValues && cost.attributeValues.length > 0) {
-      // Find attribute with name 'Trả hộ'
-      const traHoAttribute = cost.attributeValues.find(av => 
-        av.attribute && av.attribute.name === "Trả hộ" && av.value === "true");
-      
-      // Find attribute with name 'Ko hóa đơn'
-      const koHoaDonAttribute = cost.attributeValues.find(av => 
-        av.attribute && av.attribute.name === "Ko hóa đơn" && av.value === "true");
-      
-      if (traHoAttribute) {
-        costAttributeMap.set(cost.id, "Trả hộ");
-      } else if (koHoaDonAttribute) {
-        costAttributeMap.set(cost.id, "Ko hóa đơn");
-      }
-    }
+  // Use the tt_hd field directly
+  allCosts.forEach(cost => {
+    costAttributeMap.set(cost.id, cost.tt_hd);
   });
   
   return costAttributeMap;

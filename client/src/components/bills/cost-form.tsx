@@ -54,6 +54,7 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
     amount: cost ? parseFloat(cost.amount.toString()) : undefined,
     date: cost?.date ? new Date(cost.date) : new Date(),
     notes: cost?.notes ?? "",
+    tt_hd: cost?.tt_hd ?? "Hóa đơn",
   };
 
   // Khởi tạo form với các giá trị mặc định
@@ -191,6 +192,47 @@ export default function CostForm({ cost, billId, onSuccess }: CostFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 gap-4">
+          <FormField
+            control={form.control}
+            name="tt_hd"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Trạng thái hóa đơn</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  defaultValue="Hóa đơn"
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn trạng thái hóa đơn" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Hóa đơn">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                        Hóa đơn
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="Trả hộ">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                        Trả hộ
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Chọn "Hóa đơn" nếu chi phí có hóa đơn, "Trả hộ" nếu chi phí không có hóa đơn
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
