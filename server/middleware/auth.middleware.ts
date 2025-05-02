@@ -3,12 +3,18 @@ import { db } from "@db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
-// Add userId to Request interface
+// Add user info to Request interface
 declare global {
   namespace Express {
     interface Request {
       userId?: number;
       userRole?: string;
+      userPermissions?: {
+        canManageCategories: boolean;
+        canEditBills: boolean;
+        canCreateBills: boolean;
+        canViewRevenueAndPricing: boolean;
+      }
     }
   }
 }
@@ -22,13 +28,17 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       });
     }
     
-    // Get user info to verify user exists and get role
+    // Get user info to verify user exists and get role and permissions
     const user = await db.query.users.findFirst({
       where: eq(users.id, req.session.userId),
       columns: {
         id: true,
         username: true,
-        role: true
+        role: true,
+        canManageCategories: true,
+        canEditBills: true,
+        canCreateBills: true,
+        canViewRevenueAndPricing: true
       }
     });
     
@@ -46,6 +56,12 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     // Add user info to request for use in route handlers
     req.userId = user.id;
     req.userRole = user.role;
+    req.userPermissions = {
+      canManageCategories: user.role === 'admin' ? true : user.canManageCategories,
+      canEditBills: user.role === 'admin' ? true : user.canEditBills,
+      canCreateBills: user.role === 'admin' ? true : user.canCreateBills,
+      canViewRevenueAndPricing: user.role === 'admin' ? true : user.canViewRevenueAndPricing
+    };
     
     next();
   } catch (error) {
@@ -66,13 +82,23 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
         columns: {
           id: true,
           username: true,
-          role: true
+          role: true,
+          canManageCategories: true,
+          canEditBills: true,
+          canCreateBills: true,
+          canViewRevenueAndPricing: true
         }
       });
       
       if (user) {
         req.userId = user.id;
         req.userRole = user.role;
+        req.userPermissions = {
+          canManageCategories: user.role === 'admin' ? true : user.canManageCategories,
+          canEditBills: user.role === 'admin' ? true : user.canEditBills,
+          canCreateBills: user.role === 'admin' ? true : user.canCreateBills,
+          canViewRevenueAndPricing: user.role === 'admin' ? true : user.canViewRevenueAndPricing
+        };
       }
     }
     

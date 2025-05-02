@@ -9,6 +9,11 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   role: text("role").notNull().default("user"),
+  // Quyền hạn chi tiết
+  canManageCategories: boolean("can_manage_categories").default(false).notNull(),
+  canEditBills: boolean("can_edit_bills").default(false).notNull(),
+  canCreateBills: boolean("can_create_bills").default(false).notNull(),
+  canViewRevenueAndPricing: boolean("can_view_revenue_pricing").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
@@ -16,6 +21,13 @@ export const insertUserSchema = createInsertSchema(users, {
   username: (schema) => schema.min(3, "Username must be at least 3 characters"),
   password: (schema) => schema.min(6, "Password must be at least 6 characters"),
   role: (schema) => schema.refine(val => ["admin", "user"].includes(val), "Role must be either 'admin' or 'user'")
+});
+
+export const updateUserPermissionsSchema = z.object({
+  canManageCategories: z.boolean().default(false),
+  canEditBills: z.boolean().default(false),
+  canCreateBills: z.boolean().default(false),
+  canViewRevenueAndPricing: z.boolean().default(false),
 });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
