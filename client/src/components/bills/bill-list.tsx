@@ -84,9 +84,21 @@ export default function BillList({ bills, isLoading, showActions = true, onBillD
     return bill.costs.reduce((sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
   };
 
+  // Calculate revenue from cost prices instead of revenues table
   const calculateTotalRevenue = (bill: Bill) => {
-    if (!bill.revenues) return 0;
-    return bill.revenues.reduce((sum, revenue) => sum + parseFloat(revenue.amount.toString()), 0);
+    if (!bill.costs || !bill.costPrices) return 0;
+    
+    return bill.costs.reduce((sum, cost) => {
+      // Find matching cost price if available
+      const costPrice = bill.costPrices?.find(cp => 
+        cp.costTypeId === cost.costTypeId && 
+        cp.customerId === bill.customerId && 
+        cp.serviceId === bill.serviceId
+      );
+      
+      // Add price to total revenue if cost price exists
+      return sum + (costPrice ? parseFloat(costPrice.price.toString()) : 0);
+    }, 0);
   };
 
   const calculateProfit = (bill: Bill) => {

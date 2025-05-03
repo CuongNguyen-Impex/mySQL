@@ -167,14 +167,26 @@ export const getBillById = async (req: Request, res: Response) => {
             costType: true,
             supplier: true
           }
-        },
-        revenues: {
-          with: {
-            service: true
-          }
         }
       }
     });
+    
+    // Lấy giá bán theo từng loại chi phí (cost_prices)
+    // cho khách hàng và dịch vụ tương ứng của hóa đơn này
+    if (bill) {
+      const costPrices = await db.query.costPrices.findMany({
+        where: and(
+          eq(costPrices.customerId, bill.customerId),
+          eq(costPrices.serviceId, bill.serviceId)
+        ),
+        with: {
+          costType: true
+        }
+      });
+      
+      // Thêm costPrices vào đối tượng bill
+      bill.costPrices = costPrices;
+    }
     
     if (!bill) {
       return res.status(404).json({
@@ -198,12 +210,18 @@ export const getBillById = async (req: Request, res: Response) => {
       });
     }
     
-    // Tính toán tổng doanh thu (totalRevenue)
+    // Tính toán tổng doanh thu (totalRevenue) từ cost_prices
     let totalRevenue = 0;
     
-    if (bill.revenues && bill.revenues.length > 0) {
-      bill.revenues.forEach(revenue => {
-        totalRevenue += parseFloat(revenue.amount.toString());
+    if (bill.costs && bill.costs.length > 0 && bill.costPrices && bill.costPrices.length > 0) {
+      bill.costs.forEach(cost => {
+        // Tìm giá tương ứng cho loại chi phí này
+        const costPrice = bill.costPrices.find(cp => cp.costTypeId === cost.costTypeId);
+        
+        // Nếu tìm thấy giá, thêm vào tổng doanh thu
+        if (costPrice) {
+          totalRevenue += parseFloat(costPrice.price.toString());
+        }
       });
     }
     

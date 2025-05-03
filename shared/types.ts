@@ -125,7 +125,7 @@ export interface BillWithRelations extends Bill {
   customer?: Customer;
   service?: Service;
   costs?: Cost[];
-  // revenues array removed - using cost_prices now
+  costPrices?: CostPrice[]; // Added to support revenue calculation
   totalCost?: number;
   totalRevenue?: number; // calculated from cost_prices
   profit?: number;
