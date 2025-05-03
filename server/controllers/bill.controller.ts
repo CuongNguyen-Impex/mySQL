@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "@db";
 import { bills, billsRelations, insertBillSchema, costPrices } from "@shared/schema";
+import { BillWithRelations } from "@shared/types";
 import { eq, desc, like, and, between, or } from "drizzle-orm";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -211,35 +212,37 @@ export const getBillById = async (req: Request, res: Response) => {
       }
     });
     
-    // Lấy giá bán theo từng loại chi phí (cost_prices)
-    // cho khách hàng và dịch vụ tương ứng của hóa đơn này
-    if (bill) {
-      const billCostPrices = await db.query.costPrices.findMany({
-        where: and(
-          eq(costPrices.customerId, bill.customerId),
-          eq(costPrices.serviceId, bill.serviceId)
-        ),
-        with: {
-          costType: true
-        }
-      });
-      
-      // Thêm costPrices vào đối tượng bill
-      bill.costPrices = billCostPrices;
-    }
-    
+    // Kiểm tra bill có tồn tại không
     if (!bill) {
       return res.status(404).json({
         message: "Bill not found"
       });
     }
     
+    // Lấy giá bán theo từng loại chi phí (cost_prices)
+    // cho khách hàng và dịch vụ tương ứng của hóa đơn này
+    const billCostPrices = await db.query.costPrices.findMany({
+      where: and(
+        eq(costPrices.customerId, bill.customerId),
+        eq(costPrices.serviceId, bill.serviceId)
+      ),
+      with: {
+        costType: true
+      }
+    });
+    
+    // Tạo đối tượng billWithExtensions bao gồm costPrices
+    const billWithExtensions: BillWithRelations = {
+      ...bill,
+      costPrices: billCostPrices
+    };
+    
     // Tính toán tổng chi phí (totalCost)
     let totalCost = 0;
     let totalHoaDonCost = 0; // Chỉ bao gồm chi phí có hóa đơn
     
-    if (bill.costs && bill.costs.length > 0) {
-      bill.costs.forEach(cost => {
+    if (billWithExtensions.costs && billWithExtensions.costs.length > 0) {
+      billWithExtensions.costs.forEach(cost => {
         const amount = parseFloat(cost.amount.toString());
         totalCost += amount;
         
@@ -253,10 +256,10 @@ export const getBillById = async (req: Request, res: Response) => {
     // Tính toán tổng doanh thu (totalRevenue) từ cost_prices
     let totalRevenue = 0;
     
-    if (bill.costs && bill.costs.length > 0 && bill.costPrices && bill.costPrices.length > 0) {
-      bill.costs.forEach(cost => {
+    if (billWithExtensions.costs && billWithExtensions.costs.length > 0 && billWithExtensions.costPrices && billWithExtensions.costPrices.length > 0) {
+      billWithExtensions.costs.forEach(cost => {
         // Tìm giá tương ứng cho loại chi phí này
-        const costPrice = bill.costPrices.find(cp => cp.costTypeId === cost.costTypeId);
+        const costPrice = billWithExtensions.costPrices.find((cp: { costTypeId: number }) => cp.costTypeId === cost.costTypeId);
         
         // Nếu tìm thấy giá, thêm vào tổng doanh thu
         if (costPrice) {
@@ -269,7 +272,7 @@ export const getBillById = async (req: Request, res: Response) => {
     const profit = totalRevenue - totalHoaDonCost;
     
     const billWithData = {
-      ...bill,
+      ...billWithExtensions,
       totalCost,
       totalHoaDonCost,
       totalRevenue,
