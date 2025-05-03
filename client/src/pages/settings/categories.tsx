@@ -429,7 +429,69 @@ export default function SettingsCategories() {
                       Enter the details for the new service
                     </DialogDescription>
                   </DialogHeader>
-                  {/* Service form will go here */}
+                  <div className="py-4">
+                    <form className="space-y-4" onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      const service = {
+                        name: formData.get('name') as string,
+                        description: formData.get('description') as string
+                      };
+                      
+                      const createService = async () => {
+                        try {
+                          const response = await apiRequest('POST', '/api/services', service);
+                          const newService = await response.json();
+                          queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+                          toast({
+                            title: 'Thành công',
+                            description: `Dịch vụ "${newService.name}" đã được thêm thành công`,
+                          });
+                          // Close the dialog
+                          const closeDialogButton = document.querySelector('[data-radix-dialog-primitive="close"]');
+                          if (closeDialogButton) {
+                            (closeDialogButton as HTMLButtonElement).click();
+                          }
+                        } catch (error: any) {
+                          let errorMessage = error.message || 'Không thể tạo dịch vụ';
+                          
+                          // Xử lý phản hồi lỗi từ server
+                          if (error.status === 400) {
+                            try {
+                              const errorData = await error.json();
+                              errorMessage = errorData.message || errorMessage;
+                            } catch {}
+                          }
+                          
+                          toast({
+                            title: 'Lỗi',
+                            description: errorMessage,
+                            variant: 'destructive',
+                          });
+                        }
+                      };
+                      
+                      createService();
+                    }}>
+                      <div>
+                        <Label htmlFor="name">Tên dịch vụ *</Label>
+                        <Input id="name" name="name" placeholder="Tên dịch vụ" required />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="description">Mô tả</Label>
+                        <Textarea 
+                          id="description" 
+                          name="description" 
+                          placeholder="Mô tả chi tiết về dịch vụ" 
+                        />
+                      </div>
+                      
+                      <Button type="submit" className="w-full">
+                        Thêm dịch vụ
+                      </Button>
+                    </form>
+                  </div>
                 </DialogContent>
               </Dialog>
             </CardHeader>
