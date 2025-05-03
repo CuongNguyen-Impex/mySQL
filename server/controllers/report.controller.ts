@@ -1767,7 +1767,9 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
         { id: 'costAmount', title: 'Chi phí' },
         { id: 'revenueAmount', title: 'Doanh thu' },
         { id: 'profit', title: 'Lợi nhuận' },
-      ]
+      ],
+      encoding: 'utf8',
+      bom: true // Add BOM to ensure Excel recognizes UTF-8 encoding correctly
     });
     
     await csvWriter.writeRecords(csvRows);
