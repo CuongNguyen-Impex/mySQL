@@ -222,22 +222,7 @@ export type InsertCostPrice = z.infer<typeof insertCostPriceSchema>;
 export type CostPrice = typeof costPrices.$inferSelect;
 
 // Revenue table
-export const revenues = pgTable("revenues", {
-  id: serial("id").primaryKey(),
-  billId: integer("bill_id").references(() => bills.id, { onDelete: 'cascade' }).notNull(),
-  serviceId: integer("service_id").references(() => services.id, { onDelete: 'cascade' }).notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  date: date("date").notNull(),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
-});
-
-export const insertRevenueSchema = createInsertSchema(revenues, {
-  amount: (schema) => schema.refine(val => parseFloat(val) > 0, "Amount must be greater than 0")
-});
-export type InsertRevenue = z.infer<typeof insertRevenueSchema>;
-export type Revenue = typeof revenues.$inferSelect;
+// Bảng revenues đã bị xóa - Hiện doanh thu được tính từ bảng cost_prices
 
 // Google Sheets Settings
 export const settings = pgTable("settings", {
@@ -262,8 +247,8 @@ export const billsRelations = relations(bills, ({ one, many }) => ({
     fields: [bills.serviceId],
     references: [services.id]
   }),
-  costs: many(costs),
-  revenues: many(revenues)
+  costs: many(costs)
+  // Revenues relation removed - using cost_prices now for revenue calculation
 }));
 
 export const costsRelations = relations(costs, ({ one, many }) => ({
@@ -282,16 +267,7 @@ export const costsRelations = relations(costs, ({ one, many }) => ({
   attributeValues: many(costAttributeValues)
 }));
 
-export const revenuesRelations = relations(revenues, ({ one }) => ({
-  bill: one(bills, {
-    fields: [revenues.billId],
-    references: [bills.id]
-  }),
-  service: one(services, {
-    fields: [revenues.serviceId],
-    references: [services.id]
-  })
-}));
+// Revenues relations removed - using cost_prices now
 
 export const pricesRelations = relations(prices, ({ one }) => ({
   customer: one(customers, {
@@ -327,7 +303,7 @@ export const customersRelations = relations(customers, ({ many }) => ({
 
 export const servicesRelations = relations(services, ({ many }) => ({
   bills: many(bills),
-  revenues: many(revenues),
+  // revenues relation removed - using cost_prices now
   prices: many(prices),
   costPrices: many(costPrices)
 }));

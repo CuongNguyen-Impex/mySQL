@@ -6,7 +6,7 @@ import {
   CostTypeAttribute,
   CostAttributeValue,
   Customer,
-  Revenue,
+  // Revenue has been removed - using cost_prices now
   Service,
   Supplier,
   Price,
@@ -19,7 +19,7 @@ import {
   insertCostTypeAttributeSchema,
   insertCostAttributeValueSchema,
   insertCustomerSchema,
-  insertRevenueSchema,
+  // insertRevenueSchema has been removed - using cost_prices now
   insertServiceSchema,
   insertSupplierSchema,
   insertPriceSchema,
@@ -36,7 +36,7 @@ export type {
   CostTypeAttribute,
   CostAttributeValue,
   Customer,
-  Revenue,
+  // Revenue type removed
   Service,
   Supplier,
   Price,
@@ -65,12 +65,8 @@ export const costFormSchema = insertCostSchema.extend({
   tt_hd: z.enum(["Hóa đơn", "Trả hộ"])
 });
 
-export const revenueFormSchema = insertRevenueSchema.extend({
-  date: z.coerce.date(),
-  billId: z.coerce.number(),
-  serviceId: z.coerce.number(),
-  amount: z.coerce.number().positive("Amount must be greater than 0")
-});
+// Revenue form schema has been removed
+// Now using cost_prices for revenue calculation
 
 // PriceForm schema for multi-price form
 const priceItemSchema = z.object({
@@ -129,9 +125,9 @@ export interface BillWithRelations extends Bill {
   customer?: Customer;
   service?: Service;
   costs?: Cost[];
-  revenues?: Revenue[];
+  // revenues array removed - using cost_prices now
   totalCost?: number;
-  totalRevenue?: number;
+  totalRevenue?: number; // calculated from cost_prices
   profit?: number;
 }
 
@@ -151,10 +147,7 @@ export interface CostAttributeValueWithRelations extends CostAttributeValue {
   cost?: Cost;
 }
 
-export interface RevenueWithRelations extends Revenue {
-  bill?: Bill;
-  service?: Service;
-}
+// Revenue interface removed - using cost_prices now
 
 export interface PriceWithRelations extends Price {
   customer?: Customer;

@@ -1,45 +1,15 @@
-import { Edit, Trash2, MoreHorizontal } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { Revenue } from "@shared/types";
-import RevenueForm from "./revenue-form";
+/**
+ * THIS COMPONENT HAS BEEN DEPRECATED
+ * 
+ * Revenue is now calculated automatically from cost_prices
+ * and no longer requires manual entry or editing.
+ * 
+ * See cost-price.controller.ts for the new implementation.
+ */
+
+import { InfoIcon } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CostPriceWithRelations } from "@shared/types";
 
 interface RevenueListProps {
   revenues: Revenue[];

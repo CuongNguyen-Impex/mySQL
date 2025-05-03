@@ -8,7 +8,7 @@ import {
   costTypeAttributes,
   bills,
   costs,
-  revenues,
+  // revenues removed - using cost_prices now
   prices,
   costPrices,
   settings
@@ -22,7 +22,7 @@ async function resetDatabase() {
     console.log("Xóa tất cả dữ liệu cũ...");
     
     // Xóa dữ liệu từ các bảng có khóa ngoại trước
-    await db.delete(revenues);
+    // await db.delete(revenues); - revenues table removed
     await db.delete(costs);
     await db.delete(costPrices);
     await db.delete(prices);
@@ -493,66 +493,7 @@ async function seedCosts(billsData, costTypesData, suppliersData) {
   }
 }
 
-async function seedRevenues(billsData, servicesData) {
-  try {
-    const revenuesData = [
-      {
-        billId: billsData[0].id,
-        serviceId: servicesData[0].id,
-        amount: "10000000",
-        currency: "VND",
-        exchangeRate: "1",
-        notes: "Doanh thu dịch vụ vận chuyển",
-        date: new Date().toISOString()
-      },
-      {
-        billId: billsData[1].id,
-        serviceId: servicesData[1].id,
-        amount: "8000000",
-        currency: "VND",
-        exchangeRate: "1",
-        notes: "Doanh thu dịch vụ vận chuyển đường bộ",
-        date: new Date().toISOString()
-      },
-      {
-        billId: billsData[2].id,
-        serviceId: servicesData[2].id,
-        amount: "7000000",
-        currency: "VND",
-        exchangeRate: "1",
-        notes: "Doanh thu dịch vụ kho bãi",
-        date: new Date().toISOString()
-      },
-      {
-        billId: billsData[3].id,
-        serviceId: servicesData[3].id,
-        amount: "12000000",
-        currency: "VND",
-        exchangeRate: "1",
-        notes: "Doanh thu dịch vụ giao nhận máy móc",
-        date: new Date().toISOString()
-      },
-      {
-        billId: billsData[4].id,
-        serviceId: servicesData[4].id,
-        amount: "9000000",
-        currency: "VND",
-        exchangeRate: "1",
-        notes: "Doanh thu dịch vụ thông quan",
-        date: new Date().toISOString()
-      }
-    ];
-    
-    for (const revenue of revenuesData) {
-      await db.insert(revenues).values(revenue);
-    }
-    
-    console.log("Đã tạo doanh thu cho hóa đơn.");
-  } catch (error) {
-    console.error("Lỗi khi tạo doanh thu:", error);
-    throw error;
-  }
-}
+// seedRevenues function removed - using cost_prices for revenue calculation
 
 async function seedPrices(customersData, servicesData) {
   try {
@@ -768,7 +709,7 @@ async function main() {
     // Thêm dữ liệu cho các bảng phụ thuộc (có khóa ngoại)
     const bills = await seedBills(customers, services);
     await seedCosts(bills, costTypes, suppliers);
-    await seedRevenues(bills, services);
+    // seedRevenues removed - using cost_prices for revenue calculation
     await seedPrices(customers, services);
     await seedCostPrices(customers, services, costTypes);
     
