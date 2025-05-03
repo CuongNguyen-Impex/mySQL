@@ -1061,6 +1061,8 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
           acc[costTypeId] = {
             costTypeId,
             costTypeName: cost.costType?.name || 'Unknown',
+            hoaDonCosts: [],
+            traHoCosts: [],
             hoaDonAmount: 0,
             traHoAmount: 0,
             totalAmount: 0,
@@ -1073,8 +1075,10 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
         acc[costTypeId].totalAmount += amount;
         
         if (cost.tt_hd === "Trả hộ") {
+          acc[costTypeId].traHoCosts.push(cost);
           acc[costTypeId].traHoAmount += amount;
         } else { // "Hóa đơn"
+          acc[costTypeId].hoaDonCosts.push(cost);
           acc[costTypeId].hoaDonAmount += amount;
         }
         
@@ -1233,27 +1237,28 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       
       // For bills with costs, add rows grouped by cost type
       if (bill.costs.length > 0) {
-        // Distribute revenue by cost type for 'Hóa đơn' costs only
-        const numCostTypesWithHoaDon = costTypesWithHoaDon.length;
-        const revenuePerCostType = numCostTypesWithHoaDon > 0 ? totalRevenue / numCostTypesWithHoaDon : 0;
+        // Get the customer and service IDs for price lookup
+        const customerId = bill.customerId;
+        const serviceId = bill.serviceId;
         
         // Process costs grouped by type
         Object.values(costByType).forEach((costTypeGroup: any) => {
-          // Calculate revenue and profit for this cost type
-          let revenueForCostType = 0;
-          if (costTypeGroup.hoaDonCosts.length > 0) {
-            revenueForCostType = revenuePerCostType;
-          }
+          const costTypeId = costTypeGroup.costTypeId;
           
-          const profitForCostType = revenueForCostType - costTypeGroup.hoaDonAmount;
+          // Revenue for the whole bill (we'll only show it once per cost type)
+          let showRevenueForType = false;
           
           // Add a row for each cost within this cost type group
           if (costTypeGroup.hoaDonCosts.length > 0) {
-            costTypeGroup.hoaDonCosts.forEach((cost: any) => {
+            showRevenueForType = true;
+            
+            costTypeGroup.hoaDonCosts.forEach((cost: any, index: number) => {
               const costAmount = parseFloat(cost.amount.toString());
-              const revenueShare = costTypeGroup.hoaDonCosts.length > 0 ? 
-                revenueForCostType / costTypeGroup.hoaDonCosts.length : 0;
-              const profitShare = revenueShare - costAmount;
+              
+              // Only show the revenue on the first cost of each type
+              const showRevenue = index === 0 && showRevenueForType;
+              const revenueForRow = showRevenue ? totalRevenue : 0;
+              const profitForRow = showRevenue ? revenueForRow - costTypeGroup.hoaDonAmount : 0;
               
               csvRows.push({
                 billNo: bill.billNo,
@@ -1267,9 +1272,12 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
                 costType: costTypeGroup.costTypeName,
                 costAttribute: "Hóa đơn",
                 costAmount: costAmount,
-                revenueAmount: revenueShare,
-                profit: profitShare
+                revenueAmount: revenueForRow,
+                profit: profitForRow
               });
+              
+              // After showing revenue once, don't show it again for this type
+              showRevenueForType = false;
             });
           }
           
