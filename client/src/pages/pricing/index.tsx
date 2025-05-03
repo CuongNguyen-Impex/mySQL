@@ -106,7 +106,7 @@ export default function Pricing() {
         form.reset({
           customerId: selectedPrice.customerId,
           serviceId: selectedPrice.serviceId,
-          price: parseFloat(selectedPrice.price)
+          price: selectedPrice.price // Giữ nguyên giá trị dạng string, không chuyển sang parseFloat
         });
       } else {
         form.reset({
@@ -428,7 +428,7 @@ export default function Pricing() {
                           {...field}
                           onChange={(e) => {
                             const value = e.target.value === "" ? "0" : e.target.value;
-                            field.onChange(parseFloat(value));
+                            field.onChange(value); // Sử dụng giá trị dạng string thay vì chuyển sang parseFloat
                           }}
                         />
                       </div>
