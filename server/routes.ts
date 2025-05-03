@@ -107,8 +107,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch(`${apiPrefix}/cost-prices/:id`, authMiddleware, costPriceController.updateCostPrice);
   app.delete(`${apiPrefix}/cost-prices/:id`, authMiddleware, costPriceController.deleteCostPrice);
 
+  // DASHBOARD ROUTE
+  app.get(`${apiPrefix}/dashboard`, authMiddleware, dashboardController.getDashboardData);
+  
   // REPORT ROUTES
-  app.get(`${apiPrefix}/dashboard`, authMiddleware, reportController.getDashboardData);
   app.get(`${apiPrefix}/reports/by-customer`, authMiddleware, reportController.getReportByCustomer);
   app.get(`${apiPrefix}/reports/by-supplier`, authMiddleware, reportController.getReportBySupplier);
   app.get(`${apiPrefix}/reports/profit-loss`, authMiddleware, reportController.getProfitLossReport);
