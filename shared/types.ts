@@ -69,10 +69,22 @@ export const revenueFormSchema = insertRevenueSchema.extend({
   amount: z.coerce.number().positive("Amount must be greater than 0")
 });
 
-export const priceFormSchema = insertPriceSchema.extend({
+// PriceForm schema for multi-price form
+const priceItemSchema = z.object({
+  serviceId: z.coerce.number(),
+  price: z.string().min(1, "Price is required")
+});
+
+export const priceFormSchema = z.object({
+  customerId: z.coerce.number(),
+  prices: z.array(priceItemSchema).min(1, "At least one price is required")
+});
+
+// Original price item schema for single-item operations
+export const priceItemFormSchema = insertPriceSchema.extend({
   customerId: z.coerce.number(),
   serviceId: z.coerce.number(),
-  price: z.coerce.number().positive("Price must be greater than 0")
+  price: z.string().min(1, "Price is required")
 });
 
 export const customerFormSchema = insertCustomerSchema;

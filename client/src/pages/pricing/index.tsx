@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Plus, Edit, Trash2, MoreHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -45,7 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -89,14 +89,21 @@ export default function Pricing() {
     queryKey: ["/api/services"],
   });
 
-  // Setup form
+  // Setup form for multi prices
   const form = useForm({
     resolver: zodResolver(priceFormSchema),
     defaultValues: {
       customerId: undefined,
-      serviceId: undefined,
-      price: undefined,
+      prices: [
+        { serviceId: undefined, price: undefined }
+      ]
     }
+  });
+  
+  // Setup field array for multiple service prices
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "prices"
   });
 
   // Reset form when dialog opens/closes or when selectedPrice changes
@@ -105,14 +112,16 @@ export default function Pricing() {
       if (selectedPrice) {
         form.reset({
           customerId: selectedPrice.customerId,
-          serviceId: selectedPrice.serviceId,
-          price: selectedPrice.price // Giữ nguyên giá trị dạng string, không chuyển sang parseFloat
+          prices: [
+            { serviceId: selectedPrice.serviceId, price: selectedPrice.price }
+          ]
         });
       } else {
         form.reset({
           customerId: undefined,
-          serviceId: undefined,
-          price: undefined
+          prices: [
+            { serviceId: undefined, price: undefined }
+          ]
         });
       }
     }
