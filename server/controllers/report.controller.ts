@@ -1567,8 +1567,28 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
         return;
       }
       
-      // Calculate total revenue for this bill
-      const totalRevenue = bill.revenues.reduce((sum, revenue) => sum + parseFloat(revenue.amount.toString()), 0);
+      // Calculate total revenue based on cost prices for this bill
+      let totalRevenue = 0;
+      
+      // Get unique cost type IDs with Hóa đơn costs
+      const uniqueHoaDonCostTypeIds = Array.from(new Set(
+        bill.costs.filter(cost => cost.tt_hd === "Hóa đơn").map(cost => cost.costTypeId)
+      ));
+      
+      // Calculate revenue using cost prices
+      for (const costTypeId of uniqueHoaDonCostTypeIds) {
+        // Find cost-specific price
+        const costPrice = allCostPrices.find(price => 
+          price.customerId === bill.customerId && 
+          price.serviceId === bill.serviceId && 
+          price.costTypeId === costTypeId
+        );
+        
+        if (costPrice) {
+          totalRevenue += Number(costPrice.price);
+          console.log(`Bill ${bill.billNo}: Using cost price for costType ${costTypeId}: ${costPrice.price}`);
+        }
+      }
       
       // Group costs by cost type for detailed analysis
       const costByType = bill.costs.reduce((acc: Record<number, any>, cost) => {
