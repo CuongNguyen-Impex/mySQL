@@ -272,7 +272,111 @@ export default function SettingsCategories() {
                                       Update the customer details
                                     </DialogDescription>
                                   </DialogHeader>
-                                  {/* Customer form will go here */}
+                                  
+                                  <div className="py-4">
+                                    <form className="space-y-4" onSubmit={(e) => {
+                                      e.preventDefault();
+                                      const formData = new FormData(e.currentTarget);
+                                      const updatedCustomer = {
+                                        name: formData.get('name') as string,
+                                        contactPerson: formData.get('contactPerson') as string,
+                                        email: formData.get('email') as string,
+                                        phone: formData.get('phone') as string,
+                                        address: formData.get('address') as string
+                                      };
+                                      
+                                      const updateCustomer = async () => {
+                                        try {
+                                          const response = await apiRequest('PATCH', `/api/customers/${customer.id}`, updatedCustomer);
+                                          const result = await response.json();
+                                          queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+                                          toast({
+                                            title: 'Thành công',
+                                            description: `Đã cập nhật thông tin khách hàng "${result.name}"`
+                                          });
+                                          // Close the dialog
+                                          const closeDialogButton = document.querySelector('[data-radix-dialog-primitive="close"]');
+                                          if (closeDialogButton) {
+                                            (closeDialogButton as HTMLButtonElement).click();
+                                          }
+                                        } catch (error: any) {
+                                          let errorMessage = error.message || 'Failed to update customer';
+                                          
+                                          // Xử lý phản hồi lỗi từ server
+                                          if (error.status === 400) {
+                                            try {
+                                              const errorData = await error.json();
+                                              errorMessage = errorData.message || errorMessage;
+                                            } catch {}
+                                          }
+                                          
+                                          toast({
+                                            title: 'Lỗi',
+                                            description: errorMessage,
+                                            variant: 'destructive',
+                                          });
+                                        }
+                                      };
+                                      
+                                      updateCustomer();
+                                    }}>
+                                      <div>
+                                        <Label htmlFor="edit-name">Tên khách hàng *</Label>
+                                        <Input 
+                                          id="edit-name" 
+                                          name="name" 
+                                          placeholder="Tên công ty khách hàng" 
+                                          defaultValue={customer.name} 
+                                          required 
+                                        />
+                                      </div>
+                                      
+                                      <div>
+                                        <Label htmlFor="edit-contactPerson">Người liên hệ</Label>
+                                        <Input 
+                                          id="edit-contactPerson" 
+                                          name="contactPerson" 
+                                          placeholder="Tên người liên hệ" 
+                                          defaultValue={customer.contactPerson || ''} 
+                                        />
+                                      </div>
+                                      
+                                      <div>
+                                        <Label htmlFor="edit-email">Email</Label>
+                                        <Input 
+                                          id="edit-email" 
+                                          name="email" 
+                                          type="email" 
+                                          placeholder="Email liên hệ" 
+                                          defaultValue={customer.email || ''} 
+                                        />
+                                      </div>
+                                      
+                                      <div>
+                                        <Label htmlFor="edit-phone">Số điện thoại</Label>
+                                        <Input 
+                                          id="edit-phone" 
+                                          name="phone" 
+                                          placeholder="Số điện thoại liên hệ" 
+                                          defaultValue={customer.phone || ''} 
+                                        />
+                                      </div>
+                                      
+                                      <div>
+                                        <Label htmlFor="edit-address">Địa chỉ</Label>
+                                        <Input 
+                                          id="edit-address" 
+                                          name="address" 
+                                          placeholder="Địa chỉ đơn vị" 
+                                          defaultValue={customer.address || ''} 
+                                        />
+                                      </div>
+                                      
+                                      <Button type="submit" className="w-full">
+                                        Cập nhật thông tin
+                                      </Button>
+                                    </form>
+                                  </div>
                                 </DialogContent>
                               </Dialog>
                               <DropdownMenuItem 
