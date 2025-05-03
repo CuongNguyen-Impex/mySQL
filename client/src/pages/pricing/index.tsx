@@ -222,21 +222,21 @@ export default function Pricing() {
   };
 
   // Filter prices based on selected customer and service
-  const filteredPrices = prices?.filter((price: any) => {
+  const filteredPrices = Array.isArray(prices) ? prices.filter((price: any) => {
     const customerMatch = customerFilter ? price.customerId.toString() === customerFilter : true;
     const serviceMatch = serviceFilter ? price.serviceId.toString() === serviceFilter : true;
     return customerMatch && serviceMatch;
-  }) || [];
+  }) : [];
 
   // Get customer name by ID
   const getCustomerName = (customerId: number) => {
-    const customer = customers?.find((c: any) => c.id === customerId);
+    const customer = Array.isArray(customers) ? customers.find((c: any) => c.id === customerId) : null;
     return customer?.name || "Unknown";
   };
 
   // Get service name by ID
   const getServiceName = (serviceId: number) => {
-    const service = services?.find((s: any) => s.id === serviceId);
+    const service = Array.isArray(services) ? services.find((s: any) => s.id === serviceId) : null;
     return service?.name || "Unknown";
   };
 
@@ -276,12 +276,12 @@ export default function Pricing() {
                 <SelectValue placeholder="All Customers" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all_customers">All Customers</SelectItem>
-                {customers?.map((customer: any) => (
+                <SelectItem value="all_customers">Tất cả khách hàng</SelectItem>
+                {Array.isArray(customers) ? customers.map((customer: any) => (
                   <SelectItem key={customer.id} value={customer.id.toString()}>
                     {customer.name}
                   </SelectItem>
-                ))}
+                )) : null}
               </SelectContent>
             </Select>
 
@@ -290,12 +290,12 @@ export default function Pricing() {
                 <SelectValue placeholder="All Services" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all_services">All Services</SelectItem>
-                {services?.map((service: any) => (
+                <SelectItem value="all_services">Tất cả dịch vụ</SelectItem>
+                {Array.isArray(services) ? services.map((service: any) => (
                   <SelectItem key={service.id} value={service.id.toString()}>
                     {service.name}
                   </SelectItem>
-                ))}
+                )) : null}
               </SelectContent>
             </Select>
           </div>
