@@ -14,7 +14,7 @@ export const getCostPrices = async (req: Request, res: Response) => {
       }
     });
     return res.json(costPricesList);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting cost prices:', error);
     return res.status(500).json({ error: 'Failed to retrieve cost prices' });
   }
@@ -75,7 +75,7 @@ export const getCostPriceById = async (req: Request, res: Response) => {
     }
 
     return res.json(price);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting cost price by ID:', error);
     return res.status(500).json({ error: 'Failed to retrieve cost price' });
   }
@@ -159,7 +159,7 @@ export const deleteCostPrice = async (req: Request, res: Response) => {
     await db.delete(costPrices).where(eq(costPrices.id, id));
 
     return res.status(200).json({ message: 'Cost price deleted successfully' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting cost price:', error);
     return res.status(500).json({ error: 'Failed to delete cost price' });
   }
@@ -185,7 +185,7 @@ export const getCostPricesByCustomerAndService = async (req: Request, res: Respo
     });
 
     return res.json(prices);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting cost prices by customer and service:', error);
     return res.status(500).json({ error: 'Failed to retrieve cost prices' });
   }

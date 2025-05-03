@@ -22,6 +22,7 @@ import CostTypeAttributes from "./pages/settings/cost-type-attributes";
 import Customers from "./pages/customers";
 import Suppliers from "./pages/suppliers";
 import Pricing from "./pages/pricing";
+import CostPricing from "./pages/pricing/cost-pricing";
 import AuthPage from "./pages/auth";
 
 function Router() {
@@ -44,6 +45,7 @@ function Router() {
       <ProtectedRoute path="/customers" component={Customers} />
       <ProtectedRoute path="/suppliers" component={Suppliers} />
       <ProtectedRoute path="/pricing" component={Pricing} />
+      <ProtectedRoute path="/pricing/cost-pricing" component={CostPricing} />
       <Route component={NotFound} />
     </Switch>
   );
