@@ -268,8 +268,12 @@ export default function Pricing() {
 
   // Filter prices based on selected customer and service
   const filteredPrices = Array.isArray(prices) ? prices.filter((price: Price) => {
-    const customerMatch = customerFilter ? price.customerId.toString() === customerFilter : true;
-    const serviceMatch = serviceFilter ? price.serviceId.toString() === serviceFilter : true;
+    // Check if "all_customers" is selected or if the customer ID matches
+    const customerMatch = customerFilter === "all_customers" || price.customerId.toString() === customerFilter;
+    
+    // Check if "all_services" is selected or if the service ID matches
+    const serviceMatch = serviceFilter === "all_services" || price.serviceId.toString() === serviceFilter;
+    
     return customerMatch && serviceMatch;
   }) : [];
 
@@ -428,9 +432,7 @@ export default function Pricing() {
                 {filteredPrices.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                      {customerFilter || serviceFilter
-                        ? "Không tìm thấy giá phù hợp với bộ lọc."
-                        : "Chưa có báo giá nào. Vui lòng thêm báo giá mới."}
+                      Không tìm thấy giá phù hợp với bộ lọc.
                     </TableCell>
                   </TableRow>
                 )}
