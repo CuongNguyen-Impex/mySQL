@@ -1,23 +1,8 @@
 import session from 'express-session';
-import mysql from 'mysql2/promise';
-import MySQLStore from 'express-mysql-session';
 
-// Create the MySQL session store
-const options = {
-  connectionLimit: 10,
-  host: process.env.PGHOST,
-  user: process.env.PGUSER,
-  password: process.env.PGPASSWORD,
-  database: process.env.PGDATABASE,
-  port: parseInt(process.env.PGPORT || '3306')
-};
-
-// @ts-ignore - express-mysql-session has type issues
-const MySQLStoreInstance = MySQLStore(session);
-
-// Create the storage middleware
+// Sử dụng bộ nhớ (memory) để lưu trữ phiên làm giải pháp tạm thời
+// trong quá trình chuyển đổi từ PostgreSQL sang MySQL
 export const storage = session({
-  store: new MySQLStoreInstance(options),
   secret: process.env.SESSION_SECRET || 'logistics-manager-secret',
   resave: false,
   saveUninitialized: false,
