@@ -198,11 +198,28 @@ export const prices = pgTable("prices", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Cost Prices table (for cost-specific pricing by customer and service)
+export const costPrices = pgTable("cost_prices", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").references(() => customers.id, { onDelete: 'cascade' }).notNull(),
+  serviceId: integer("service_id").references(() => services.id, { onDelete: 'cascade' }).notNull(),
+  costTypeId: integer("cost_type_id").references(() => costTypes.id, { onDelete: 'cascade' }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
 export const insertPriceSchema = createInsertSchema(prices, {
   price: (schema) => schema.refine(val => parseFloat(val) > 0, "Price must be greater than 0")
 });
 export type InsertPrice = z.infer<typeof insertPriceSchema>;
 export type Price = typeof prices.$inferSelect;
+
+export const insertCostPriceSchema = createInsertSchema(costPrices, {
+  price: (schema) => schema.refine(val => parseFloat(val) > 0, "Price must be greater than 0")
+});
+export type InsertCostPrice = z.infer<typeof insertCostPriceSchema>;
+export type CostPrice = typeof costPrices.$inferSelect;
 
 // Revenue table
 export const revenues = pgTable("revenues", {
@@ -287,15 +304,32 @@ export const pricesRelations = relations(prices, ({ one }) => ({
   })
 }));
 
+export const costPricesRelations = relations(costPrices, ({ one }) => ({
+  customer: one(customers, {
+    fields: [costPrices.customerId],
+    references: [customers.id]
+  }),
+  service: one(services, {
+    fields: [costPrices.serviceId],
+    references: [services.id]
+  }),
+  costType: one(costTypes, {
+    fields: [costPrices.costTypeId],
+    references: [costTypes.id]
+  })
+}));
+
 export const customersRelations = relations(customers, ({ many }) => ({
   bills: many(bills),
-  prices: many(prices)
+  prices: many(prices),
+  costPrices: many(costPrices)
 }));
 
 export const servicesRelations = relations(services, ({ many }) => ({
   bills: many(bills),
   revenues: many(revenues),
-  prices: many(prices)
+  prices: many(prices),
+  costPrices: many(costPrices)
 }));
 
 export const suppliersRelations = relations(suppliers, ({ many }) => ({
