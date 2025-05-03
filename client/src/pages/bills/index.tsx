@@ -48,6 +48,7 @@ export default function Bills() {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [billNoFilter, setBillNoFilter] = useState<string>("");
+  
   // Fetch bills with filters
   const { data, isLoading, refetch } = useQuery({
     queryKey: [
