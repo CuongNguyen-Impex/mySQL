@@ -69,7 +69,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function Pricing() {
   const { toast } = useToast();
-  const [selectedPrice, setSelectedPrice] = useState<any | null>(null);
+  const [selectedPrice, setSelectedPrice] = useState<Price | null>(null);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -93,8 +93,17 @@ export default function Pricing() {
     queryKey: ["/api/services"],
   });
 
+  // Define types for form values
+  type PriceFormValues = {
+    customerId: number | undefined;
+    prices: {
+      serviceId: number | undefined;
+      price: string | undefined;
+    }[];
+  }
+
   // Setup form for multi prices
-  const form = useForm({
+  const form = useForm<PriceFormValues>({
     resolver: zodResolver(priceFormSchema),
     defaultValues: {
       customerId: undefined,
@@ -184,7 +193,7 @@ export default function Pricing() {
   });
 
   // Create or update price - updated for multi price form
-  const onSubmit = (values: any) => {
+  const onSubmit = (values: PriceFormValues) => {
     if (selectedPrice) {
       // Single price update
       priceMutation.mutate({
@@ -198,7 +207,7 @@ export default function Pricing() {
       const { customerId, prices } = values;
       
       // We'll use a Promise.all to create multiple prices in parallel
-      const createPromises = prices.map((priceItem: any) => {
+      const createPromises = prices.map((priceItem) => {
         return apiRequest("POST", "/api/prices", {
           customerId,
           serviceId: priceItem.serviceId,
@@ -226,7 +235,7 @@ export default function Pricing() {
   };
 
   // Filter prices based on selected customer and service
-  const filteredPrices = Array.isArray(prices) ? prices.filter((price: any) => {
+  const filteredPrices = Array.isArray(prices) ? prices.filter((price: Price) => {
     const customerMatch = customerFilter ? price.customerId.toString() === customerFilter : true;
     const serviceMatch = serviceFilter ? price.serviceId.toString() === serviceFilter : true;
     return customerMatch && serviceMatch;
@@ -700,7 +709,7 @@ export default function Pricing() {
                   
                   // Lấy danh sách các báo giá của khách hàng này
                   const customerPrices = Array.isArray(prices) 
-                    ? prices.filter((price: any) => price.customerId === selectedCustomerForPrint)
+                    ? prices.filter((price: Price) => price.customerId === selectedCustomerForPrint)
                     : [];
                   
                   // Thêm dòng cho mỗi dịch vụ
