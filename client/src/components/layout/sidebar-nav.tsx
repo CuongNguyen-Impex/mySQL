@@ -131,18 +131,31 @@ export default function SidebarNav({ className, user }: SidebarNavProps) {
       </div>
       
       <div className="absolute bottom-0 w-full border-t border-sidebar-border p-4">
-        <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
-            <User className="h-4 w-4" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
+              <User className="h-4 w-4" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">
+                {user?.username || "Guest User"}
+              </p>
+              <p className="text-xs text-sidebar-foreground/60">
+                {user?.role === "admin" ? "Administrator" : "Regular User"}
+              </p>
+            </div>
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium">
-              {user?.username || "Guest User"}
-            </p>
-            <p className="text-xs text-sidebar-foreground/60">
-              {user?.role === "admin" ? "Administrator" : "Regular User"}
-            </p>
-          </div>
+          <button 
+            onClick={() => window.location.href = "/logout"}
+            className="p-2 rounded-md text-red-500 hover:bg-sidebar-accent/50"
+            title="Đăng xuất"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-log-out">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
         </div>
       </div>
     </aside>

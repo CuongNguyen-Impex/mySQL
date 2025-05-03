@@ -24,11 +24,13 @@ import Suppliers from "./pages/suppliers";
 import Pricing from "./pages/pricing";
 import CostPricing from "./pages/pricing/cost-pricing";
 import AuthPage from "./pages/auth";
+import LogoutPage from "./pages/logout";
 
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={AuthPage} />
+      <Route path="/logout" component={LogoutPage} />
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/bills" component={Bills} />
       <ProtectedRoute path="/bills/:id" component={BillDetails} />
