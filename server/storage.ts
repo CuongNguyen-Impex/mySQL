@@ -1,21 +1,23 @@
 import session from 'express-session';
-import connectPgSimple from 'connect-pg-simple';
-import { Pool } from '@neondatabase/serverless';
+import mysql from 'mysql2/promise';
+import MySQLStore from 'express-mysql-session';
 
-const PgSession = connectPgSimple(session);
+// Create the MySQL session store
+const options = {
+  connectionLimit: 10,
+  host: process.env.PGHOST,
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  database: process.env.PGDATABASE,
+  port: parseInt(process.env.PGPORT || '3306')
+};
 
-// Create a new pool using the DATABASE_URL environment variable
-const sessionPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+// @ts-ignore - express-mysql-session has type issues
+const MySQLStoreInstance = MySQLStore(session);
 
 // Create the storage middleware
 export const storage = session({
-  store: new PgSession({
-    pool: sessionPool,
-    tableName: 'session',
-    createTableIfMissing: true,
-  }),
+  store: new MySQLStoreInstance(options),
   secret: process.env.SESSION_SECRET || 'logistics-manager-secret',
   resave: false,
   saveUninitialized: false,

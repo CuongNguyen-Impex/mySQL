@@ -26,7 +26,7 @@ import {
   insertCostPriceSchema,
   insertUserSchema,
   insertSettingSchema
-} from "./schema";
+} from "./schema.mysql";
 
 // Export DB types
 export type {

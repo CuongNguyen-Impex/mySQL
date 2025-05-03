@@ -1,10 +1,6 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "@shared/schema";
-
-// This is the correct way neon config - DO NOT change this
-neonConfig.webSocketConstructor = ws;
+import { createPool } from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/mysql2';
+import * as schema from "@shared/schema.mysql";
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -12,5 +8,5 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+export const pool = createPool(process.env.DATABASE_URL);
+export const db = drizzle(pool, { schema, mode: 'default' });

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import * as schema from "./shared/schema.js";
+import * as schema from "./shared/schema.mysql";
 import { eq } from "drizzle-orm";
 
 const { costTypes, costTypeAttributes } = schema;
@@ -19,12 +19,16 @@ async function addKoHoaDonAttributes() {
         // Check if this cost type already has a 'Ko hóa đơn' attribute
         const existingAttribute = await db.select()
           .from(costTypeAttributes)
-          .where(eq(costTypeAttributes.costTypeId, costType.id))
-          .where(eq(costTypeAttributes.name, "Ko hóa đơn"))
+          .where(
+            eq(costTypeAttributes.costTypeId, costType.id)
+          )
           .execute();
         
+        // Filter client-side since MySQL syntax is different
+        const filtered = existingAttribute.filter(attr => attr.name === "Ko hóa đơn");
+        
         // Only add if it doesn't exist
-        if (existingAttribute.length === 0) {
+        if (filtered.length === 0) {
           koHoaDonAttributesData.push({
             costTypeId: costType.id,
             name: "Ko hóa đơn"
@@ -33,8 +37,8 @@ async function addKoHoaDonAttributes() {
       }
       
       if (koHoaDonAttributesData.length > 0) {
-        const insertedAttributes = await db.insert(costTypeAttributes).values(koHoaDonAttributesData).returning();
-        console.log(`✅ Added ${insertedAttributes.length} 'Ko hóa đơn' attributes`);
+        const result = await db.insert(costTypeAttributes).values(koHoaDonAttributesData);
+        console.log(`✅ Added ${koHoaDonAttributesData.length} 'Ko hóa đơn' attributes`);
       } else {
         console.log("ℹ️ All cost types already have 'Ko hóa đơn' attributes");
       }
