@@ -158,11 +158,12 @@ export default function SettingsCategories() {
                       
                       const createCustomer = async () => {
                         try {
-                          await apiRequest('POST', '/api/customers', customer);
+                          const response = await apiRequest('POST', '/api/customers', customer);
+                          const newCustomer = await response.json();
                           queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
                           toast({
-                            title: 'Success',
-                            description: 'Customer was created successfully',
+                            title: 'Thành công',
+                            description: `Khách hàng "${newCustomer.name}" đã được thêm thành công`,
                           });
                           // Close the dialog
                           const closeDialogButton = document.querySelector('[data-radix-dialog-primitive="close"]');
@@ -170,9 +171,19 @@ export default function SettingsCategories() {
                             (closeDialogButton as HTMLButtonElement).click();
                           }
                         } catch (error: any) {
+                          let errorMessage = error.message || 'Failed to create customer';
+                          
+                          // Xử lý phản hồi lỗi từ server
+                          if (error.status === 400) {
+                            try {
+                              const errorData = await error.json();
+                              errorMessage = errorData.message || errorMessage;
+                            } catch {}
+                          }
+                          
                           toast({
-                            title: 'Error',
-                            description: error.message || 'Failed to create customer',
+                            title: 'Lỗi',
+                            description: errorMessage,
                             variant: 'destructive',
                           });
                         }
