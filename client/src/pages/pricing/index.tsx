@@ -179,8 +179,46 @@ export default function Pricing() {
     },
   });
 
+  // Create or update price - updated for multi price form
   const onSubmit = (values: any) => {
-    priceMutation.mutate(values);
+    if (selectedPrice) {
+      // Single price update
+      priceMutation.mutate({
+        id: selectedPrice.id,
+        customerId: values.customerId,
+        serviceId: values.prices[0].serviceId,
+        price: values.prices[0].price
+      });
+    } else {
+      // Process multiple prices
+      const { customerId, prices } = values;
+      
+      // We'll use a Promise.all to create multiple prices in parallel
+      const createPromises = prices.map((priceItem: any) => {
+        return apiRequest("POST", "/api/prices", {
+          customerId,
+          serviceId: priceItem.serviceId,
+          price: priceItem.price
+        });
+      });
+      
+      Promise.all(createPromises)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/prices"] });
+          setIsFormDialogOpen(false);
+          toast({
+            title: "Success",
+            description: `${prices.length} giá mới đã được tạo thành công`,
+          });
+        })
+        .catch((error) => {
+          toast({
+            title: "Error",
+            description: `Không thể tạo giá: ${error}`,
+            variant: "destructive",
+          });
+        });
+    }
   };
 
   // Filter prices based on selected customer and service
@@ -227,9 +265,9 @@ export default function Pricing() {
       <Card>
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
           <div>
-            <CardTitle>Price List</CardTitle>
+            <CardTitle>Danh sách báo giá</CardTitle>
             <CardDescription>
-              View and manage your service prices by customer
+              Xem và quản lý giá dịch vụ theo khách hàng
             </CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -340,22 +378,24 @@ export default function Pricing() {
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{selectedPrice ? "Edit Price" : "Add New Price"}</DialogTitle>
+            <DialogTitle>{selectedPrice ? "Chỉnh sửa giá" : "Thêm báo giá mới"}</DialogTitle>
             <DialogDescription>
               {selectedPrice
-                ? "Update the price information below."
-                : "Enter the details for the new price."}
+                ? "Cập nhật thông tin giá dưới đây."
+                : "Nhập thông tin khách hàng và báo giá dịch vụ."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Khu vực 1: Thông tin khách hàng */}
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-4">Thông tin khách hàng</h3>
                 <FormField
                   control={form.control}
                   name="customerId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Customer *</FormLabel>
+                      <FormLabel>Khách hàng *</FormLabel>
                       <Select
                         disabled={isLoadingCustomers || (selectedPrice !== null)}
                         onValueChange={(value) => field.onChange(parseInt(value))}
@@ -364,7 +404,7 @@ export default function Pricing() {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select customer" />
+                            <SelectValue placeholder="Chọn khách hàng" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -382,74 +422,104 @@ export default function Pricing() {
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="serviceId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Service *</FormLabel>
-                      <Select
-                        disabled={isLoadingServices || (selectedPrice !== null)}
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        value={field.value?.toString()}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select service" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {services?.map((service: any) => (
-                            <SelectItem
-                              key={service.id}
-                              value={service.id.toString()}
-                            >
-                              {service.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
+              
+              {/* Khu vực 2: Thông tin dịch vụ và báo giá */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Thông tin dịch vụ và báo giá</h3>
+                  {!selectedPrice && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => append({ serviceId: undefined, price: undefined })}
+                    >
+                      <Plus className="h-4 w-4 mr-2" /> Thêm dịch vụ
+                    </Button>
+                  )}
+                </div>
+                
+                {fields.map((field, index) => (
+                  <div key={field.id} className="border rounded-md p-4 mb-4 relative">
+                    {fields.length > 1 && !selectedPrice && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-2"
+                        onClick={() => remove(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                      <FormField
+                        control={form.control}
+                        name={`prices.${index}.serviceId`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Dịch vụ *</FormLabel>
+                            <Select
+                              disabled={isLoadingServices || (selectedPrice !== null)}
+                              onValueChange={(value) => field.onChange(parseInt(value))}
+                              value={field.value?.toString()}
+                              defaultValue={field.value?.toString()}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Chọn dịch vụ" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {services?.map((service: any) => (
+                                  <SelectItem
+                                    key={service.id}
+                                    value={service.id.toString()}
+                                  >
+                                    {service.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name={`prices.${index}.price`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Giá *</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-muted-foreground pointer-events-none">
+                                  VND
+                                </span>
+                                <Input
+                                  type="text"
+                                  placeholder="0"
+                                  className="pl-12"
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                ))}
 
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-muted-foreground pointer-events-none">
-                          $
-                        </span>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          className="pl-7"
-                          step="0.01"
-                          min="0"
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value === "" ? "0" : e.target.value;
-                            field.onChange(value); // Sử dụng giá trị dạng string thay vì chuyển sang parseFloat
-                          }}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              </div>
+              
               <div className="flex justify-end">
                 <Button type="submit" disabled={priceMutation.isPending}>
-                  {selectedPrice ? "Update Price" : "Create Price"}
+                  {selectedPrice ? "Cập nhật giá" : "Tạo báo giá"}
                 </Button>
               </div>
             </form>
@@ -461,21 +531,21 @@ export default function Pricing() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this
-              price configuration and may affect revenue calculations.
+              Hành động này không thể hoàn tác. Điều này sẽ xóa vĩnh viễn
+              cấu hình giá này và có thể ảnh hưởng đến các tính toán doanh thu.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (priceToDelete) deletePriceMutation.mutate(priceToDelete);
               }}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Delete
+              Xóa
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
