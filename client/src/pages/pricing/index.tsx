@@ -247,6 +247,15 @@ export default function Pricing() {
     unit?: string;
     description?: string;
   };
+  
+  type Price = {
+    id: number;
+    customerId: number;
+    serviceId: number;
+    price: string;
+    createdAt?: string;
+    updatedAt?: string;
+  };
 
   // Get customer name by ID
   const getCustomerName = (customerId: number) => {
@@ -305,7 +314,7 @@ export default function Pricing() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all_customers">Tất cả khách hàng</SelectItem>
-                {Array.isArray(customers) ? customers.map((customer: any) => (
+                {Array.isArray(customers) ? customers.map((customer: Customer) => (
                   <SelectItem key={customer.id} value={customer.id.toString()}>
                     {customer.name}
                   </SelectItem>
@@ -319,7 +328,7 @@ export default function Pricing() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all_services">Tất cả dịch vụ</SelectItem>
-                {Array.isArray(services) ? services.map((service: any) => (
+                {Array.isArray(services) ? services.map((service: Service) => (
                   <SelectItem key={service.id} value={service.id.toString()}>
                     {service.name}
                   </SelectItem>
@@ -347,7 +356,7 @@ export default function Pricing() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPrices.map((price: any) => (
+                {filteredPrices.map((price: Price) => (
                   <TableRow key={price.id}>
                     <TableCell className="font-medium">{getCustomerName(price.customerId)}</TableCell>
                     <TableCell>{getServiceName(price.serviceId)}</TableCell>
@@ -443,7 +452,7 @@ export default function Pricing() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {customers?.map((customer: any) => (
+                          {customers?.map((customer: Customer) => (
                             <SelectItem
                               key={customer.id}
                               value={customer.id.toString()}
@@ -508,7 +517,7 @@ export default function Pricing() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {services?.map((service: any) => (
+                                {services?.map((service: Service) => (
                                   <SelectItem
                                     key={service.id}
                                     value={service.id.toString()}
@@ -583,7 +592,7 @@ export default function Pricing() {
                     <SelectValue placeholder="Chọn khách hàng" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.isArray(customers) ? customers.map((customer: any) => (
+                    {Array.isArray(customers) ? customers.map((customer: Customer) => (
                       <SelectItem key={customer.id} value={customer.id.toString()}>
                         {customer.name}
                       </SelectItem>
@@ -612,7 +621,7 @@ export default function Pricing() {
                 // This would be a good place to create a new tab with the print layout
                 
                 const customerPrices = Array.isArray(prices) 
-                  ? prices.filter((price: any) => price.customerId === selectedCustomerForPrint)
+                  ? prices.filter((price: Price) => price.customerId === selectedCustomerForPrint)
                   : [];
                   
                 if (customerPrices.length === 0) {
@@ -695,7 +704,7 @@ export default function Pricing() {
                     : [];
                   
                   // Thêm dòng cho mỗi dịch vụ
-                  customerPrices.forEach((price: any, index: number) => {
+                  customerPrices.forEach((price: Price, index: number) => {
                     const service = Array.isArray(services) 
                       ? services.find((s: Service) => s.id === price.serviceId) 
                       : null;
