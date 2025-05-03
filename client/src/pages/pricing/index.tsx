@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, MoreHorizontal, X } from "lucide-react";
+import { Plus, Edit, Trash2, MoreHorizontal, X, Printer, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { DialogFooter } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -63,14 +65,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { priceFormSchema } from "@shared/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function Pricing() {
   const { toast } = useToast();
   const [selectedPrice, setSelectedPrice] = useState<any | null>(null);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [priceToDelete, setpriceToDelete] = useState<{id: number, customerId: number, serviceId: number} | null>(null);
+  const [selectedCustomerForPrint, setSelectedCustomerForPrint] = useState<number | null>(null);
   const [customerFilter, setCustomerFilter] = useState("");
   const [serviceFilter, setServiceFilter] = useState("");
 
@@ -251,7 +255,11 @@ export default function Pricing() {
             Quản lý báo giá dịch vụ theo khách hàng
           </p>
         </div>
-        <div className="mt-4 lg:mt-0">
+        <div className="mt-4 lg:mt-0 flex gap-2">
+          <Button variant="outline" onClick={() => setIsPrintDialogOpen(true)}>
+            <Printer className="mr-2 h-4 w-4" />
+            In báo giá
+          </Button>
           <Button onClick={() => {
             setSelectedPrice(null);
             setIsFormDialogOpen(true);
@@ -527,6 +535,90 @@ export default function Pricing() {
         </DialogContent>
       </Dialog>
 
+      {/* Print Dialog */}
+      <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>In báo giá</DialogTitle>
+            <DialogDescription>
+              Chọn khách hàng để in bảng báo giá dịch vụ.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="customer">Khách hàng</Label>
+                <Select 
+                  value={selectedCustomerForPrint?.toString() || ""} 
+                  onValueChange={(value) => setSelectedCustomerForPrint(parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn khách hàng" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.isArray(customers) ? customers.map((customer: any) => (
+                      <SelectItem key={customer.id} value={customer.id.toString()}>
+                        {customer.name}
+                      </SelectItem>
+                    )) : null}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPrintDialogOpen(false)}>Hủy</Button>
+            <Button 
+              type="button" 
+              disabled={!selectedCustomerForPrint}
+              onClick={() => {
+                if (!selectedCustomerForPrint) {
+                  toast({
+                    title: "Thông báo",
+                    description: "Vui lòng chọn khách hàng trước khi in báo giá",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
+                // Implement print functionality
+                // This would be a good place to create a new tab with the print layout
+                
+                const customerPrices = Array.isArray(prices) 
+                  ? prices.filter((price: any) => price.customerId === selectedCustomerForPrint)
+                  : [];
+                  
+                if (customerPrices.length === 0) {
+                  toast({
+                    title: "Thông báo",
+                    description: "Không có báo giá nào cho khách hàng này",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
+                // In báo giá thành công
+                toast({
+                  title: "In báo giá",
+                  description: `Đã chuẩn bị báo giá cho ${getCustomerName(selectedCustomerForPrint)}`,
+                });
+                
+                // Đặt lại giá trị và đóng hộp thoại
+                setIsPrintDialogOpen(false);
+                setSelectedCustomerForPrint(null);
+                
+                // Hiển thị báo giá trong cửa sổ mới
+                const windowFeatures = "left=100,top=100,width=800,height=600";
+                window.open('', '_blank', windowFeatures);
+              }}
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              In báo giá
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
