@@ -1034,20 +1034,24 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
       }
     });
     
+    console.log(`Found ${allPrices.length} standard prices and ${allCostPrices.length} cost-specific prices`);
+    
     // Helper functions to find prices
     const findPrice = (customerId: number, serviceId: number) => {
-      return allPrices.find(price => 
+      const foundPrice = allPrices.find(price => 
         price.customerId === customerId && 
         price.serviceId === serviceId
       );
+      return foundPrice;
     };
     
     const findCostPrice = (customerId: number, serviceId: number, costTypeId: number) => {
-      return allCostPrices.find(price => 
+      const foundPrice = allCostPrices.find(price => 
         price.customerId === customerId && 
         price.serviceId === serviceId && 
         price.costTypeId === costTypeId
       );
+      return foundPrice;
     };
     
     // Get all bills with costs, revenues, customer, and service relationships
@@ -1069,6 +1073,12 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
     
     // Enhance bill details with cost attribute information and profit calculations
     const enhancedBills = billsWithDetails.map(bill => {
+      const customerId = bill.customerId;
+      const serviceId = bill.serviceId;
+      
+      // Log for debugging
+      console.log(`Processing bill ${bill.billNo} for customer ${customerId}, service ${serviceId}`);
+      
       // Split costs by tt_hd value
       const hoaDonCosts = bill.costs.filter(cost => cost.tt_hd === "Hóa đơn");
       const traHoCosts = bill.costs.filter(cost => cost.tt_hd === "Trả hộ");
@@ -1078,19 +1088,44 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
         (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
       const totalTraHoCost = traHoCosts.reduce(
         (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
-        
-      // Calculate total revenue
-      const totalRevenue = bill.revenues.reduce(
-        (sum, revenue) => sum + parseFloat(revenue.amount.toString()), 0);
       
-      // Get customer and service IDs for price lookup
-      const customerId = bill.customerId;
-      const serviceId = bill.serviceId;
+      // We'll use these to collect revenue information
+      const costTypeRevenues: Record<number, number> = {};
+      let totalRevenueFromPrices = 0;
       
-      // Group costs by cost type for detailed analysis
-      const costByType = bill.costs.reduce((acc: Record<number, any>, cost) => {
+      // Get costs by type
+      const costsByType = bill.costs.reduce((acc: Record<number, any>, cost) => {
         const costTypeId = cost.costTypeId;
+        
+        // Initialize if this is the first occurrence of this cost type
         if (!acc[costTypeId]) {
+          // Get price for this cost type - first try cost-specific price
+          let priceValue = 0;
+          const costPrice = findCostPrice(customerId, serviceId, costTypeId);
+          
+          if (costPrice) {
+            priceValue = parseFloat(costPrice.price.toString());
+            console.log(`Found cost price for bill ${bill.billNo}, cost type ${costTypeId}: ${priceValue}`);
+          } else {
+            // If no cost-specific price, try service price
+            const servicePrice = findPrice(customerId, serviceId);
+            if (servicePrice) {
+              priceValue = parseFloat(servicePrice.price.toString());
+              console.log(`Found service price for bill ${bill.billNo}, service ${serviceId}: ${priceValue}`);
+            } else {
+              console.log(`No price found for bill ${bill.billNo}, customer ${customerId}, service ${serviceId}`);
+            }
+          }
+          
+          // Store revenue for this cost type
+          costTypeRevenues[costTypeId] = priceValue;
+          
+          // Add to total price-based revenue if this is a Hóa đơn type
+          if (hoaDonCosts.some(c => c.costTypeId === costTypeId)) {
+            totalRevenueFromPrices += priceValue;
+          }
+          
+          // Create the cost type group
           acc[costTypeId] = {
             costTypeId,
             costTypeName: cost.costType?.name || 'Unknown',
@@ -1100,23 +1135,11 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
             traHoAmount: 0,
             totalAmount: 0,
             count: 0,
-            // Try to get price from price tables
-            unitPrice: 0
+            unitPrice: priceValue
           };
-          
-          // Look for cost prices first
-          const costPrice = findCostPrice(customerId, serviceId, costTypeId);
-          if (costPrice) {
-            acc[costTypeId].unitPrice = parseFloat(costPrice.price.toString());
-          } else {
-            // Try regular price as fallback
-            const regularPrice = findPrice(customerId, serviceId);
-            if (regularPrice) {
-              acc[costTypeId].unitPrice = parseFloat(regularPrice.price.toString());
-            }
-          }
         }
         
+        // Add this cost to appropriate category
         const amount = parseFloat(cost.amount.toString());
         acc[costTypeId].count += 1;
         acc[costTypeId].totalAmount += amount;
@@ -1132,28 +1155,33 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
         return acc;
       }, {});
       
-      // Calculate revenue and profit based on cost type prices
-      let totalRevenueFromPrices = 0;
-      Object.values(costByType).forEach((group: any) => {
-        group.revenue = group.hoaDonCosts.length > 0 ? group.unitPrice : 0;
-        group.profit = group.revenue - group.hoaDonAmount;
-        totalRevenueFromPrices += group.revenue;
+      // For each cost type, calculate revenue and profit
+      Object.keys(costsByType).forEach(costTypeIdStr => {
+        const costTypeId = parseInt(costTypeIdStr);
+        const costTypeGroup = costsByType[costTypeId];
+        
+        // Only assign revenue if there are Hóa đơn costs for this type
+        if (costTypeGroup.hoaDonCosts.length > 0) {
+          costTypeGroup.revenue = costTypeRevenues[costTypeId] || 0;
+          costTypeGroup.profit = costTypeGroup.revenue - costTypeGroup.hoaDonAmount;
+        } else {
+          costTypeGroup.revenue = 0;
+          costTypeGroup.profit = 0;
+        }
       });
       
-      // Always use revenue from prices, even if it's 0
-      const effectiveRevenue = totalRevenueFromPrices;
-      
+      // The effective revenue is the sum of revenues for cost types with Hóa đơn costs
       // For profit calculation, only use 'Hóa đơn' costs
-      const profit = effectiveRevenue - totalHoaDonCost;
+      const profit = totalRevenueFromPrices - totalHoaDonCost;
       
       return {
         ...bill,
         totalHoaDonCost,
         totalTraHoCost,
         totalCost: totalHoaDonCost + totalTraHoCost,
-        totalRevenue: effectiveRevenue,
+        totalRevenue: totalRevenueFromPrices,
         profit,
-        costsByType: Object.values(costByType)
+        costsByType: Object.values(costsByType)
       };
     });
     
@@ -1197,6 +1225,8 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       dateFrom = subDays(dateTo, 90);
     }
     
+    console.log(`Exporting bill detail report for date range: ${dateFrom.toISOString()} to ${dateTo.toISOString()}`);
+    
     // Get all prices and cost prices for lookups
     const allPrices = await db.query.prices.findMany({
       with: {
@@ -1213,20 +1243,24 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       }
     });
     
+    console.log(`Found ${allPrices.length} standard prices and ${allCostPrices.length} cost-specific prices`);
+    
     // Helper functions to find prices
     const findPrice = (customerId: number, serviceId: number) => {
-      return allPrices.find(price => 
+      const foundPrice = allPrices.find(price => 
         price.customerId === customerId && 
         price.serviceId === serviceId
       );
+      return foundPrice;
     };
     
     const findCostPrice = (customerId: number, serviceId: number, costTypeId: number) => {
-      return allCostPrices.find(price => 
+      const foundPrice = allCostPrices.find(price => 
         price.customerId === customerId && 
         price.serviceId === serviceId && 
         price.costTypeId === costTypeId
       );
+      return foundPrice;
     };
     
     // Get all bills with costs, revenues, customer, and service relationships
@@ -1246,10 +1280,17 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       orderBy: desc(bills.date)
     });
     
+    console.log(`Processing ${billsWithDetails.length} bills for CSV export`);
+    
     // Prepare data for CSV format (flatten nested data)
     const csvRows: any[] = [];
     
     billsWithDetails.forEach(bill => {
+      const customerId = bill.customerId;
+      const serviceId = bill.serviceId;
+      
+      console.log(`Processing bill ${bill.billNo} for CSV export`);
+      
       // For bills with no costs or revenues, add a single row
       if (bill.costs.length === 0 && bill.revenues.length === 0) {
         csvRows.push({
