@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, MoreHorizontal, X, Printer, FileText } from "lucide-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -304,6 +305,12 @@ export default function Pricing() {
             <Printer className="mr-2 h-4 w-4" />
             In báo giá
           </Button>
+          <Link href="/pricing/cost-pricing">
+            <Button variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              Báo giá chi phí
+            </Button>
+          </Link>
           <Button onClick={() => {
             setSelectedPrice(null);
             setIsFormDialogOpen(true);
