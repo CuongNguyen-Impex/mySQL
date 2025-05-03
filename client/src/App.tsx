@@ -17,6 +17,7 @@ import BillDetailReport from "./pages/reports/bill-detail-new";
 import Settings from "./pages/settings";
 import SettingsCategories from "./pages/settings/categories";
 import SettingsGoogleSheets from "./pages/settings/google-sheets";
+import SettingsUsers from "./pages/settings/users";
 import CostTypeAttributes from "./pages/settings/cost-type-attributes";
 import Customers from "./pages/customers";
 import Suppliers from "./pages/suppliers";
@@ -38,6 +39,7 @@ function Router() {
       <ProtectedRoute path="/settings" component={Settings} />
       <ProtectedRoute path="/settings/categories" component={SettingsCategories} />
       <ProtectedRoute path="/settings/google-sheets" component={SettingsGoogleSheets} />
+      <ProtectedRoute path="/settings/users" component={SettingsUsers} />
       <ProtectedRoute path="/settings/cost-type-attributes" component={CostTypeAttributes} />
       <ProtectedRoute path="/customers" component={Customers} />
       <ProtectedRoute path="/suppliers" component={Suppliers} />
