@@ -246,9 +246,9 @@ export default function Pricing() {
     <div className="p-4 lg:p-8">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Pricing</h1>
+          <h1 className="text-2xl font-bold">Báo giá</h1>
           <p className="text-muted-foreground">
-            Manage service pricing by customer
+            Quản lý báo giá dịch vụ theo khách hàng
           </p>
         </div>
         <div className="mt-4 lg:mt-0">
@@ -257,7 +257,7 @@ export default function Pricing() {
             setIsFormDialogOpen(true);
           }}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Price
+            Thêm báo giá
           </Button>
         </div>
       </div>
@@ -376,8 +376,8 @@ export default function Pricing() {
 
       {/* Price Form Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[600px] p-4">
+          <DialogHeader className="px-2">
             <DialogTitle>{selectedPrice ? "Chỉnh sửa giá" : "Thêm báo giá mới"}</DialogTitle>
             <DialogDescription>
               {selectedPrice
@@ -386,10 +386,10 @@ export default function Pricing() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* Khu vực 1: Thông tin khách hàng */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4">Thông tin khách hàng</h3>
+              <div className="mb-4">
+                <h3 className="text-lg font-medium mb-2">Thông tin khách hàng</h3>
                 <FormField
                   control={form.control}
                   name="customerId"
@@ -425,8 +425,8 @@ export default function Pricing() {
               </div>
               
               {/* Khu vực 2: Thông tin dịch vụ và báo giá */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-4">
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
                   <h3 className="text-lg font-medium">Thông tin dịch vụ và báo giá</h3>
                   {!selectedPrice && (
                     <Button 
@@ -441,20 +441,20 @@ export default function Pricing() {
                 </div>
                 
                 {fields.map((field, index) => (
-                  <div key={field.id} className="border rounded-md p-4 mb-4 relative">
+                  <div key={field.id} className="border rounded-md p-3 mb-3 relative hover:bg-accent/10">
                     {fields.length > 1 && !selectedPrice && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-2 top-2"
+                        className="absolute right-1 top-1"
                         onClick={() => remove(index)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     )}
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-0">
                       <FormField
                         control={form.control}
                         name={`prices.${index}.serviceId`}
