@@ -338,7 +338,8 @@ export const suppliersRelations = relations(suppliers, ({ many }) => ({
 
 export const costTypesRelations = relations(costTypes, ({ many }) => ({
   costs: many(costs),
-  attributes: many(costTypeAttributes)
+  attributes: many(costTypeAttributes),
+  costPrices: many(costPrices)
 }));
 
 export const costTypeAttributesRelations = relations(costTypeAttributes, ({ one, many }) => ({

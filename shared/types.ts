@@ -10,6 +10,7 @@ import {
   Service,
   Supplier,
   Price,
+  CostPrice,
   User,
   Setting,
   insertBillSchema,
@@ -22,6 +23,7 @@ import {
   insertServiceSchema,
   insertSupplierSchema,
   insertPriceSchema,
+  insertCostPriceSchema,
   insertUserSchema,
   insertSettingSchema
 } from "./schema";
@@ -38,6 +40,7 @@ export type {
   Service,
   Supplier,
   Price,
+  CostPrice,
   User,
   Setting
 };
