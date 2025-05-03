@@ -1715,8 +1715,8 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
           });
         });
       }
-          // For bills with revenues but no costs - always return 0 revenue
-      else if (bill.revenues.length > 0) {
+          // For bills without costs - always return 0 revenue
+      else {
         csvRows.push({
           billNo: bill.billNo,
           date: bill.date,

@@ -7,7 +7,7 @@ import { authMiddleware, optionalAuthMiddleware } from "./middleware/auth.middle
 import * as authController from "./controllers/auth.controller";
 import * as billController from "./controllers/bill.controller";
 import * as costController from "./controllers/cost.controller";
-import * as revenueController from "./controllers/revenue.controller";
+// Revenue controller removed
 import * as customerController from "./controllers/customer.controller";
 import * as supplierController from "./controllers/supplier.controller";
 import * as serviceController from "./controllers/service.controller";
@@ -47,12 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch(`${apiPrefix}/costs/:id`, authMiddleware, costController.updateCost);
   app.delete(`${apiPrefix}/costs/:id`, authMiddleware, costController.deleteCost);
 
-  // REVENUE ROUTES
-  app.get(`${apiPrefix}/revenues`, authMiddleware, revenueController.getRevenues);
-  app.post(`${apiPrefix}/revenues`, authMiddleware, revenueController.createRevenue);
-  app.get(`${apiPrefix}/revenues/:id`, authMiddleware, revenueController.getRevenueById);
-  app.patch(`${apiPrefix}/revenues/:id`, authMiddleware, revenueController.updateRevenue);
-  app.delete(`${apiPrefix}/revenues/:id`, authMiddleware, revenueController.deleteRevenue);
+  // REVENUE ROUTES REMOVED - Using cost prices to calculate revenue
 
   // CUSTOMER ROUTES
   app.get(`${apiPrefix}/customers`, authMiddleware, customerController.getCustomers);
