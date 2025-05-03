@@ -8,5 +8,13 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = createPool(process.env.DATABASE_URL);
+// Tạo kết nối MySQL với cấu hình timeout cao hơn 
+const connectionOptions = {
+  uri: process.env.DATABASE_URL,
+  connectionLimit: 10,
+  connectTimeout: 60000, // Tăng timeout lên 60 giây
+  waitForConnections: true,
+};
+
+export const pool = createPool(connectionOptions);
 export const db = drizzle(pool, { schema, mode: 'default' });
