@@ -3,7 +3,7 @@ import { useRoute, useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, InfoIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -135,10 +135,18 @@ export default function BillDetail() {
     0
   ) || 0;
   
-  const totalRevenue = bill.revenues?.reduce(
-    (sum: number, revenue: any) => sum + parseFloat(revenue.amount.toString()), 
-    0
-  ) || 0;
+  // Calculate revenue from cost prices instead of revenues table
+  const totalRevenue = bill.costs?.reduce((sum: number, cost: any) => {
+    // Find matching cost price if available
+    const costPrice = bill.costPrices?.find((cp: any) => 
+      cp.costTypeId === cost.costTypeId && 
+      cp.customerId === bill.customerId && 
+      cp.serviceId === bill.serviceId
+    );
+    
+    // Add price to total revenue if cost price exists
+    return sum + (costPrice ? parseFloat(costPrice.price.toString()) : 0);
+  }, 0) || 0;
   
   const profit = totalRevenue - totalCost;
 
@@ -274,41 +282,54 @@ export default function BillDetail() {
             <CardHeader>
               <CardTitle>Doanh thu liên quan</CardTitle>
               <CardDescription>
-                Danh sách các doanh thu liên quan đến hóa đơn này
+                Doanh thu được tính tự động từ bảng giá theo loại chi phí
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {bill.revenues && bill.revenues.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 font-medium">Dịch vụ</th>
-                        <th className="text-left py-3 font-medium">Ngày</th>
-                        <th className="text-right py-3 font-medium">Số tiền</th>
-                        <th className="text-left py-3 font-medium">Ghi chú</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bill.revenues.map((revenue: any) => (
-                        <tr key={revenue.id} className="border-b">
-                          <td className="py-3">{revenue.service?.name || bill.service?.name || 'N/A'}</td>
-                          <td className="py-3">{formatDate(revenue.date)}</td>
-                          <td className="py-3 text-right">{formatCurrency(revenue.amount)}</td>
-                          <td className="py-3">{revenue.notes || '-'}</td>
+              <div className="bg-yellow-50 p-4 rounded-md border border-yellow-200 mb-4">
+                <p className="text-sm text-yellow-800 flex items-center gap-2">
+                  <InfoIcon size={16} />
+                  Doanh thu hiện được tính tự động dựa trên bảng giá theo loại chi phí. 
+                  Mỗi chi phí sẽ được tính toán doanh thu dựa trên giá đã thiết lập cho từng khách hàng, dịch vụ và loại chi phí.
+                </p>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 font-medium">Loại chi phí</th>
+                      <th className="text-left py-3 font-medium">Dịch vụ</th>
+                      <th className="text-right py-3 font-medium">Giá bán</th>
+                      <th className="text-left py-3 font-medium">Mô tả</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bill.costs?.map((cost: any) => {
+                      // Find matching cost price if available
+                      const costPrice = bill.costPrices?.find((cp: any) => 
+                        cp.costTypeId === cost.costTypeId && 
+                        cp.customerId === bill.customerId && 
+                        cp.serviceId === bill.serviceId
+                      );
+                      
+                      return (
+                        <tr key={cost.id} className="border-b">
+                          <td className="py-3">{cost.costType?.name || 'N/A'}</td>
+                          <td className="py-3">{bill.service?.name || 'N/A'}</td>
+                          <td className="py-3 text-right">{costPrice ? formatCurrency(costPrice.price) : '0'}</td>
+                          <td className="py-3">{costPrice?.description || '-'}</td>
                         </tr>
-                      ))}
-                      <tr className="bg-muted/50">
-                        <td colSpan={2} className="py-3 font-medium">Tổng cộng</td>
-                        <td className="py-3 text-right font-medium">{formatCurrency(totalRevenue)}</td>
-                        <td></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">Không có doanh thu nào được ghi nhận cho hóa đơn này</p>
-              )}
+                      );
+                    })}
+                    <tr className="bg-muted/50">
+                      <td colSpan={2} className="py-3 font-medium">Tổng cộng</td>
+                      <td className="py-3 text-right font-medium">{formatCurrency(totalRevenue)}</td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
