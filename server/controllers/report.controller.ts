@@ -748,9 +748,12 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
   try {
     const { timeframe, from, to } = req.query;
     
+    console.log(`Exporting customer report for date range: ${from} to ${to}`);
+    
     // Reuse the getReportByCustomer logic
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
+    // Get all customers with their bills
     const customersWithBills = await db.query.customers.findMany({
       columns: {
         id: true,
@@ -761,34 +764,64 @@ export const exportReportByCustomer = async (req: Request, res: Response) => {
           where: between(bills.date, dateRange.from.toISOString(), dateRange.to.toISOString()),
           with: {
             costs: true,
-            revenues: true
+            service: true
           }
         }
       }
     });
+    
+    // Get all cost prices for revenue calculation
+    const allCostPrices = await db.query.costPrices.findMany({
+      with: {
+        customer: true,
+        service: true,
+        costType: true
+      }
+    });
+    
+    console.log(`Found ${customersWithBills.length} customers for export`);
     
     const customerReports = customersWithBills.map(customer => {
       let totalRevenue = 0;
       let totalHoaDonCosts = 0;
       let totalTraHoCosts = 0;
       
+      // Process each bill for this customer
       customer.bills.forEach(bill => {
-        // Sum costs based on tt_hd value
-        bill.costs.forEach(cost => {
-          // Get cost attribute directly from tt_hd field
-          const costType = cost.tt_hd || "Hóa đơn"; // Default to 'Hóa đơn' if not set
-          
-          if (costType === "Trả hộ") {
-            totalTraHoCosts += parseFloat(cost.amount.toString());
-          } else { // "Hóa đơn"
-            totalHoaDonCosts += parseFloat(cost.amount.toString());
-          }
+        const customerId = bill.customerId;
+        const serviceId = bill.serviceId;
+        
+        // Get costs by type
+        const hoaDonCosts = bill.costs.filter(cost => cost.tt_hd === "Hóa đơn");
+        const traHoCosts = bill.costs.filter(cost => cost.tt_hd === "Trả hộ");
+        
+        // Sum costs
+        hoaDonCosts.forEach(cost => {
+          totalHoaDonCosts += Number(cost.amount);
         });
         
-        // Sum revenues
-        bill.revenues.forEach(revenue => {
-          totalRevenue += parseFloat(revenue.amount.toString());
+        traHoCosts.forEach(cost => {
+          totalTraHoCosts += Number(cost.amount);
         });
+        
+        // Calculate revenue based on cost prices
+        const uniqueCostTypeIds = Array.from(new Set(
+          hoaDonCosts.map(cost => cost.costTypeId)
+        ));
+        
+        // Get revenue from cost prices
+        for (const costTypeId of uniqueCostTypeIds) {
+          // Find cost-specific price
+          const costPrice = allCostPrices.find(price => 
+            price.customerId === customerId && 
+            price.serviceId === serviceId && 
+            price.costTypeId === costTypeId
+          );
+          
+          if (costPrice) {
+            totalRevenue += Number(costPrice.price);
+          }
+        }
       });
       
       // Calculate total costs (all types combined)
@@ -1003,42 +1036,78 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
   try {
     const { timeframe, from, to } = req.query;
     
+    console.log(`Exporting profit/loss report for timeframe: ${timeframe}, from: ${from}, to: ${to}`);
+    
     // Reuse the getProfitLossReport logic
     const dateRange = getDateRange(timeframe as string, from as string, to as string);
     
-    // No longer need to use costAttributeMap as we now use tt_hd field directly
-    
+    // Get all bills with related data
     const billsInRange = await db.query.bills.findMany({
       where: between(bills.date, dateRange.from.toISOString(), dateRange.to.toISOString()),
       with: {
-        costs: true,
-        revenues: true
+        costs: {
+          with: {
+            costType: true
+          }
+        },
+        customer: true,
+        service: true
       },
-      orderBy: bills.date
+      orderBy: desc(bills.date)
     });
+    
+    // Get all cost prices for revenue calculation
+    const allCostPrices = await db.query.costPrices.findMany({
+      with: {
+        customer: true,
+        service: true,
+        costType: true
+      }
+    });
+    
+    console.log(`Found ${billsInRange.length} bills for profit/loss export`);
     
     // Calculate summary with cost attribute type differentiation
     let totalRevenue = 0;
     let totalHoaDonCosts = 0;
     let totalTraHoCosts = 0;
     
+    // Process each bill
     billsInRange.forEach(bill => {
-      // Sum costs based on their attribute type
-      bill.costs.forEach(cost => {
-        // Get cost attribute directly from tt_hd field
-        const costType = cost.tt_hd || "Hóa đơn"; // Default to 'Hóa đơn' if not set
-        
-        if (costType === "Trả hộ") {
-          totalTraHoCosts += parseFloat(cost.amount.toString());
-        } else { // "Hóa đơn"
-          totalHoaDonCosts += parseFloat(cost.amount.toString());
-        }
+      const customerId = bill.customerId;
+      const serviceId = bill.serviceId;
+      
+      // Get costs by type
+      const hoaDonCosts = bill.costs.filter(cost => cost.tt_hd === "Hóa đơn");
+      const traHoCosts = bill.costs.filter(cost => cost.tt_hd === "Trả hộ");
+      
+      // Sum costs by type
+      hoaDonCosts.forEach(cost => {
+        totalHoaDonCosts += Number(cost.amount);
       });
       
-      // Sum revenues
-      bill.revenues.forEach(revenue => {
-        totalRevenue += parseFloat(revenue.amount.toString());
+      traHoCosts.forEach(cost => {
+        totalTraHoCosts += Number(cost.amount);
       });
+      
+      // Calculate revenue from cost prices
+      const uniqueCostTypeIds = Array.from(new Set(
+        hoaDonCosts.map(cost => cost.costTypeId)
+      ));
+      
+      // Get revenue from cost prices
+      for (const costTypeId of uniqueCostTypeIds) {
+        // Find the matching cost price
+        const costPrice = allCostPrices.find(price => 
+          price.customerId === customerId && 
+          price.serviceId === serviceId && 
+          price.costTypeId === costTypeId
+        );
+        
+        if (costPrice) {
+          totalRevenue += Number(costPrice.price);
+        }
+      }
     });
     
     // Calculate total costs (all types combined)
@@ -1050,38 +1119,54 @@ export const exportProfitLossReport = async (req: Request, res: Response) => {
     
     const billsByMonth: Record<string, any> = {};
     
+    // Process each bill and group by month
     billsInRange.forEach(bill => {
+      const customerId = bill.customerId;
+      const serviceId = bill.serviceId;
       const date = new Date(bill.date);
       const period = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
       
       if (!billsByMonth[period]) {
         billsByMonth[period] = {
           bills: [],
-          revenues: [],
           hoaDonCosts: [],
-          traHoCosts: []
+          traHoCosts: [],
+          revenue: 0
         };
       }
       
       billsByMonth[period].bills.push(bill);
       
-      // Split costs by tt_hd value
-      bill.costs.forEach(cost => {
-        const costType = cost.tt_hd || "Hóa đơn";
-        
-        if (costType === "Trả hộ") {
-          billsByMonth[period].traHoCosts.push(cost);
-        } else {
-          billsByMonth[period].hoaDonCosts.push(cost);
-        }
-      });
+      // Get costs by type
+      const hoaDonCosts = bill.costs.filter(cost => cost.tt_hd === "Hóa đơn");
+      const traHoCosts = bill.costs.filter(cost => cost.tt_hd === "Trả hộ");
       
-      billsByMonth[period].revenues.push(...bill.revenues);
+      // Add costs to period data
+      billsByMonth[period].hoaDonCosts.push(...hoaDonCosts);
+      billsByMonth[period].traHoCosts.push(...traHoCosts);
+      
+      // Calculate revenue based on cost prices for this bill
+      const uniqueCostTypeIds = Array.from(new Set(
+        hoaDonCosts.map(cost => cost.costTypeId)
+      ));
+      
+      // Add revenue from cost prices to period data
+      for (const costTypeId of uniqueCostTypeIds) {
+        const costPrice = allCostPrices.find(price => 
+          price.customerId === customerId && 
+          price.serviceId === serviceId && 
+          price.costTypeId === costTypeId
+        );
+        
+        if (costPrice) {
+          billsByMonth[period].revenue += Number(costPrice.price);
+        }
+      }
     });
     
     const periods = Object.keys(billsByMonth).map(period => {
       const periodData = billsByMonth[period];
-      const periodRevenue = periodData.revenues.reduce((sum: number, revenue: any) => sum + parseFloat(revenue.amount.toString()), 0);
+      const periodRevenue = periodData.revenue || 0;
       
       // Split costs by type for reporting
       const periodHoaDonCosts = periodData.hoaDonCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount.toString()), 0);
