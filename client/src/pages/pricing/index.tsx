@@ -273,7 +273,7 @@ export default function Pricing() {
           <div className="flex flex-col sm:flex-row gap-2">
             <Select value={customerFilter} onValueChange={setCustomerFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Customers" />
+                <SelectValue placeholder="Khách hàng" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all_customers">Tất cả khách hàng</SelectItem>
@@ -287,7 +287,7 @@ export default function Pricing() {
 
             <Select value={serviceFilter} onValueChange={setServiceFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Services" />
+                <SelectValue placeholder="Dịch vụ" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all_services">Tất cả dịch vụ</SelectItem>
@@ -312,9 +312,9 @@ export default function Pricing() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Service</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead>Khách hàng</TableHead>
+                  <TableHead>Dịch vụ</TableHead>
+                  <TableHead className="text-right">Giá</TableHead>
                   <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -338,7 +338,7 @@ export default function Pricing() {
                             setIsFormDialogOpen(true);
                           }}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                            Chỉnh sửa
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-destructive focus:text-destructive"
@@ -352,7 +352,7 @@ export default function Pricing() {
                             }}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            Xóa
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -363,8 +363,8 @@ export default function Pricing() {
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
                       {customerFilter || serviceFilter
-                        ? "No prices found matching your filters."
-                        : "No prices found. Add a price to get started."}
+                        ? "Không tìm thấy giá phù hợp với bộ lọc."
+                        : "Chưa có báo giá nào. Vui lòng thêm báo giá mới."}
                     </TableCell>
                   </TableRow>
                 )}
