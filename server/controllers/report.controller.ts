@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { db } from "@db";
-import { bills, costs, revenues, customers, services, suppliers, costTypes, costAttributeValues, costTypeAttributes } from "@shared/schema";
+import { bills, costs, customers, services, suppliers, costTypes, costAttributeValues, costTypeAttributes } from "@shared/schema";
 import { eq, and, desc, between, sql, count, sum, avg } from "drizzle-orm";
 import { subDays, subMonths, subYears, parseISO, isValid, startOfDay, endOfDay } from "date-fns";
 
@@ -162,8 +162,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       with: {
         bills: {
           with: {
-            costs: true,
-            revenues: true
+            costs: true
           }
         }
       }
@@ -241,8 +240,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
           with: {
             costs: true
           }
-        },
-        revenues: true
+        }
       }
     });
     
