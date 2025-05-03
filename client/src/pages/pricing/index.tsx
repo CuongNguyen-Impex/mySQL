@@ -295,7 +295,7 @@ export default function Pricing() {
     <div className="p-4 lg:p-8">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Báo giá</h1>
+          <h1 className="text-2xl font-bold">Báo giá dịch vụ</h1>
           <p className="text-muted-foreground">
             Quản lý báo giá dịch vụ theo khách hàng
           </p>
@@ -311,13 +311,13 @@ export default function Pricing() {
               Báo giá chi phí
             </Button>
           </Link>
-          <Button onClick={() => {
+          {/* <Button onClick={() => {
             setSelectedPrice(null);
             setIsFormDialogOpen(true);
           }}>
             <Plus className="mr-2 h-4 w-4" />
             Thêm báo giá
-          </Button>
+          </Button> */}
         </div>
       </div>
 
