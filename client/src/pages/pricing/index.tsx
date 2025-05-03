@@ -141,16 +141,16 @@ export default function Pricing() {
       setIsFormDialogOpen(false);
       setSelectedPrice(null);
       toast({
-        title: "Success",
+        title: "Thành công",
         description: selectedPrice
-          ? "Price updated successfully"
-          : "Price created successfully",
+          ? "Báo giá đã được cập nhật thành công"
+          : "Báo giá đã được tạo thành công",
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to ${selectedPrice ? "update" : "create"} price: ${error}`,
+        title: "Lỗi",
+        description: `Không thể ${selectedPrice ? "cập nhật" : "tạo"} báo giá: ${error}`,
         variant: "destructive",
       });
     },
@@ -166,14 +166,14 @@ export default function Pricing() {
       setDeleteDialogOpen(false);
       setpriceToDelete(null);
       toast({
-        title: "Success",
-        description: "Price deleted successfully",
+        title: "Đã xóa báo giá",
+        description: "Báo giá đã được xóa thành công",
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to delete price: ${error}`,
+        title: "Lỗi",
+        description: `Không thể xóa báo giá: ${error}`,
         variant: "destructive",
       });
     },
@@ -207,14 +207,14 @@ export default function Pricing() {
           queryClient.invalidateQueries({ queryKey: ["/api/prices"] });
           setIsFormDialogOpen(false);
           toast({
-            title: "Success",
-            description: `${prices.length} giá mới đã được tạo thành công`,
+            title: "Thành công",
+            description: `Đã tạo ${prices.length} báo giá mới thành công`,
           });
         })
         .catch((error) => {
           toast({
-            title: "Error",
-            description: `Không thể tạo giá: ${error}`,
+            title: "Lỗi",
+            description: `Không thể tạo báo giá: ${error}`,
             variant: "destructive",
           });
         });
