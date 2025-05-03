@@ -1751,28 +1751,37 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
     
     const filePath = path.join(__dirname, '..', 'temp', `bill_detail_report_${new Date().getTime()}.csv`);
     
-    const csvWriter = createObjectCsvWriter({
-      path: filePath,
-      header: [
-        { id: 'billNo', title: 'Số bill' },
-        { id: 'date', title: 'Ngày' },
-        { id: 'customerName', title: 'Khách hàng' },
-        { id: 'serviceName', title: 'Dịch vụ' },
-        { id: 'importExportType', title: 'Loại NK/XK' },
-        { id: 'goodsType', title: 'Loại hàng' },
-        { id: 'invoiceNo', title: 'Số invoice' },
-        { id: 'supplierName', title: 'Nhà cung cấp' },
-        { id: 'costType', title: 'Loại chi phí' },
-        { id: 'costAttribute', title: 'Thuộc tính' },
-        { id: 'costAmount', title: 'Chi phí' },
-        { id: 'revenueAmount', title: 'Doanh thu' },
-        { id: 'profit', title: 'Lợi nhuận' },
-      ],
-      encoding: 'utf8',
-      bom: true // Add BOM to ensure Excel recognizes UTF-8 encoding correctly
-    });
+    // Generate CSV content manually with proper UTF-8 encoding and BOM
+    const headers = ['Số bill', 'Ngày', 'Khách hàng', 'Dịch vụ', 'Loại NK/XK', 'Loại hàng', 'Số invoice', 'Nhà cung cấp', 'Loại chi phí', 'Thuộc tính', 'Chi phí', 'Doanh thu', 'Lợi nhuận'];
     
-    await csvWriter.writeRecords(csvRows);
+    // Create CSV content with UTF-8 BOM
+    let csvContent = '\uFEFF'; // Add UTF-8 BOM
+    
+    // Add headers
+    csvContent += headers.join(',') + '\n';
+    
+    // Add rows
+    for (const row of csvRows) {
+      const values = [
+        row.billNo || '',
+        row.date || '',
+        `"${(row.customerName || '').replace(/"/g, '""')}"`, // Escape quotes in CSV
+        `"${(row.serviceName || '').replace(/"/g, '""')}"`,
+        `"${(row.importExportType || '').replace(/"/g, '""')}"`,
+        `"${(row.goodsType || '').replace(/"/g, '""')}"`,
+        `"${(row.invoiceNo || '').replace(/"/g, '""')}"`,
+        `"${(row.supplierName || '').replace(/"/g, '""')}"`,
+        `"${(row.costType || '').replace(/"/g, '""')}"`,
+        `"${(row.costAttribute || '').replace(/"/g, '""')}"`,
+        row.costAmount,
+        row.revenueAmount,
+        row.profit
+      ];
+      csvContent += values.join(',') + '\n';
+    }
+    
+    // Write to file
+    fs.writeFileSync(filePath, csvContent, { encoding: 'utf8' });
     
     // Send the file
     return res.download(filePath, `bao_cao_chi_tiet_hoa_don_${dateFrom.toISOString().split('T')[0]}_${dateTo.toISOString().split('T')[0]}.csv`, (err) => {
