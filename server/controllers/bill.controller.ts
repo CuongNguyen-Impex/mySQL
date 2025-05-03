@@ -34,11 +34,11 @@ export const getBills = async (req: Request, res: Response) => {
     }
     
     if (startDate && endDate) {
-      whereConditions.push(between(bills.date, new Date(String(startDate)), new Date(String(endDate))));
+      whereConditions.push(between(bills.date, String(startDate), String(endDate)));
     } else if (startDate) {
-      whereConditions.push(bills.date >= new Date(String(startDate)));
+      whereConditions.push(bills.date >= String(startDate));
     } else if (endDate) {
-      whereConditions.push(bills.date <= new Date(String(endDate)));
+      whereConditions.push(bills.date <= String(endDate));
     }
     
     // Apply combined conditions if any exist
@@ -76,6 +76,11 @@ export const getBills = async (req: Request, res: Response) => {
       serviceId: bill.serviceId
     }));
     
+    // Trường hợp không có kết quả, trả về rỗng
+    if (customerServicePairs.length === 0) {
+      return res.status(200).json({ bills: [] });
+    }
+    
     // Tạo một mảng các điều kiện OR cho mỗi cặp customer-service
     const orConditions = customerServicePairs.map(pair => {
       return and(
@@ -93,7 +98,7 @@ export const getBills = async (req: Request, res: Response) => {
     });
     
     // Organize costPrices by customer-service pairs for quick lookup
-    const costPricesByCustomerAndService = {};
+    const costPricesByCustomerAndService: Record<string, any[]> = {};
     
     allCostPrices.forEach(costPrice => {
       const key = `${costPrice.customerId}-${costPrice.serviceId}`;
@@ -209,7 +214,7 @@ export const getBillById = async (req: Request, res: Response) => {
     // Lấy giá bán theo từng loại chi phí (cost_prices)
     // cho khách hàng và dịch vụ tương ứng của hóa đơn này
     if (bill) {
-      const costPrices = await db.query.costPrices.findMany({
+      const billCostPrices = await db.query.costPrices.findMany({
         where: and(
           eq(costPrices.customerId, bill.customerId),
           eq(costPrices.serviceId, bill.serviceId)
@@ -220,7 +225,7 @@ export const getBillById = async (req: Request, res: Response) => {
       });
       
       // Thêm costPrices vào đối tượng bill
-      bill.costPrices = costPrices;
+      bill.costPrices = billCostPrices;
     }
     
     if (!bill) {

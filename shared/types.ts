@@ -127,6 +127,7 @@ export interface BillWithRelations extends Bill {
   costs?: Cost[];
   costPrices?: CostPrice[]; // Added to support revenue calculation
   totalCost?: number;
+  totalHoaDonCost?: number; // Chi phí có hóa đơn
   totalRevenue?: number; // calculated from cost_prices
   profit?: number;
 }
