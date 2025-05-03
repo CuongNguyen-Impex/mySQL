@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { db } from "@db";
-import { bills, billsRelations, insertBillSchema } from "@shared/schema";
+import { bills, billsRelations, insertBillSchema, costPrices } from "@shared/schema";
 import { eq, desc, like, and, between, or } from "drizzle-orm";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -70,6 +70,39 @@ export const getBills = async (req: Request, res: Response) => {
     
     const results = await query;
     
+    // Lấy tất cả customer IDs và service IDs để query costPrices
+    const customerServicePairs = results.map(bill => ({
+      customerId: bill.customerId,
+      serviceId: bill.serviceId
+    }));
+    
+    // Tạo một mảng các điều kiện OR cho mỗi cặp customer-service
+    const orConditions = customerServicePairs.map(pair => {
+      return and(
+        eq(costPrices.customerId, pair.customerId),
+        eq(costPrices.serviceId, pair.serviceId)
+      );
+    });
+    
+    // Lấy tất cả costPrices cần thiết trong một lần query
+    const allCostPrices = await db.query.costPrices.findMany({
+      where: or(...orConditions),
+      with: {
+        costType: true
+      }
+    });
+    
+    // Organize costPrices by customer-service pairs for quick lookup
+    const costPricesByCustomerAndService = {};
+    
+    allCostPrices.forEach(costPrice => {
+      const key = `${costPrice.customerId}-${costPrice.serviceId}`;
+      if (!costPricesByCustomerAndService[key]) {
+        costPricesByCustomerAndService[key] = [];
+      }
+      costPricesByCustomerAndService[key].push(costPrice);
+    });
+    
     // Calculate totals and profit for each bill
     const billsWithTotals = results.map(bill => {
       let totalCost = 0;
@@ -86,13 +119,18 @@ export const getBills = async (req: Request, res: Response) => {
           if (cost.tt_hd === "Hóa đơn") {
             totalHoaDonCost += amount;
           }
-        });
-      }
-      
-      // Sum revenues
-      if (bill.revenues && bill.revenues.length > 0) {
-        bill.revenues.forEach(revenue => {
-          totalRevenue += parseFloat(revenue.amount.toString());
+          
+          // Lookup costPrices for this bill
+          const key = `${bill.customerId}-${bill.serviceId}`;
+          const billCostPrices = costPricesByCustomerAndService[key] || [];
+          
+          // Find matching costPrice for this cost type
+          const costPrice = billCostPrices.find(cp => cp.costTypeId === cost.costTypeId);
+          
+          // Add to revenue if found
+          if (costPrice) {
+            totalRevenue += parseFloat(costPrice.price.toString());
+          }
         });
       }
       
@@ -328,7 +366,7 @@ export const deleteBill = async (req: Request, res: Response) => {
       });
     }
     
-    // Delete bill (costs and revenues will be deleted due to cascade)
+    // Delete bill (costs will be deleted due to cascade)
     await db.delete(bills).where(eq(bills.id, Number(id)));
     
     return res.status(200).json({
