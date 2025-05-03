@@ -3,6 +3,9 @@ import { db } from "@db";
 import { bills, costs, customers, services, suppliers, costTypes, costAttributeValues, costTypeAttributes } from "@shared/schema";
 import { eq, and, desc, between, sql, count, sum, avg } from "drizzle-orm";
 import { subDays, subMonths, subYears, parseISO, isValid, startOfDay, endOfDay } from "date-fns";
+import { createObjectCsvWriter } from "csv-writer";
+import * as path from "path";
+import * as fs from "fs";
 
 // Helper function has been removed since we now use tt_hd field directly
 // No longer need a map to classify costs by attributes
@@ -1545,8 +1548,8 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       
       console.log(`Processing bill ${bill.billNo} for CSV export`);
       
-      // For bills with no costs or revenues, add a single row
-      if (bill.costs.length === 0 && bill.revenues.length === 0) {
+      // For bills with no costs, add a single row
+      if (bill.costs.length === 0) {
         csvRows.push({
           billNo: bill.billNo,
           date: bill.date,
@@ -1736,11 +1739,15 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
     });
     
     // Create and write CSV file
-    const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-    const path = require('path');
+    // Ensure temp directory exists
+    const tempDir = path.join(__dirname, '..', 'temp');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
     const filePath = path.join(__dirname, '..', 'temp', `bill_detail_report_${new Date().getTime()}.csv`);
     
-    const csvWriter = createCsvWriter({
+    const csvWriter = createObjectCsvWriter({
       path: filePath,
       header: [
         { id: 'billNo', title: 'Số bill' },
@@ -1768,7 +1775,6 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       }
       
       // Clean up the temp file
-      const fs = require('fs');
       fs.unlink(filePath, (err: any) => {
         if (err) console.error("Error deleting temp file:", err);
       });
