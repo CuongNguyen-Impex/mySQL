@@ -112,10 +112,10 @@ export default function BillDetailReport() {
                           return data?.bills?.map((bill: any, billIndex: number) => {
                             // Pre-calculate bill totals
                             const billCosts = bill.costs || [];
-                            const billRevenues = bill.revenues || [];
+                            // Đã chuyển sang dùng totalRevenue từ bill (tính dựa trên cost_prices)
                             const totalCost = billCosts.reduce((sum: number, cost: any) => sum + parseFloat(cost.amount || 0), 0);
-                            const totalRevenue = billRevenues.reduce((sum: number, rev: any) => sum + parseFloat(rev.amount || 0), 0);
-                            const totalProfit = totalRevenue - totalCost;
+                            const totalRevenue = bill.totalRevenue || 0; // Lấy totalRevenue đã được tính từ controller
+                            const totalProfit = bill.profit || 0; // Lấy profit đã được tính từ controller
                                   
                             return (
                               <React.Fragment key={`bill-${bill.id}`}>
@@ -208,10 +208,7 @@ export default function BillDetailReport() {
                             <td colSpan={10} className="border p-2">TỔNG CỘNG</td>
                             <td className="border p-2 text-right">
                               {data.bills.reduce((sum: number, bill: any) => {
-                                const revTotal = (bill.revenues || []).reduce(
-                                  (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
-                                );
-                                return sum + revTotal;
+                                return sum + (bill.totalRevenue || 0);
                               }, 0).toLocaleString('vi-VN')}
                             </td>
                             <td className="border p-2 text-right">
@@ -225,18 +222,12 @@ export default function BillDetailReport() {
                               }, 0).toLocaleString('vi-VN')}
                             </td>
                             <td className={`border p-2 text-right ${data.bills.reduce((sum: number, bill: any) => {
-                                const revTotal = (bill.revenues || []).reduce(
-                                  (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
-                                );
-                                // Chỉ tính lợi nhuận dựa trên chi phí "Hóa đơn"
-                                return sum + (revTotal - (bill.totalHoaDonCost || 0));
+                                // Chỉ tính lợi nhuận dựa trên giá trị profit đã được tính từ controller
+                                return sum + (bill.profit || 0);
                               }, 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
                               {data.bills.reduce((sum: number, bill: any) => {
-                                const revTotal = (bill.revenues || []).reduce(
-                                  (s: number, rev: any) => s + parseFloat(rev.amount || 0), 0
-                                );
-                                // Chỉ tính lợi nhuận dựa trên chi phí "Hóa đơn"
-                                return sum + (revTotal - (bill.totalHoaDonCost || 0));
+                                // Chỉ tính lợi nhuận dựa trên giá trị profit đã được tính từ controller
+                                return sum + (bill.profit || 0);
                               }, 0).toLocaleString('vi-VN')}
                             </td>
                           </tr>
