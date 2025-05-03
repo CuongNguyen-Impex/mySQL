@@ -42,21 +42,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -64,32 +52,75 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { priceFormSchema } from "@shared/types";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { priceFormSchema } from "@shared/types";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+
+// Define types for our data
+type Customer = {
+  id: number;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+};
+
+type Service = {
+  id: number;
+  name: string;
+  unit?: string;
+  description?: string;
+};
+
+type Price = {
+  id: number;
+  customerId: number;
+  serviceId: number;
+  price: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
 export default function Pricing() {
   const { toast } = useToast();
-  const [selectedPrice, setSelectedPrice] = useState<Price | null>(null);
+  
+  // State for filters
+  const [customerFilter, setCustomerFilter] = useState<string>("all_customers");
+  const [serviceFilter, setServiceFilter] = useState<string>("all_services");
+  
+  // State for dialogs
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
-  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  
+  // State for selecting items
+  const [selectedPrice, setSelectedPrice] = useState<Price | null>(null);
   const [priceToDelete, setpriceToDelete] = useState<{id: number, customerId: number, serviceId: number} | null>(null);
   const [selectedCustomerForPrint, setSelectedCustomerForPrint] = useState<number | null>(null);
-  const [customerFilter, setCustomerFilter] = useState("");
-  const [serviceFilter, setServiceFilter] = useState("");
-
+  
   // Fetch prices
-  const { data: prices, isLoading: isLoadingPrices } = useQuery({
+  const { data: prices, isLoading: isLoadingPrices } = useQuery<Price[]>({
     queryKey: ["/api/prices"],
   });
-
+  
   // Fetch customers
-  const { data: customers, isLoading: isLoadingCustomers } = useQuery({
+  const { data: customers, isLoading: isLoadingCustomers } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
   });
 
   // Fetch services
-  const { data: services, isLoading: isLoadingServices } = useQuery({
+  const { data: services, isLoading: isLoadingServices } = useQuery<Service[]>({
     queryKey: ["/api/services"],
   });
 
@@ -139,7 +170,7 @@ export default function Pricing() {
       }
     }
   }, [isFormDialogOpen, selectedPrice, form]);
-
+  
   // Create or update price
   const priceMutation = useMutation({
     mutationFn: async (values: any) => {
@@ -240,31 +271,6 @@ export default function Pricing() {
     const serviceMatch = serviceFilter ? price.serviceId.toString() === serviceFilter : true;
     return customerMatch && serviceMatch;
   }) : [];
-
-  // Define types for our data
-  type Customer = {
-    id: number;
-    name: string;
-    email?: string;
-    phone?: string;
-    address?: string;
-  };
-
-  type Service = {
-    id: number;
-    name: string;
-    unit?: string;
-    description?: string;
-  };
-  
-  type Price = {
-    id: number;
-    customerId: number;
-    serviceId: number;
-    price: string;
-    createdAt?: string;
-    updatedAt?: string;
-  };
 
   // Get customer name by ID
   const getCustomerName = (customerId: number) => {
@@ -461,14 +467,14 @@ export default function Pricing() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {customers?.map((customer: Customer) => (
+                          {Array.isArray(customers) ? customers.map((customer: Customer) => (
                             <SelectItem
                               key={customer.id}
                               value={customer.id.toString()}
                             >
                               {customer.name}
                             </SelectItem>
-                          ))}
+                          )) : null}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -526,14 +532,14 @@ export default function Pricing() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {services?.map((service: Service) => (
+                                {Array.isArray(services) ? services.map((service: Service) => (
                                   <SelectItem
                                     key={service.id}
                                     value={service.id.toString()}
                                   >
                                     {service.name}
                                   </SelectItem>
-                                ))}
+                                )) : null}
                               </SelectContent>
                             </Select>
                             <FormMessage />
