@@ -180,10 +180,14 @@ export default function MultiCostForm({ billId, onSuccess }: MultiCostFormProps)
       if (selectedAttributes[index]) {
         return {
           ...cost,
+          amount: cost.amount.toString(), // Chuyển đổi amount từ number sang string
           attributeValues: selectedAttributes[index]
         };
       }
-      return cost;
+      return {
+        ...cost,
+        amount: cost.amount.toString() // Chuyển đổi amount từ number sang string
+      };
     });
     
     console.log("Submitting costs with attributes:", costsWithAttributes);
