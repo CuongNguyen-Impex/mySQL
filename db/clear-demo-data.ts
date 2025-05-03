@@ -1,6 +1,6 @@
 import { db } from './index';
-import { eq } from 'drizzle-orm';
-import { users, bills, costs, costPrices, prices, suppliers, costTypes, customers, services, sessions } from '../shared/schema';
+import { eq, not } from 'drizzle-orm';
+import { users, bills, costs, costPrices, prices, suppliers, costTypes, customers, services } from '../shared/schema';
 
 async function clearDemoData() {
   try {
@@ -29,13 +29,12 @@ async function clearDemoData() {
     console.log('Xóa dữ liệu dịch vụ...');
     await db.delete(services);
     
-    // Xóa dữ liệu phiên làm việc
-    console.log('Xóa dữ liệu phiên làm việc cũ...');
-    await db.delete(sessions);
+    // Xóa dữ liệu phiên làm việc - tạm bỏ qua vì không có bảng sessions trong schema
+    console.log('Bỏ qua xóa dữ liệu phiên làm việc vì không có bảng sessions trong schema...');
     
     // Xóa tất cả người dùng NGOẠI TRỪ admin có id=1
     console.log('Xóa người dùng không phải admin...');
-    await db.delete(users).where(eq(users.id, 1).not);
+    await db.delete(users).where(not(eq(users.id, 1)));
     
     console.log('Hoàn thành xóa dữ liệu demo!');
     console.log('Chỉ còn giữ lại tài khoản admin.');

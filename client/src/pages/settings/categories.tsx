@@ -540,7 +540,76 @@ export default function SettingsCategories() {
                                       Update the service details
                                     </DialogDescription>
                                   </DialogHeader>
-                                  {/* Service form will go here */}
+                                  <div className="py-4">
+                                    <form className="space-y-4" onSubmit={(e) => {
+                                      e.preventDefault();
+                                      const formData = new FormData(e.currentTarget);
+                                      const updatedService = {
+                                        name: formData.get('name') as string,
+                                        description: formData.get('description') as string
+                                      };
+                                      
+                                      const updateService = async () => {
+                                        try {
+                                          const response = await apiRequest('PATCH', `/api/services/${service.id}`, updatedService);
+                                          const result = await response.json();
+                                          queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+                                          toast({
+                                            title: 'Thành công',
+                                            description: `Đã cập nhật thông tin dịch vụ "${result.name}"`
+                                          });
+                                          // Close the dialog
+                                          const closeDialogButton = document.querySelector('[data-radix-dialog-primitive="close"]');
+                                          if (closeDialogButton) {
+                                            (closeDialogButton as HTMLButtonElement).click();
+                                          }
+                                        } catch (error: any) {
+                                          let errorMessage = error.message || 'Không thể cập nhật dịch vụ';
+                                          
+                                          // Xử lý phản hồi lỗi từ server
+                                          if (error.status === 400) {
+                                            try {
+                                              const errorData = await error.json();
+                                              errorMessage = errorData.message || errorMessage;
+                                            } catch {}
+                                          }
+                                          
+                                          toast({
+                                            title: 'Lỗi',
+                                            description: errorMessage,
+                                            variant: 'destructive',
+                                          });
+                                        }
+                                      };
+                                      
+                                      updateService();
+                                    }}>
+                                      <div>
+                                        <Label htmlFor="edit-service-name">Tên dịch vụ *</Label>
+                                        <Input 
+                                          id="edit-service-name" 
+                                          name="name" 
+                                          placeholder="Tên dịch vụ" 
+                                          defaultValue={service.name} 
+                                          required 
+                                        />
+                                      </div>
+                                      
+                                      <div>
+                                        <Label htmlFor="edit-service-description">Mô tả</Label>
+                                        <Textarea 
+                                          id="edit-service-description" 
+                                          name="description" 
+                                          placeholder="Mô tả chi tiết về dịch vụ" 
+                                          defaultValue={service.description || ''} 
+                                        />
+                                      </div>
+                                      
+                                      <Button type="submit" className="w-full">
+                                        Cập nhật dịch vụ
+                                      </Button>
+                                    </form>
+                                  </div>
                                 </DialogContent>
                               </Dialog>
                               <DropdownMenuItem 
