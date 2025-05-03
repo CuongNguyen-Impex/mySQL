@@ -1739,6 +1739,10 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
     });
     
     // Create and write CSV file
+    // Get current file path using import.meta.url
+    const __filename = new URL(import.meta.url).pathname;
+    const __dirname = path.dirname(__filename);
+    
     // Ensure temp directory exists
     const tempDir = path.join(__dirname, '..', 'temp');
     if (!fs.existsSync(tempDir)) {
