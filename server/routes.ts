@@ -17,6 +17,7 @@ import * as costAttributeValueController from "./controllers/cost-attribute-valu
 import * as priceController from "./controllers/price.controller";
 import * as costPriceController from "./controllers/cost-price.controller";
 import * as reportController from "./controllers/report.controller";
+import * as dashboardController from "./controllers/dashboard.controller";
 import * as googleSheetsController from "./controllers/google-sheets.controller";
 import * as userController from "./controllers/user.controller";
 
