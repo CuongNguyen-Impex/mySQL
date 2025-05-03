@@ -28,7 +28,11 @@ export function formatDate(date: Date | string | null | undefined): string {
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     return dateObj instanceof Date && !isNaN(dateObj.getTime())
-      ? dateObj.toLocaleDateString()
+      ? dateObj.toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })
       : '';
   } catch {
     return '';

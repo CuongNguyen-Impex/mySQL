@@ -24,6 +24,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -44,7 +45,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { DialogFooter } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -232,15 +232,35 @@ export default function Pricing() {
     return customerMatch && serviceMatch;
   }) : [];
 
+  // Define types for our data
+  type Customer = {
+    id: number;
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  };
+
+  type Service = {
+    id: number;
+    name: string;
+    unit?: string;
+    description?: string;
+  };
+
   // Get customer name by ID
   const getCustomerName = (customerId: number) => {
-    const customer = Array.isArray(customers) ? customers.find((c: any) => c.id === customerId) : null;
+    const customer = Array.isArray(customers) 
+      ? customers.find((c: Customer) => c.id === customerId) 
+      : null;
     return customer?.name || "Unknown";
   };
 
   // Get service name by ID
   const getServiceName = (serviceId: number) => {
-    const service = Array.isArray(services) ? services.find((s: any) => s.id === serviceId) : null;
+    const service = Array.isArray(services) 
+      ? services.find((s: Service) => s.id === serviceId) 
+      : null;
     return service?.name || "Unknown";
   };
 
@@ -347,6 +367,13 @@ export default function Pricing() {
                           }}>
                             <Edit className="mr-2 h-4 w-4" />
                             Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => {
+                            setSelectedCustomerForPrint(price.customerId);
+                            setIsPrintDialogOpen(true);
+                          }}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            In báo giá
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-destructive focus:text-destructive"
@@ -609,7 +636,103 @@ export default function Pricing() {
                 
                 // Hiển thị báo giá trong cửa sổ mới
                 const windowFeatures = "left=100,top=100,width=800,height=600";
-                window.open('', '_blank', windowFeatures);
+                const printWindow = window.open('', '_blank', windowFeatures);
+                
+                if (printWindow) {
+                  // Lấy thông tin khách hàng
+                  const customer = Array.isArray(customers) 
+                    ? customers.find((c: Customer) => c.id === selectedCustomerForPrint) 
+                    : null;
+                  
+                  // Tạo nội dung HTML cho bảng báo giá
+                  const today = new Date();
+                  let htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                      <title>Báo giá - ${customer?.name || ''}</title>
+                      <meta charset="UTF-8">
+                      <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1, h2 { text-align: center; }
+                        .header { margin-bottom: 30px; }
+                        .info { margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; }
+                        th { background-color: #f2f2f2; text-align: left; }
+                        .text-right { text-align: right; }
+                        .footer { margin-top: 50px; text-align: center; font-style: italic; }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="header">
+                        <h1>BẢNG BÁO GIÁ DỊCH VỤ</h1>
+                        <h2>Khách hàng: ${customer?.name || ''}</h2>
+                      </div>
+                      
+                      <div class="info">
+                        <p><strong>Ngày báo giá:</strong> ${formatDate(today)}</p>
+                        <p><strong>Địa chỉ:</strong> ${customer?.address || ''}</p>
+                        <p><strong>Điện thoại:</strong> ${customer?.phone || ''}</p>
+                        <p><strong>Email:</strong> ${customer?.email || ''}</p>
+                      </div>
+                      
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>STT</th>
+                            <th>Tên dịch vụ</th>
+                            <th>Đơn vị</th>
+                            <th class="text-right">Đơn giá (VND)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                  `;
+                  
+                  // Lấy danh sách các báo giá của khách hàng này
+                  const customerPrices = Array.isArray(prices) 
+                    ? prices.filter((price: any) => price.customerId === selectedCustomerForPrint)
+                    : [];
+                  
+                  // Thêm dòng cho mỗi dịch vụ
+                  customerPrices.forEach((price: any, index: number) => {
+                    const service = Array.isArray(services) 
+                      ? services.find((s: Service) => s.id === price.serviceId) 
+                      : null;
+                    
+                    htmlContent += `
+                      <tr>
+                        <td>${index + 1}</td>
+                        <td>${service?.name || ''}</td>
+                        <td>${service?.unit || 'Dịch vụ'}</td>
+                        <td class="text-right">${formatCurrency(price.price)}</td>
+                      </tr>
+                    `;
+                  });
+                  
+                  // Hoàn thành HTML
+                  htmlContent += `
+                        </tbody>
+                      </table>
+                      
+                      <div class="footer">
+                        <p>Báo giá có hiệu lực trong vòng 30 ngày kể từ ngày báo giá.</p>
+                        <p>Mọi thắc mắc vui lòng liên hệ bộ phận kinh doanh.</p>
+                      </div>
+                    </body>
+                    </html>
+                  `;
+                  
+                  // Ghi nội dung vào cửa sổ mới và in
+                  printWindow.document.open();
+                  printWindow.document.write(htmlContent);
+                  printWindow.document.close();
+                  
+                  // Đợi trang tải xong trước khi in
+                  setTimeout(() => {
+                    printWindow.print();
+                  }, 500);
+                }
               }}
             >
               <Printer className="mr-2 h-4 w-4" />
