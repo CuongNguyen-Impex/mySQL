@@ -113,9 +113,9 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
             name="billNo"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Bill Number</FormLabel>
+                <FormLabel>Số hóa đơn</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. B001" {...field} />
+                  <Input placeholder="Ví dụ: VC001" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -127,7 +127,7 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Date</FormLabel>
+                <FormLabel>Ngày tạo</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -141,7 +141,7 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
                         {field.value ? (
                           format(field.value, "PPP")
                         ) : (
-                          <span>Pick a date</span>
+                          <span>Chọn ngày</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
@@ -171,7 +171,7 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
             name="customerId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Customer</FormLabel>
+                <FormLabel>Khách hàng</FormLabel>
                 <Select
                   disabled={isLoadingCustomers}
                   onValueChange={(value) => field.onChange(parseInt(value))}
@@ -180,7 +180,7 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select customer" />
+                      <SelectValue placeholder="Chọn khách hàng" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -204,7 +204,7 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
             name="serviceId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Service</FormLabel>
+                <FormLabel>Dịch vụ</FormLabel>
                 <Select
                   disabled={isLoadingServices}
                   onValueChange={(value) => field.onChange(parseInt(value))}
@@ -213,7 +213,7 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select service" />
+                      <SelectValue placeholder="Chọn dịch vụ" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -236,21 +236,21 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>Trạng thái</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="Chọn trạng thái" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    <SelectItem value="Pending">Chờ xử lý</SelectItem>
+                    <SelectItem value="In Progress">Đang xử lý</SelectItem>
+                    <SelectItem value="Completed">Hoàn tất</SelectItem>
+                    <SelectItem value="Cancelled">Đã hủy</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -263,9 +263,9 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
             name="invoiceNo"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Invoice Number</FormLabel>
+                <FormLabel>Số hóa đơn VAT</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. INV001" {...field} />
+                  <Input placeholder="Ví dụ: HD001" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -279,14 +279,14 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
             name="importExportType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Type</FormLabel>
+                <FormLabel>Loại hàng</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder="Chọn loại hàng" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -304,7 +304,7 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
             name="packageCount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Number of Packages</FormLabel>
+                <FormLabel>Số lượng kiện hàng</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
@@ -327,14 +327,14 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
             name="goodsType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Goods Type</FormLabel>
+                <FormLabel>Loại vận chuyển</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select goods type" />
+                      <SelectValue placeholder="Chọn loại vận chuyển" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -355,10 +355,10 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel>Ghi chú</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Enter any notes about this bill"
+                  placeholder="Nhập ghi chú cho hóa đơn này"
                   value={field.value || ""}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -367,7 +367,7 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
                 />
               </FormControl>
               <FormDescription>
-                Optional additional information about the bill
+                Thông tin bổ sung về hóa đơn (không bắt buộc)
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -376,7 +376,7 @@ export default function BillForm({ bill, onSuccess }: BillFormProps) {
 
         <div className="flex justify-end">
           <Button type="submit" disabled={mutation.isPending}>
-            {isEditing ? "Update Bill" : "Create Bill"}
+            {isEditing ? "Cập nhật hóa đơn" : "Tạo hóa đơn"}
           </Button>
         </div>
       </form>
