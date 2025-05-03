@@ -40,8 +40,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoreHorizontal, Edit, Trash } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export default function SettingsCategories() {
   const { toast } = useToast();
@@ -142,7 +143,73 @@ export default function SettingsCategories() {
                       Enter the details for the new customer
                     </DialogDescription>
                   </DialogHeader>
-                  {/* Customer form will go here */}
+                  
+                  <div className="py-4">
+                    <form className="space-y-4" onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      const customer = {
+                        name: formData.get('name') as string,
+                        contactPerson: formData.get('contactPerson') as string,
+                        email: formData.get('email') as string,
+                        phone: formData.get('phone') as string,
+                        address: formData.get('address') as string
+                      };
+                      
+                      const createCustomer = async () => {
+                        try {
+                          await apiRequest('POST', '/api/customers', customer);
+                          queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+                          toast({
+                            title: 'Success',
+                            description: 'Customer was created successfully',
+                          });
+                          // Close the dialog
+                          const closeDialogButton = document.querySelector('[data-radix-dialog-primitive="close"]');
+                          if (closeDialogButton) {
+                            (closeDialogButton as HTMLButtonElement).click();
+                          }
+                        } catch (error: any) {
+                          toast({
+                            title: 'Error',
+                            description: error.message || 'Failed to create customer',
+                            variant: 'destructive',
+                          });
+                        }
+                      };
+                      
+                      createCustomer();
+                    }}>
+                      <div>
+                        <Label htmlFor="name">Tên khách hàng *</Label>
+                        <Input id="name" name="name" placeholder="Tên công ty khách hàng" required />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="contactPerson">Người liên hệ</Label>
+                        <Input id="contactPerson" name="contactPerson" placeholder="Tên người liên hệ" />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" name="email" type="email" placeholder="Email liên hệ" />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="phone">Số điện thoại</Label>
+                        <Input id="phone" name="phone" placeholder="Số điện thoại liên hệ" />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="address">Địa chỉ</Label>
+                        <Input id="address" name="address" placeholder="Địa chỉ đơn vị" />
+                      </div>
+                      
+                      <Button type="submit" className="w-full">
+                        Thêm khách hàng
+                      </Button>
+                    </form>
+                  </div>
                 </DialogContent>
               </Dialog>
             </CardHeader>
