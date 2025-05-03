@@ -1113,7 +1113,22 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
               priceValue = parseFloat(servicePrice.price.toString());
               console.log(`Found service price for bill ${bill.billNo}, service ${serviceId}: ${priceValue}`);
             } else {
-              console.log(`No price found for bill ${bill.billNo}, customer ${customerId}, service ${serviceId}`);
+              // Nếu không tìm thấy giá, sử dụng doanh thu từ revenues nếu có
+              if (bill.revenues.length > 0) {
+                // Giả sử doanh thu phân bổ đều cho các loại chi phí
+                const revenueAmount = bill.revenues.reduce((sum, rev) => sum + parseFloat(rev.amount.toString()), 0);
+                const costTypesWithHoaDon = bill.costs
+                  .filter(c => c.tt_hd === "Hóa đơn")
+                  .map(c => c.costTypeId);
+                const uniqueCostTypesWithHoaDon = [...new Set(costTypesWithHoaDon)];
+                
+                if (uniqueCostTypesWithHoaDon.length > 0 && uniqueCostTypesWithHoaDon.includes(costTypeId)) {
+                  priceValue = revenueAmount / uniqueCostTypesWithHoaDon.length;
+                  console.log(`Using revenue from bill ${bill.billNo}, allocated to cost type ${costTypeId}: ${priceValue}`);
+                }
+              } else {
+                console.log(`No price found for bill ${bill.billNo}, customer ${customerId}, service ${serviceId}`);
+              }
             }
           }
           
