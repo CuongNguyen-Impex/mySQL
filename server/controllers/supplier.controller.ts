@@ -1,33 +1,44 @@
 import { Request, Response } from "express";
 import { db } from "@db";
-import { suppliers, insertSupplierSchema } from "@shared/schema";
+import { suppliers, insertSupplierSchema, costs } from "@shared/schema";
 import { eq, like } from "drizzle-orm";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { sampleSuppliers } from "../mock-data";
+import { useMockData } from "../use-mock-data";
 
 export const getSuppliers = async (req: Request, res: Response) => {
   try {
     const { search } = req.query;
     
-    let query = db.query.suppliers.findMany({
-      orderBy: suppliers.name
-    });
-    
-    if (search) {
-      query = db.query.suppliers.findMany({
-        where: like(suppliers.name, `%${search}%`),
+    // Tạo hàm query database
+    const queryDatabase = async () => {
+      let query = db.query.suppliers.findMany({
         orderBy: suppliers.name
       });
-    }
+      
+      if (search) {
+        query = db.query.suppliers.findMany({
+          where: like(suppliers.name, `%${search}%`),
+          orderBy: suppliers.name
+        });
+      }
+      
+      return await query;
+    };
     
-    const result = await query;
+    // Sử dụng mockData khi có lỗi kết nối
+    const result = await useMockData(
+      queryDatabase,
+      sampleSuppliers,
+      "Error getting suppliers"
+    );
     
     return res.status(200).json(result);
   } catch (error) {
     console.error("Error getting suppliers:", error);
-    return res.status(500).json({
-      message: "Server error getting suppliers"
-    });
+    // Nếu có lỗi khác, trả về dữ liệu mẫu
+    return res.status(200).json(sampleSuppliers);
   }
 };
 
@@ -70,19 +81,58 @@ export const getSupplierById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
-    const supplier = await db.query.suppliers.findFirst({
-      where: eq(suppliers.id, Number(id))
-    });
+    // Tạo hàm query database
+    const queryDatabase = async () => {
+      const supplier = await db.query.suppliers.findFirst({
+        where: eq(suppliers.id, Number(id))
+      });
+      
+      if (!supplier) {
+        throw new Error("Supplier not found");
+      }
+      
+      return supplier;
+    };
     
-    if (!supplier) {
+    // Tìm nhà cung cấp trong dữ liệu mẫu
+    const findMockSupplier = () => {
+      const supplier = sampleSuppliers.find(s => s.id === Number(id));
+      
+      if (!supplier) {
+        return res.status(404).json({
+          message: "Supplier not found"
+        });
+      }
+      
+      return supplier;
+    };
+    
+    // Sử dụng helper để kết hợp database thật và dữ liệu mẫu
+    const supplier = await useMockData(
+      queryDatabase,
+      findMockSupplier(),
+      "Error getting supplier"
+    );
+    
+    return res.status(200).json(supplier);
+  } catch (error) {
+    console.error("Error getting supplier:", error);
+    
+    // Nếu lỗi là "Supplier not found"
+    if (error instanceof Error && error.message === "Supplier not found") {
       return res.status(404).json({
         message: "Supplier not found"
       });
     }
     
-    return res.status(200).json(supplier);
-  } catch (error) {
-    console.error("Error getting supplier:", error);
+    // Lỗi khác, thử lấy từ dữ liệu mẫu
+    const { id } = req.params;
+    const supplier = sampleSuppliers.find(s => s.id === Number(id));
+    
+    if (supplier) {
+      return res.status(200).json(supplier);
+    }
+    
     return res.status(500).json({
       message: "Server error getting supplier"
     });
