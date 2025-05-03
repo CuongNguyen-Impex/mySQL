@@ -1054,6 +1054,33 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
       const totalRevenue = bill.revenues.reduce(
         (sum, revenue) => sum + parseFloat(revenue.amount.toString()), 0);
       
+      // Group costs by cost type for detailed analysis
+      const costByType = bill.costs.reduce((acc: Record<number, any>, cost) => {
+        const costTypeId = cost.costTypeId;
+        if (!acc[costTypeId]) {
+          acc[costTypeId] = {
+            costTypeId,
+            costTypeName: cost.costType?.name || 'Unknown',
+            hoaDonAmount: 0,
+            traHoAmount: 0,
+            totalAmount: 0,
+            count: 0
+          };
+        }
+        
+        const amount = parseFloat(cost.amount.toString());
+        acc[costTypeId].count += 1;
+        acc[costTypeId].totalAmount += amount;
+        
+        if (cost.tt_hd === "Trả hộ") {
+          acc[costTypeId].traHoAmount += amount;
+        } else { // "Hóa đơn"
+          acc[costTypeId].hoaDonAmount += amount;
+        }
+        
+        return acc;
+      }, {});
+      
       // For profit calculation, only use 'Hóa đơn' costs
       const profit = totalRevenue - totalHoaDonCost;
       
@@ -1063,7 +1090,8 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
         totalTraHoCost,
         totalCost: totalHoaDonCost + totalTraHoCost,
         totalRevenue,
-        profit
+        profit,
+        costsByType: Object.values(costByType)
       };
     });
     
@@ -1154,11 +1182,47 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       // Calculate total revenue for this bill
       const totalRevenue = bill.revenues.reduce((sum, revenue) => sum + parseFloat(revenue.amount.toString()), 0);
       
-      // Split costs by tt_hd value
+      // Group costs by cost type for detailed analysis
+      const costByType = bill.costs.reduce((acc: Record<number, any>, cost) => {
+        const costTypeId = cost.costTypeId;
+        if (!acc[costTypeId]) {
+          acc[costTypeId] = {
+            costTypeId,
+            costTypeName: cost.costType?.name || 'Unknown',
+            hoaDonCosts: [],
+            traHoCosts: [],
+            hoaDonAmount: 0,
+            traHoAmount: 0,
+            totalAmount: 0,
+            count: 0
+          };
+        }
+        
+        const amount = parseFloat(cost.amount.toString());
+        acc[costTypeId].count += 1;
+        acc[costTypeId].totalAmount += amount;
+        
+        if (cost.tt_hd === "Trả hộ") {
+          acc[costTypeId].traHoCosts.push(cost);
+          acc[costTypeId].traHoAmount += amount;
+        } else { // "Hóa đơn"
+          acc[costTypeId].hoaDonCosts.push(cost);
+          acc[costTypeId].hoaDonAmount += amount;
+        }
+        
+        return acc;
+      }, {});
+      
+      // Count the number of cost types with Hóa đơn costs
+      const costTypesWithHoaDon = Object.values(costByType).filter(
+        (type: any) => type.hoaDonCosts.length > 0
+      );
+      
+      // Split costs by tt_hd value for totals
       const hoaDonCosts = bill.costs.filter(cost => cost.tt_hd === "Hóa đơn");
       const traHoCosts = bill.costs.filter(cost => cost.tt_hd === "Trả hộ");
       
-      // Calculate totals by attribute type
+      // Calculate totals
       const totalHoaDonCost = hoaDonCosts.reduce(
         (sum, cost) => sum + parseFloat(cost.amount.toString()), 0);
       const totalTraHoCost = traHoCosts.reduce(
@@ -1167,39 +1231,65 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
       // For profit calculation, only use 'Hóa đơn' costs
       const profit = totalRevenue - totalHoaDonCost;
       
-      // For bills with costs, add one row per cost
+      // For bills with costs, add rows grouped by cost type
       if (bill.costs.length > 0) {
-        bill.costs.forEach(cost => {
-          // Get attribute from tt_hd
-          const costAttribute = cost.tt_hd || "Hóa đơn";
-          
-          // Calculate profit share for this cost
-          const costAmount = parseFloat(cost.amount.toString());
-          
-          // For 'Trả hộ' costs, profit is not calculated (pass-through)
-          let profitShare = 0;
-          let revenueShare = 0;
-          
-          if (costAttribute === "Hóa đơn") {
-            // Only divide revenue among 'Hóa đơn' costs for profit calculation
-            revenueShare = hoaDonCosts.length > 0 ? totalRevenue / hoaDonCosts.length : 0;
-            profitShare = revenueShare - costAmount;
+        // Distribute revenue by cost type for 'Hóa đơn' costs only
+        const numCostTypesWithHoaDon = costTypesWithHoaDon.length;
+        const revenuePerCostType = numCostTypesWithHoaDon > 0 ? totalRevenue / numCostTypesWithHoaDon : 0;
+        
+        // Process costs grouped by type
+        Object.values(costByType).forEach((costTypeGroup: any) => {
+          // Calculate revenue and profit for this cost type
+          let revenueForCostType = 0;
+          if (costTypeGroup.hoaDonCosts.length > 0) {
+            revenueForCostType = revenuePerCostType;
           }
           
-          csvRows.push({
-            billNo: bill.billNo,
-            date: bill.date,
-            customerName: bill.customer?.name || 'N/A',
-            serviceName: bill.service?.name || 'N/A',
-            importExportType: bill.importExportType,
-            goodsType: bill.goodsType,
-            invoiceNo: bill.invoiceNo || 'N/A',
-            supplierName: cost.supplier?.name || 'N/A',
-            costType: cost.costType?.name || 'N/A',
-            costAttribute: costAttribute,
-            costAmount: costAmount,
-            revenueAmount: revenueShare,
-            profit: profitShare
+          const profitForCostType = revenueForCostType - costTypeGroup.hoaDonAmount;
+          
+          // Add a row for each cost within this cost type group
+          if (costTypeGroup.hoaDonCosts.length > 0) {
+            costTypeGroup.hoaDonCosts.forEach((cost: any) => {
+              const costAmount = parseFloat(cost.amount.toString());
+              const revenueShare = costTypeGroup.hoaDonCosts.length > 0 ? 
+                revenueForCostType / costTypeGroup.hoaDonCosts.length : 0;
+              const profitShare = revenueShare - costAmount;
+              
+              csvRows.push({
+                billNo: bill.billNo,
+                date: bill.date,
+                customerName: bill.customer?.name || 'N/A',
+                serviceName: bill.service?.name || 'N/A',
+                importExportType: bill.importExportType,
+                goodsType: bill.goodsType,
+                invoiceNo: bill.invoiceNo || 'N/A',
+                supplierName: cost.supplier?.name || 'N/A',
+                costType: costTypeGroup.costTypeName,
+                costAttribute: "Hóa đơn",
+                costAmount: costAmount,
+                revenueAmount: revenueShare,
+                profit: profitShare
+              });
+            });
+          }
+          
+          // Add rows for 'Trả hộ' costs (no revenue or profit)
+          costTypeGroup.traHoCosts.forEach((cost: any) => {
+            csvRows.push({
+              billNo: bill.billNo,
+              date: bill.date,
+              customerName: bill.customer?.name || 'N/A',
+              serviceName: bill.service?.name || 'N/A',
+              importExportType: bill.importExportType,
+              goodsType: bill.goodsType,
+              invoiceNo: bill.invoiceNo || 'N/A',
+              supplierName: cost.supplier?.name || 'N/A',
+              costType: costTypeGroup.costTypeName,
+              costAttribute: "Trả hộ",
+              costAmount: parseFloat(cost.amount.toString()),
+              revenueAmount: 0, // No revenue for 'Trả hộ'
+              profit: 0 // No profit for 'Trả hộ'
+            });
           });
         });
       }
