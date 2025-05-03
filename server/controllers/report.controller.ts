@@ -1287,7 +1287,7 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
             costType: true
           }
         },
-        revenues: true
+        // Đã xóa revenues do chuyển sang sử dụng costPrices
       },
       orderBy: desc(bills.date)
     });
@@ -1529,7 +1529,7 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
             costType: true
           }
         },
-        revenues: true
+        // Đã xóa revenues do chuyển sang sử dụng costPrices
       },
       orderBy: desc(bills.date)
     });
