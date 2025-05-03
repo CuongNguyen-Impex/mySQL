@@ -1140,8 +1140,8 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
         totalRevenueFromPrices += group.revenue;
       });
       
-      // Use revenue from prices if available, otherwise fall back to actual revenues
-      const effectiveRevenue = totalRevenueFromPrices > 0 ? totalRevenueFromPrices : totalRevenue;
+      // Always use revenue from prices, even if it's 0
+      const effectiveRevenue = totalRevenueFromPrices;
       
       // For profit calculation, only use 'Hóa đơn' costs
       const profit = effectiveRevenue - totalHoaDonCost;
@@ -1415,8 +1415,8 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
           priceFromTable = parseFloat(regularPrice.price.toString());
         }
         
-        // Use price from table if available, otherwise use actual revenue
-        const effectiveRevenue = priceFromTable > 0 ? priceFromTable : totalRevenue;
+        // Always use price from table, even if it's 0
+        const effectiveRevenue = priceFromTable;
         
         csvRows.push({
           billNo: bill.billNo,
