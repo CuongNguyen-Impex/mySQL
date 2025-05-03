@@ -79,8 +79,8 @@ export default function RevenueForm({ revenue, billId, customerId, onSuccess }: 
 
   // If price is available, set the amount
   React.useEffect(() => {
-    if (priceData?.price && !isEditing && !form.getValues("amount")) {
-      form.setValue("amount", parseFloat(priceData.price));
+    if (priceData && priceData.price && !isEditing && !form.getValues("amount")) {
+      form.setValue("amount", parseFloat(priceData.price.toString()));
     }
   }, [priceData, form, isEditing]);
 
@@ -137,9 +137,9 @@ export default function RevenueForm({ revenue, billId, customerId, onSuccess }: 
                     ))}
                   </SelectContent>
                 </Select>
-                {customerId && serviceId && priceData?.price && (
+                {customerId && serviceId && priceData && priceData.price && (
                   <FormDescription>
-                    Standard price: ${parseFloat(priceData.price).toFixed(2)}
+                    Standard price: ${parseFloat(priceData.price.toString()).toFixed(2)}
                   </FormDescription>
                 )}
                 <FormMessage />
