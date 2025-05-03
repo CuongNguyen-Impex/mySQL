@@ -15,6 +15,7 @@ import * as costTypeController from "./controllers/cost-type.controller";
 import * as costTypeAttributeController from "./controllers/cost-type-attribute.controller";
 import * as costAttributeValueController from "./controllers/cost-attribute-value.controller";
 import * as priceController from "./controllers/price.controller";
+import * as costPriceController from "./controllers/cost-price.controller";
 import * as reportController from "./controllers/report.controller";
 import * as googleSheetsController from "./controllers/google-sheets.controller";
 import * as userController from "./controllers/user.controller";
@@ -101,6 +102,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch(`${apiPrefix}/prices/:id`, authMiddleware, priceController.updatePrice);
   app.delete(`${apiPrefix}/prices/:id`, authMiddleware, priceController.deletePrice);
   app.get(`${apiPrefix}/prices/customer/:customerId/service/:serviceId`, authMiddleware, priceController.getPriceByCustomerAndService);
+
+  // COST PRICE ROUTES
+  app.get(`${apiPrefix}/cost-prices`, authMiddleware, costPriceController.getCostPrices);
+  app.post(`${apiPrefix}/cost-prices`, authMiddleware, costPriceController.createCostPrice);
+  app.get(`${apiPrefix}/cost-prices/customer/:customerId/service/:serviceId`, authMiddleware, costPriceController.getCostPricesByCustomerAndService);
+  app.get(`${apiPrefix}/cost-prices/:id`, authMiddleware, costPriceController.getCostPriceById);
+  app.patch(`${apiPrefix}/cost-prices/:id`, authMiddleware, costPriceController.updateCostPrice);
+  app.delete(`${apiPrefix}/cost-prices/:id`, authMiddleware, costPriceController.deleteCostPrice);
 
   // REPORT ROUTES
   app.get(`${apiPrefix}/dashboard`, authMiddleware, reportController.getDashboardData);

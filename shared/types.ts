@@ -90,6 +90,26 @@ export const priceItemFormSchema = insertPriceSchema.extend({
   price: z.string().min(1, "Price is required")
 });
 
+// Cost Price item schema
+export const costPriceItemFormSchema = insertCostPriceSchema.extend({
+  customerId: z.coerce.number(),
+  serviceId: z.coerce.number(),
+  costTypeId: z.coerce.number(),
+  price: z.string().min(1, "Price is required")
+});
+
+// Cost price form schema for multi-price form
+const costPriceItemSchema = z.object({
+  costTypeId: z.coerce.number(),
+  price: z.string().min(1, "Price is required")
+});
+
+export const costPriceFormSchema = z.object({
+  customerId: z.coerce.number(),
+  serviceId: z.coerce.number(),
+  prices: z.array(costPriceItemSchema).min(1, "At least one price is required")
+});
+
 export const customerFormSchema = insertCustomerSchema;
 export const serviceFormSchema = insertServiceSchema;
 export const costTypeFormSchema = insertCostTypeSchema;
@@ -139,6 +159,12 @@ export interface RevenueWithRelations extends Revenue {
 export interface PriceWithRelations extends Price {
   customer?: Customer;
   service?: Service;
+}
+
+export interface CostPriceWithRelations extends CostPrice {
+  customer?: Customer;
+  service?: Service;
+  costType?: CostType;
 }
 
 // Dashboard types
