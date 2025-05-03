@@ -689,6 +689,9 @@ export default function Pricing() {
                         body { font-family: Arial, sans-serif; margin: 20px; }
                         h1, h2 { text-align: center; }
                         .header { margin-bottom: 30px; }
+                        .company-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+                        .logo { width: 120px; height: auto; }
+                        .company-name { text-align: right; font-weight: bold; font-size: 18px; }
                         .info { margin-bottom: 20px; }
                         table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
                         th, td { border: 1px solid #ddd; padding: 8px; }
@@ -698,6 +701,10 @@ export default function Pricing() {
                       </style>
                     </head>
                     <body>
+                      <div class="company-header">
+                        <img src="/images/logo.svg" alt="Impex Vina Logo" class="logo">
+                        <div class="company-name">CÔNG TY TNHH IMPEX VINA</div>
+                      </div>
                       <div class="header">
                         <h1>BẢNG BÁO GIÁ DỊCH VỤ</h1>
                         <h2>Khách hàng: ${customer?.name || ''}</h2>

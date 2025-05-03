@@ -59,7 +59,7 @@ export default function SidebarNav({ className, user }: SidebarNavProps) {
       className
     )}>
       <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
-        <h1 className="text-xl font-bold text-primary">LogiCost</h1>
+        <h1 className="text-xl font-bold text-primary">Công ty TNHH Impex Vina</h1>
         <div className="inline-flex items-center">
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
