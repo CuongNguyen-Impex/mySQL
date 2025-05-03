@@ -1112,29 +1112,9 @@ export const getBillDetailReport = async (req: Request, res: Response) => {
           priceSource = "cost-specific price";
           console.log(`Bill ${bill.billNo}: Using cost-specific price for costType ${costTypeId}: ${revenue}`);
         } else {
-          // If no cost-specific price, try service price
-          const servicePrice = allPrices.find(price => 
-            price.customerId === customerId && 
-            price.serviceId === serviceId
-          );
-          
-          if (servicePrice) {
-            revenue = Number(servicePrice.price);
-            priceSource = "service price";
-            console.log(`Bill ${bill.billNo}: Using service price for costType ${costTypeId}: ${revenue}`);
-          } else if (bill.revenues.length > 0) {
-            // If no prices in price tables but bill has revenues, use those
-            const billRevenue = bill.revenues.reduce((sum, rev) => sum + Number(rev.amount), 0);
-            
-            // Divide revenue equally among cost types with Hóa đơn costs
-            revenue = billRevenue / uniqueCostTypeIds.length;
-            priceSource = "bill revenues";
-            console.log(`Bill ${bill.billNo}: Using revenue from bill for costType ${costTypeId}: ${revenue}`);
-          } else {
-            // No price information available
-            priceSource = "none";
-            console.log(`Bill ${bill.billNo}: No price found for costType ${costTypeId}`);
-          }
+          // No price information available
+          priceSource = "none";
+          console.log(`Bill ${bill.billNo}: No price found for costType ${costTypeId}`);
         }
         
         // Add the revenue from this cost type to the total
@@ -1407,11 +1387,8 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
               // If we have a cost price for this combination, use it
               priceFromTable = parseFloat(costPrice.price.toString());
             } else {
-              // If no cost price, try to get the overall service price
-              const regularPrice = findPrice(customerId, serviceId);
-              if (regularPrice) {
-                priceFromTable = parseFloat(regularPrice.price.toString());
-              }
+              // Don't use any fallback methods, only use cost-specific prices
+              priceFromTable = 0;
             }
             
             costTypeGroup.hoaDonCosts.forEach((cost: any, index: number) => {
@@ -1463,21 +1440,8 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
           });
         });
       }
-          // For bills with revenues but no costs
+          // For bills with revenues but no costs - always return 0 revenue
       else if (bill.revenues.length > 0) {
-        // Try to find a price from the pricing tables
-        const billCustomerId = bill.customerId;
-        const billServiceId = bill.serviceId;
-        const regularPrice = findPrice(billCustomerId, billServiceId);
-        let priceFromTable = 0;
-        
-        if (regularPrice) {
-          priceFromTable = parseFloat(regularPrice.price.toString());
-        }
-        
-        // Always use price from table, even if it's 0
-        const effectiveRevenue = priceFromTable;
-        
         csvRows.push({
           billNo: bill.billNo,
           date: bill.date,
@@ -1490,8 +1454,8 @@ export const exportBillDetailReport = async (req: Request, res: Response) => {
           costType: 'N/A',
           costAttribute: 'N/A',
           costAmount: 0,
-          revenueAmount: effectiveRevenue,
-          profit: effectiveRevenue
+          revenueAmount: 0, // Always 0 if no cost-specific prices
+          profit: 0
         });
       }
     });
