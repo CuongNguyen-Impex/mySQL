@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Filter, Search } from "lucide-react";
@@ -48,8 +48,6 @@ export default function Bills() {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [billNoFilter, setBillNoFilter] = useState<string>("");
-  const [filteredBills, setFilteredBills] = useState<Bill[]>([]);
-
   // Fetch bills with filters
   const { data, isLoading, refetch } = useQuery({
     queryKey: [
@@ -73,15 +71,14 @@ export default function Bills() {
 
   const bills = data?.bills || [];
 
-  // Effect to filter bills by bill number
-  useEffect(() => {
+  // Memoize filtered bills instead of using useEffect
+  const filteredBills = useMemo(() => {
     if (billNoFilter) {
-      const filtered = bills.filter(bill =>
+      return bills.filter(bill =>
         bill.billNo.toLowerCase().includes(billNoFilter.toLowerCase())
       );
-      setFilteredBills(filtered);
     } else {
-      setFilteredBills(bills);
+      return bills;
     }
   }, [bills, billNoFilter]);
 
