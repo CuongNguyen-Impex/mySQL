@@ -463,7 +463,7 @@ export default function BillDetails() {
                         Bạn có thể thêm nhiều chi phí cùng lúc
                       </DialogDescription>
                     </DialogHeader>
-                    <MultiCostForm billId={bill.id} onSuccess={handleCostAddSuccess} />
+                    {bill && <MultiCostForm billId={bill.id} onSuccess={handleCostAddSuccess} />}
                   </DialogContent>
                 </Dialog>
               </div>
@@ -490,11 +490,11 @@ export default function BillDetails() {
                         Nhập thông tin cho doanh thu mới
                       </DialogDescription>
                     </DialogHeader>
-                    <RevenueForm 
+                    {bill && <RevenueForm 
                       billId={bill.id} 
                       customerId={bill.customerId}
                       onSuccess={handleRevenueAddSuccess} 
-                    />
+                    />}
                   </DialogContent>
                 </Dialog>
               </div>

@@ -198,6 +198,10 @@ export const getBillById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
+    // Khai báo biến billWithExtensions với kiểu BillWithRelations
+    let billWithExtensions: BillWithRelations;
+    
+    // Lấy thông tin hóa đơn cơ bản với các quan hệ
     const bill = await db.query.bills.findFirst({
       where: eq(bills.id, Number(id)),
       with: {
@@ -231,8 +235,8 @@ export const getBillById = async (req: Request, res: Response) => {
       }
     });
     
-    // Tạo đối tượng billWithExtensions bao gồm costPrices
-    const billWithExtensions: BillWithRelations = {
+    // Gán dữ liệu cho billWithExtensions
+    billWithExtensions = {
       ...bill,
       costPrices: billCostPrices
     };
