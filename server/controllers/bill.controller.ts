@@ -13,8 +13,7 @@ export const getBills = async (req: Request, res: Response) => {
       with: {
         customer: true,
         service: true,
-        costs: true,
-        revenues: true
+        costs: true
       },
       orderBy: desc(bills.date)
     });
@@ -48,8 +47,7 @@ export const getBills = async (req: Request, res: Response) => {
         with: {
           customer: true,
           service: true,
-          costs: true,
-          revenues: true
+          costs: true
         },
         where: and(...whereConditions),
         orderBy: desc(bills.date)
@@ -62,8 +60,7 @@ export const getBills = async (req: Request, res: Response) => {
         with: {
           customer: true,
           service: true,
-          costs: true,
-          revenues: true
+          costs: true
         },
         where: whereConditions.length > 0 ? and(...whereConditions) : undefined,
         orderBy: desc(bills.date),
