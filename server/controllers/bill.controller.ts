@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { db } from "@db";
-import { bills, billsRelations, insertBillSchema, costPrices } from "@shared/schema";
+import { bills, billsRelations, insertBillSchema, costPrices, costs } from "@shared/schema";
 import { BillWithRelations } from "@shared/types";
 import { eq, desc, like, and, between, or } from "drizzle-orm";
 import { ZodError } from "zod";
