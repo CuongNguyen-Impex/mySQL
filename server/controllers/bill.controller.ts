@@ -464,16 +464,30 @@ export const deleteBill = async (req: Request, res: Response) => {
       });
     }
     
-    // Delete bill (costs will be deleted due to cascade)
-    await db.delete(bills).where(eq(bills.id, Number(id)));
+    // Delete related costs first
+    try {
+      await db.transaction(async (tx) => {
+        // Delete costs
+        await tx.delete(costs).where(eq(costs.billId, Number(id)));
+        // Delete the bill
+        await tx.delete(bills).where(eq(bills.id, Number(id)));
+      });
+    } catch (dbError) {
+      console.error("Database transaction error:", dbError);
+      return res.status(500).json({
+        message: "Error deleting bill and related records",
+        error: dbError instanceof Error ? dbError.message : "Unknown error"
+      });
+    }
     
     return res.status(200).json({
       message: "Bill deleted successfully"
     });
   } catch (error) {
-    console.error("Error deleting bill:", error);
+    console.error("Error in delete bill operation:", error);
     return res.status(500).json({
-      message: "Server error deleting bill"
+      message: "Server error deleting bill",
+      error: error instanceof Error ? error.message : "Unknown error"
     });
   }
 };
