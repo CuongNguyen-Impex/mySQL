@@ -143,7 +143,7 @@ export const insertCostTypeSchema = createInsertSchema(costTypes, {
 export type InsertCostType = z.infer<typeof insertCostTypeSchema>;
 export type CostType = typeof costTypes.$inferSelect;
 
-// Bills table
+// Bills table - Đã thêm trường declarationNumber (Số tờ khai)
 export const bills = mysqlTable("bills", {
   id: int("id").primaryKey().autoincrement(),
   billNo: varchar("bill_no", { length: 100 }).notNull(),
@@ -152,6 +152,7 @@ export const bills = mysqlTable("bills", {
   serviceId: int("service_id").notNull(),
   status: varchar("status", { length: 50 }).notNull().default("Pending"),
   invoiceNo: varchar("invoice_no", { length: 100 }),
+  declarationNumber: varchar("declaration_number", { length: 100 }), // Thêm trường Số tờ khai
   importExportType: varchar("import_export_type", { length: 50 }).notNull().default("Nhập"),
   packageCount: int("package_count"),
   goodsType: varchar("goods_type", { length: 50 }).notNull().default("Air"),
@@ -160,6 +161,7 @@ export const bills = mysqlTable("bills", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Cập nhật schema với trường mới
 export const insertBillSchema = createInsertSchema(bills, {
   billNo: (schema: any) => schema.min(1, "Bill number is required"),
   status: (schema: any) => schema.refine(
@@ -173,7 +175,8 @@ export const insertBillSchema = createInsertSchema(bills, {
   goodsType: (schema: any) => schema.refine(
     (val: any) => ["Air", "Sea", "LCL", "Dom"].includes(val),
     "Goods type must be one of: Air, Sea, LCL, Dom"
-  )
+  ),
+  declarationNumber: (schema: any) => schema.optional() // Thêm validation cho trường mới
 });
 export type InsertBill = z.infer<typeof insertBillSchema>;
 export type Bill = typeof bills.$inferSelect;
